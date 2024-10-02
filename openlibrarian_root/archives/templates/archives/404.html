@@ -1,0 +1,16 @@
+<!-- 404.html -->
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+
+{% block content %}
+  <div class="container mt-2">
+    <p class="fw-bold text-danger"><i class="fa-solid fa-circle-exclamation"></i> RESTRICTED SECTION <i class="fa-solid fa-circle-exclamation"></i></p>
+    <p class="fw-lighter fs-6">I wonder what you were looking for when you ventured into this place?</p>
+  </div>
+  <div class="text-center">
+    <img src="{% static 'images/err_404.png' %}" alt="404 image" class="rounded" style="width: auto; height: 300px;">
+    <br>
+    <a href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-primary mt-2"><i class="fa-solid fa-person-running"></i> Run along home!</a>
+  </div>
+{% endblock %}

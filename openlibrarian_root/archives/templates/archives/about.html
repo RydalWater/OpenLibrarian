@@ -1,0 +1,32 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+    <div class="container mt-2">
+        <p class="fw-bold">Current Features</p>
+        <ul class="list-group text-start">
+            <li class="list-group-item">User profile</li>
+            <li class="list-group-item">Relays</li>
+            <li class="list-group-item">Friends</li>
+            <li class="list-group-item">Search for Books</li>
+            <li class="list-group-item">Interests</li>
+            <li class="list-group-item">Manage Library Shelves</li>
+            <li class="list-group-item">Import Friends/Foes Lists</li>
+        </ul>
+    </div>
+{% if not npub %}
+    <div class="container mt-2">
+        <div class="row">
+            <div class="col">
+                <a href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-house"></i> Home</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock content %}

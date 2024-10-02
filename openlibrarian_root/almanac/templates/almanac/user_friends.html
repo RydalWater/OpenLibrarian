@@ -1,0 +1,107 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <p class="fw-bold">Friends & Foes</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div style="height: 55vh; overflow-y: auto;"> 
+        <div class="accordion" id="socialAccordion">
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="friends">
+                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFriends" aria-expanded="true" aria-controls="collapseFriends">
+                        <i class="fa-solid fa-users me-2"></i> Friends
+                    </button>
+                </h2>
+                <div id="collapseFriends" class="accordion-collapse collapse show" aria-labelledby="friends" data-bs-parent="#socialAccordion">
+                    <div class="accordion-body">
+                        {% if friends %}
+                            {% for key, values in friends.items %}
+                            <ul class="list-group bg-secondary-container text-start">
+                                <li class="list-group-item container d-flex flex-row justify-content-md-between align-items-center">
+                                    <div class="col-md-1">
+                                        {% if values.image %}
+                                            <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
+                                        {% else %}
+                                            <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-7 ps-1 flex-grow-1">
+                                        <p class="mb-0">{{ values.name }}</p>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <!-- <button id="removeButton" class="btn btn-sm btn-danger" name="remove", value="{{ values.npub }}"><i class="fa-solid fa-trash"></i></button> -->
+                                        <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
+                                        <a id="profileButton" class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
+                                    </div>
+                                </li>
+                            </ul>
+                            {% endfor %}
+                        {% else %}
+                            <p>No users currently added to your friends list.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="foes">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFoes" aria-expanded="false" aria-controls="collapseFoes">
+                        <i class="fa-solid fa-skull-crossbones me-2"></i> Foes (Muted)
+                    </button>
+                </h2>
+                <div id="collapseFoes" class="accordion-collapse collapse" aria-labelledby="foes" data-bs-parent="#socialAccordion">
+                    <div class="accordion-body">
+                        {% if muted %}
+                            {% for key, values in muted.items %}
+                            <ul class="list-group bg-secondary-container text-start">
+                                <li class="list-group-item container d-flex justify-content-between align-items-center">
+                                    <div class="col-1">
+                                        {% if values.image %}
+                                            <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
+                                        {% else %}
+                                            <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-8">
+                                        <p>{{ values.name }}</p>
+                                    </div>
+                                    <div class="col-1">
+                                        <button id="copyButton" class="btn btn-sm btn-outline-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
+                                    </div>
+                                </li>
+                            </ul>
+                            {% endfor %}
+                        {% else %}
+                            <p>No users currently added to your muted list.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Save/Refresh Button -->
+    <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+        <a id="nsec" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        {% if session.nsec %}
+            <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
+        {% endif %}
+    </div>
+
+    <div id="spinnerBox" class="col mt-2 not-visible">
+        <div class="spinner-border" role="status"></div>
+    </div>
+</form>
+
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
+<script src="{% static 'js/copy-toast.js' %}"> </script>
+
+{% endblock content %}

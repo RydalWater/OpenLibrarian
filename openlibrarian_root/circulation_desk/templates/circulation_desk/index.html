@@ -1,0 +1,54 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+    <div class="container mt-2">
+        <p class="fw-bold">Circulation Desk</p>
+        <p>
+            Open Libraian was created to help you track and share your 
+            love of books and reading. <i>It is still early in the development so please
+            forgive, or better still, <a href="https://github.com/RydalWater/OpenLibrarian/issues" target="_blank">report any bugs</a> you find.</i>
+        </p>
+        <p>
+            It is built on <a href="https://nostr.com/" target="_blank">Nostr</a> which is an open social network protocol where you
+            are free to bring your profile and connections with you, or even take them to other applications on the network.
+        </p>
+        <p>
+            The heart of this app is built on the brilliant work of the
+            <a href="https://openlibrary.org" target="_blank">Open Library</a> team. Check out there work and contribute to it.
+        </p>
+        {% if nsec %}
+            {% if profile.displayname %}
+                <p class="fw-bold">Welcome back, {{ profile.displayname }}!</p>
+            {% elif nym %}
+                <p class="fw-bold">Welcome back, {{ nym }}!</p>
+            {% else %}
+                <p class="fw-bold">Welcome back!</p>
+                <p>Head over to the Almanac to update your profile.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+{% if npub %}
+    <!-- Share my profile button via npub and card section -->
+    <div class="container mt-2">
+        <a href="{% url 'library_card:library_card' npub=npub %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-share-nodes"></i> 
+            {% if nsec %}
+                My Shareable Profile
+            {% else %}
+                Shareable Profile
+            {% endif %}
+        </a>
+    </div>
+{% else %}
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <a href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
+            </div>
+            <div class="col">
+                <a href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock content %}

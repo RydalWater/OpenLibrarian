@@ -1,0 +1,110 @@
+{% extends 'circulation_desk/base_minimal.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="container my-3">
+    <div class="profile-card position-relative border border-1 border-primary">
+        <!-- Banner/Stripe -->
+        <div class="position-absolute start-0 end-0 bg-on-primary-container" style="height: 105px; z-index: 0; pointer-events: none;"></div>
+        <!-- Logo on left -->
+        <div class="position-absolute top-0 start-0 pt-4 ps-3" style="pointer-events: none;">
+            <div class="position-relative mt-3" style="width: 70px; height: 70px;">
+                <img src="{% static 'images/logo_main.jpg' %}"   alt="Logo" class="rounded-circle" style="width: 100%; height: 100%; object-fit: cover; opacity: 0.6; pointer-events: none; z-index: 1;">
+            </div>
+        </div>
+        <!-- Text on right -->
+        <div class="position-absolute top-0 end-0 pt-3 pe-2 text-end mt-3" style="pointer-events: none; z-index: 1;">
+            <div class="position-relative" style="width: 200px; opacity: 0.5;">
+                <span class="d-block text-on-primary" style="font-size: 1rem; font-weight: bold; white-space: nowrap;">Open</span>
+                <span class="d-block text-on-primary" style="font-size: 1rem; font-weight: bold; white-space: nowrap;">Librarian</span>
+                <span class="d-block text-on-primary" style="font-size: 1rem; white-space: nowrap;"><i>Library Card</i></span>
+            </div>
+        </div>
+        <div class="text-center" style="z-index: 1; position: relative;">
+            {% if picture != None %}
+                <img src="{{ picture }}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
+            {% else %}
+                <img src="{% static '/images/person.jpg' %}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
+            {% endif %}
+            {% if displayname %}
+                <h4>{{ displayname }}</h4>
+            {% elif nym %}
+                <h4>{{ nym }}</h4>
+            {% else %}
+                <h4>{{ username }}</h3>
+            {% endif %}
+        </div>
+        <p class="text-center">{{ about }}</p>
+        <hr>
+        <div class="mb-3">
+            <h5>Reading</h5>
+            <ul class="list-group">
+                {% for book in current_books %}
+                    <li class="list-group-item"> {{ book }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="row mb-3">
+            <div class="col-6 col-md-3 mb-3">
+                <h6>Wait List</h6>
+                <span class="badge bg-primary">{{ to_read }}</span>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <h6>Finished</h6>
+                <span class="badge bg-primary">{{ read }}</span>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <h6>Challenges</h6>
+                <span class="badge bg-secondary">Soon<sup>TM</sup></span>
+            </div>
+            <div class="col-6 col-md-3 mb-3">
+                <h6>Badges</h6>
+                <span class="badge bg-secondary">Soon<sup>TM</sup></span>
+            </div>
+        </div>
+        <div>
+            <h5>Interests</h5>
+            <div class="interests">
+                {% for interest in interests %}
+                    <span>{{ interest }}</span>
+                {% endfor %}
+            </div>
+        </div>
+        <hr>
+        <form method="POST">
+            {% csrf_token %}
+            <div class="text-center">
+                {% if owner %}
+                    <h5>Share your Profile with others!</h5>
+                {% else %}
+                    <h5>Explore my Profile or Build your Own!</h5>
+                {% endif %}
+                <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+                    {% if owner %}
+                        <button type="submit" name="home" value="true" class="btn btn-sm btn-secondary w-50">
+                            <i class="fa-solid fa-home"></i> Home
+                        </button>
+                        <button id="copyButton" value="{{ request.build_absolute_uri }}" name="share" value="true" class="btn btn-sm btn-primary w-50">
+                            <i class="fa-solid fa-share"></i> Share
+                        </button>
+                    {% else %}
+                        <button type="submit" name="explore" value="true" class="btn btn-sm btn-secondary w-50">
+                            <i class="fa-solid fa-magnifying-glass"></i> Explore
+                        </button>
+                        <button type="submit" name="new" value="true" class="btn btn-sm btn-primary w-50">
+                            <i class="fa-solid fa-plus"></i> New
+                        </button>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
+
+<script src="{% static 'js/copy-toast.js' %}"> </script>
+
+{% endblock content %}

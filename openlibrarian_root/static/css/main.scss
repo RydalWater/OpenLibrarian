@@ -1,0 +1,41 @@
+// Custom styles
+$primary: #65558F;
+$secondary: #625B71;
+
+// Import Bootstrap functions and variables
+@import "../../../node_modules/bootstrap/scss/_functions";
+@import "../../../node_modules/bootstrap/scss/_variables";
+
+$custom-theme-colors: (
+  "on-primary": #FFFFFF,
+  "primary-container": #EADDFF,
+  "on-primary-container": #21005D,
+  "on-secondary": #FFFFFF,
+  "secondary-container": #E8DEF8,
+  "on-secondary-container": #1D192B
+);
+
+$theme-colors: map-merge($theme-colors, $custom-theme-colors);
+
+// Import Bootstrap
+@import "../../../node_modules/bootstrap/scss/bootstrap";
+
+.profile-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  background-color: #f9f9f9;
+  max-width: 600px;
+  margin: auto;
+}
+.interests span {
+  display: inline-block;
+  background-color: #e9ecef;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin: 2px;
+}
+
+.not-visible {
+  display: none;
+}

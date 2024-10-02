@@ -1,0 +1,43 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <p class="fw-bold">Almanac</p>
+    <p>Here you'll find settings and profile information. </p>
+</div>
+
+<div class="container">
+    <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="npub" href="{% url 'almanac:user_profile' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-address-card"></i> Profile</a>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="nsec" href="{% url 'almanac:user_relays' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-tower-broadcast"></i> Relays</a>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="nsec" href="{% url 'almanac:user_friends' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-users"></i> Friends</a>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="nsec" href="{% url 'transfers:transfers' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-file-export"></i> Export/Import</a>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="nsec" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-primary w-100 disabled"><i class="fa-solid fa-wrench" deactivated></i> Advanced</a>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

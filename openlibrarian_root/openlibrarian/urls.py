@@ -15,8 +15,24 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    # Langing pages and login/logout
+    path('', include('circulation_desk.urls')),
+    # User profile
+    path('almanac/', include('almanac.urls')),
+    # Glossary
+    path('glossary/', include('glossary.urls')),
+    # Library
+    path('library/', include('library.urls')),
+    # Library Card
+    path('card/', include('library_card.urls')),
+    # Archives
+    path('archives/', include('archives.urls')),
+    # Transfers
+    path('transfers/', include('transfers.urls')),
 ]
+
+handler404 = "archives.views.page_not_found_view"
