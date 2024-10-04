@@ -39,9 +39,9 @@
                                     {% if book.c == "Y" %}
                                         <img src="https://covers.openlibrary.org/b/isbn/{{book.i}}-M.jpg" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
                                     {% elif book.c == "M" %}
-                                        <img src="{% static '/images/hidden_book.jpg' %}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
+                                        <img src="{% static 'images/hidden_book.jpg' %}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
                                     {% else %}
-                                        <img src="{% static '/images/book.jpg' %}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
+                                        <img src="{% static 'images/book.jpg' %}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
                                     {% endif %}
                                 </div>
                                 <div class = "col-8">
@@ -85,7 +85,7 @@
                                         {% if book.c == "Y" %}
                                             <img src="https://covers.openlibrary.org/b/isbn/{{book.i}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
                                         {% else %}
-                                            <img src="{% static '/images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
+                                            <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                         {% endif %}
         
                                         <p class="mt-2 container text-start">
@@ -126,7 +126,7 @@
                                     {% if book.c == "Y" %}
                                         <img src="https://covers.openlibrary.org/b/isbn/{{book.i}}-M.jpg" class="img-fluid rounded" alt="cover-img">
                                     {% else %}
-                                        <img src="{% static '/images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
+                                        <img src="{% static 'images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
                                     {% endif %}
                                         <form method="post">
                                             {% csrf_token %}
