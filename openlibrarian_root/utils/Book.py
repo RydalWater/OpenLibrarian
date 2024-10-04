@@ -1,7 +1,4 @@
 import aiohttp, asyncio, os
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
 
 api_url = "https://openlibrary.org/search.json"
 

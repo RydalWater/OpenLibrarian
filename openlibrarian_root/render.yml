@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: openlibrarian
+    env: python
+    build:
+      script:
+        - pip install -r requirements.txt
+        - python manage.py collectstatic --no-input
+        - python manage.py migrate --fake
+    port: 8000
+    start:
+      command: gunicorn openlibrarian.wsgi:application
+    envVars:
+      - key: SECRET_KEY
+        value: $SECRET_KEY

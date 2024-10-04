@@ -2,9 +2,6 @@
 from nostr_sdk import Client, Metadata, Event, EventBuilder, EventSource, Keys, init_logger, LogLevel
 from datetime import timedelta
 import os, ast
-from dotenv import load_dotenv
-
-load_dotenv(override=True)
 
 os.environ
 async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
