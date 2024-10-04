@@ -1,0 +1,112 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <p class="fw-bold">Profile</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <!-- User Profile Info -->
+    {% if nsec %}
+        <div style="height: 55vh; overflow-y: auto;">
+            <div class="input-group-sm text-start">
+                <label for="edit_nym" class="form-label">Account Nym</label>
+                {% if nym %}
+                    <input class="form-control" type="text", name="edit_nym", value="{{ nym }}"></input>
+                {% else %}
+                    <input class="form-control" type="text", name="edit_nym", placeholder="Enter your user nym"></input>
+                {% endif %}
+            </div>
+            <div class="accordion-flush" id="nym-info">
+                <div class="accordion-item">
+                    <p class="accordion-header" id="headingOne">
+                        <button class="accordion-button collapsed d-block text-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                            <i class="fa-solid fa-circle-info"></i> What is a Nym?
+                        </button>
+                    </p>
+                    <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#nym-info">
+                        <div class="accordion-body">
+                            <p class="mt-2">
+                                Your Nym is a simple way for you would like your account to be referred to.
+                                It can be changed any time and doesn't need to be unique to you. Think of it as a nickname, alias or user name. 
+                            </p>
+                            <p>
+                                We <b>DO NOT</b> recommend using your real name as your Nym as it potentially creates a permanent link 
+                                etween your account and you as an individual. 
+                            </p>
+                            <p> 
+                                If you are unsure what to put how about picking your favorite character from a book, or maybe randomly generating one.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% if profile %}
+                <div class="input-group-sm text-start">
+                    <label for="edit_displayname" class="form-label mt-1">Display Name</label>
+                    {% if profile.displayname %}
+                        <input class="form-control" type="text", name="edit_displayname", value="{{ profile.displayname }}"></input>
+                    {% else %}
+                        <input class="form-control" type="text", name="edit_displayname", placeholder="Enter your preferred display name"></input>
+                    {% endif %}
+                    <label for="edit_about" class="form-label mt-1">About</label>
+                    {% if profile.about %}
+                        <textarea class="form-control" type="text", name="edit_about", maxlength="200">{{ profile.about }}</textarea>
+                    {% else %}
+                        <textarea class="form-control" type="text", name="edit_about", placeholder="Write a bit about yourself (max. 200 characters)" maxlength="200"></textarea>
+                    {% endif %}
+                    <label for="edit_picture" class="form-label mt-1">Profile Picture</label>
+                    <div class="input-group input-group-sm">
+                        {% if profile.picture %}
+                            <input class="form-control" type="text", name="edit_picture", value="{{ profile.picture }}" aria-describedby="upload"></input>
+                        {% else %}
+                            <input class="form-control" type="text", name="edit_picture", placeholder="Enter your Picture URL" aria-describedby="upload"></input>
+                        {% endif %}
+                        <!-- <button class="btn btn-outline-secondary" type="button" id="upload"><i class="fa-solid fa-cloud-arrow-up"></i></button> -->
+                    </div>
+                    <label for="edit_nip05" class="form-label mt-1">NIP05</label>
+                    {% if profile.nip05 %}
+                        <input class="form-control" type="text", name="edit_nip05", value="{{ profile.nip05 }}"></input>
+                    {% else %}
+                        <input class="form-control" type="text", name="edit_nip05", placeholder="Enter your NIP05"></input>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="input-group-sm text-start">
+                    <label for="edit_displayname" class="form-label mt-1">Display Name</label>
+                    <input class="form-control" type="text", name="edit_displayname", placeholder="Enter your preferred display name"></input>
+                    <label for="edit_about" class="form-label mt-1">About</label>
+                    <textarea class="form-control" type="text", name="edit_about", placeholder="Write a bit about yourself (max. 200 characters)" maxlength="200"></textarea>
+                    <label for="edit_picture" class="form-label mt-1">Picture</label>
+                    <div class="input-group input-group-sm">
+                        <input class="form-control" type="text", name="edit_picture", placeholder="Enter your Picture URL" aria-describedby="upload"></input>
+                        <!-- <button class="btn btn-outline-secondary" type="button" id="upload"><i class="fa-solid fa-cloud-arrow-up"></i></button> -->
+                    </div>
+                    <label for="edit_nip05" class="form-label mt-1">NIP05</label>
+                    <input class="form-control" type="text", name="edit_nip05", placeholder="Enter your NIP05"></input>
+                </div>
+            {% endif %}
+        </div>
+    {% else %}
+        <p><i class="fa-solid fa-eye-slash"></i> Unavailable in Read-Only Mode</p>
+    {% endif %}
+   
+    <!-- Save/Refresh Button -->
+    <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+        <a href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        {% if nsec %}
+            <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
+        {% endif %}
+    </div>
+    <div id="spinnerBox" class="col mt-2 not-visible">
+        <div class="spinner-border" role="status"></div>
+    </div>
+</form>
+
+{% endblock content %}

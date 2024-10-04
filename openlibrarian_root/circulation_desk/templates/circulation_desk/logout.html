@@ -1,0 +1,14 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+<div class="container mt-2">
+    <p class="fw-bold">Thank you for using Open Librarian</p>
+    <p>You have been successfully logged out. Keep stacking knowledge!</p>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-arrow-left"></i> Back to Circulation Desk</a>
+        </div>
+    </div>
+</div>
+{% endblock content %}

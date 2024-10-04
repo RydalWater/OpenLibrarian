@@ -1,0 +1,47 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <p class="fw-bold">Interests</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="accordion" id="interestAccordion" style="height: 55vh; overflow-y: auto;">
+        {% for category, interest_list in interests.items %}
+        <div class="accordion-item">
+            <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="flush-collapseOne">
+                <b>{{ category }}</b>
+            </button>
+            </h2>
+            <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" data-bs-parent="#interestAccordion">
+                <div class="accordion-body text-start row">
+                    <div class="col-12" id="checklist">
+                        {% for interest in interest_list %}
+                            <div class="form-check">
+                                <input class="form-check-input" name="interests" value="{{ interest }}" type="checkbox" id="checkbox{{forloop.parentloop.counter}}{{ forloop.counter }}" {% if interest in selected %} checked {% endif %} {% if not session.nsec %} disabled {% endif %}>
+                                <label class="form-check-label" for="checkbox{{forloop.parentloop.counter}}{{ forloop.counter }}">
+                                    {{ interest }}
+                                </label>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Save/Refresh Button -->
+    <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+        <a href="{% url 'glossary:glossary' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        {% if session.nsec %}
+            <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
+        {% endif %}
+    </div>
+</form>
+
+{% endblock content %}

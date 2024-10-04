@@ -1,0 +1,202 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+{% block scripts %} 
+<script src="{% static 'js/spinner-data.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+
+<meta name="csrf-token" content="{{ csrf_token }}">
+
+<div class="container mt-2">
+    <p class="fw-bold">Search</p>
+</div>
+
+<div class="container mt-2">
+    <div class="d-flex flex-column">
+        <form method="post" id="search-form">
+            {% csrf_token %}
+            <!-- User Profile Info -->
+            <div class="row">
+                <div class="gap-2 mx-auto d-flex justify-content-between">
+                    {{ form.search_type }}
+                    {{ form.sort_type }}
+                </div>
+
+                <div class="input-group input-group-sm mt-2">
+                    {{ form.search_field }}
+                </div>
+                
+                <!-- Back/Search Button -->
+                <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+                    <a href="{% url 'glossary:glossary' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                    <button id="submit-search" class="btn btn-sm btn-primary w-50" type="submit", name="search", value="true"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                </div> 
+
+                <!-- Page Buttons -->
+                {% if num_results > 0 %}
+                    <div class="">
+                        <div class="d-flex justify-content-between">
+                            <p class="fw-lighter fst-italic">{{ num_results }} matching results.</p>
+                            <p class="fw-bold" name="page" value="{{ page }}">Pages: {{ page }} of {{ pages }}</p>
+                        </div>
+                        <!-- Pagination -->
+                        <div class="d-flex justify-content-center">
+                            <nav class="w-75">
+                                <ul class="pagination gap-1">
+                                {% if pages > 1 %}
+                                    {% if page > 1 %}
+                                        <li class="page-item" id="submit-search"><button class="btn btn-sm btn-primary" type="submit" name="prev" value="{{ page }}"><i class="fa-solid fa-chevron-left"></i></button></li>
+                                    {% else %}
+                                        <li class="page-item disabled"><button class="btn btn-sm btn-primary" type="submit" name="prev" value="{{ page }}"><i class="fa-solid fa-chevron-left"></i></button></li>
+                                    {% endif %}
+                                    {% if page != pages %}
+                                        <li class="page-item" id="submit-search"><button class="btn btn-sm btn-primary" type="submit" name="next" value="{{ page }}"><i class="fa-solid fa-chevron-right"></i></button></li>
+                                    {% else %}
+                                        <li class="page-item disabled"><button class="btn btn-sm btn-primary" type="submit" name="next" value="{{ page }}"><i class="fa-solid fa-chevron-right"></i></button></li>
+                                    {% endif %}
+                                    <input class="form-control form-control-sm" type="integer" name="go_page" placeholder="#" min="1" max="{{ pages }}"></input>
+                                    <li class="page-item"><button class="btn btn-sm btn-primary" id="submit-search" type="submit" name="go" value="{{ pages }}"><i class="fa-solid fa-angles-right"></i></button></li>
+                                {% endif %}
+                                </ul>
+                            </nav> 
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </form>
+        <div id="spinnerBox" class="col mt-2 not-visible">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    </div>
+
+    <!-- Results -->
+    <div id="dataBox" class="container" id="resultsContainer" style="overflow-y: auto; height: 35vh">
+        {% if num_results > 0 %}
+            <div class="col">
+                {% for result in results %}
+                    <div class="card mb-2">
+                        <div class="d-flex flex-wrap align-items-center g-0">
+                            <div class="col-2 image-container p-1">
+                                {% if result.cover == "Y" %}
+                                    <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" class="img-fluid rounded" alt="cover-img">
+                                {% else %}
+                                    <img src="{% static '/images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
+                                {% endif %}
+                            </div>
+                            <div class="col-10" style="text-align: left">
+                                <div class="card-body p-1">
+                                    <figure>
+                                        <blockquote class="blockquote ">
+                                            <p>{{ result.title }}</p>
+                                        </blockquote>
+                                        <figcaption class="blockquote-footer text-truncate" style="max-width: 200px"        >
+                                            <cite title="Source Author">{{ result.author_name }}</cite>
+                                        </figcaption>
+                                    </figure>
+
+                                    <div class="gap-1 mx-auto d-flex justify-content-end">
+                                        <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#viewModal{{ forloop.counter }}">
+                                            <i class="fa-solid fa-circle-info"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addModal{{ forloop.counter }}">
+                                            <i class="fa-solid fa-plus"></i>
+                                        </button> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+            {% for result in results %}
+                <!-- Modal (details) -->
+                <div class="modal fade" id="viewModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="BookDetails" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="BookDetails">{{ result.title }}</h1>
+                            </div>
+                            <div class="modal-body">
+                                {% if result.cover == "Y" %}
+                                    <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
+                                {% else %}
+                                    <img src="{% static '/images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
+                                {% endif %}
+
+                                <p class="mt-2 container text-start">
+                                    <b>Author(s):</b> {{ result.author_name }} <br>
+                                    <b>ISBN:</b> {{ result.isbn }} <br>
+                                    <b>Publish Date:</b> {{ result.publish_date }} <br>
+                                    <b>Number of Pages:</b> {{ result.number_of_pages_median }} <br>
+                                    <b>Avg. Rating:</b> {{ result.ratings_average }} <br>
+                                    {% if result.has_fulltext == "Y" %}
+                                        <b>Fulltext Available:</b> Yes
+                                        <a href="https://openlibrary.org/isbn/{{ result.isbn }}" target="_blank"><i class="fa-solid fa-up-right-from-square"></i></a>
+                                    {% else %}
+                                        <b>Fulltext Available:</b> No
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="modal-footer">
+                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Modal Add to Library -->
+                <div class="modal fade" id="addModal{{ forloop.counter }}" tabindex="-1" aria-labelledby="AddBook" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h1 class="modal-title fs-5" id="AddBook">{{ result.title }}</h1>
+                            </div>
+                            <div class="modal-body">
+                                {% if result.cover == "Y" %}
+                                    <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
+                                {% else %}
+                                    <img src="{% static '/images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
+                                {% endif %}
+                                <form method="post">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="book_isbn" value="{{ result.isbn }}">
+                                    <div class="form-group mt-2">
+                                        <label for="book_status">Status:</label>
+                                        <select class="form-select" name="shelf" id="shelf">
+                                            <option value=""></option>
+                                            <option value="HR">Have Read</option>
+                                            <option value="CR">Currently Reading</option>
+                                            <option value="TRW">To Read (want)</option>
+                                            <option value="TRS">To Read (on the shelf)</option>
+                                        </select>
+                                        
+                                        <div class="modal-footer">
+                                            <div class="form-group mt-2">
+                                                <label for="hidden"><p><i class="fa-solid fa-eye-slash"></i> (hidden) </label>
+                                                <input type="checkbox" name="hidden" id="hidden">
+                                            </div>
+                                            <button type="button" class="btn btn-sm btn-secondary" data-bs-dismiss="modal">Close</button>
+                                            <button type="submit" id="add_book" name="add_book" value="true" class="btn btn-sm btn-primary" data-bs-dismiss="modal">Add</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% elif num_results == 0 %}
+            <div class="row text-end mt-2">
+                <p class="fw-bold fst-italic">No results found.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<input type="hidden" id="notification" value="{{ notification }}">
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
+<script src="{% static 'js/add-toast.js' %}"></script>
+{% endblock content %}

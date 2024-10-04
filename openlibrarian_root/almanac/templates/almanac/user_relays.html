@@ -1,0 +1,101 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <p class="fw-bold">Relays</p>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <!-- User Profile Info -->
+    <div style="height: 40vh; overflow-y: auto;">
+        <div class="accordion-flush mt-2" id="relay-info">
+            <div class="accordion-item">
+                <p class="accordion-header" id="headingOne">
+                    <button class="accordion-button collapsed d-block text-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                        <i class="fa-solid fa-circle-info"></i> What is a Relay?
+                    </button>
+                </p>
+                <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#relay-info">
+                    <div class="accordion-body">
+                        <p class="mt-2">
+                            Relays are the backbone of the Nostr network. They are effectively databases that store your event information.
+                        </p>
+                        <p>
+                            You <b>MUST</b> have at least one relay that is read and write. You can add more if you wish but it is recommended 
+                            to only have 3-5. 
+                        </p>
+                        <p> 
+                            <a href="https://nostr.watch/relays/find" target="_blank" class="btn btn-sm btn-outline-primary">Find Relays on nostr.watch</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% if mod_relays %}
+            {% for key, value in mod_relays.items %}
+                <ul class="list-group text-start bg-secondary-container">
+                    {% if nsec %}
+                        <li class="list-group-item container d-flex justify-content-between align-items-center">
+                            <div class="col-2">
+                                {% if value == "READ" or value == None %} 
+                                <i class="fa-solid fa-eye"></i>
+                                {% endif %}
+                                {% if value == None %}
+                                    /
+                                {% endif %}
+                                {% if value == "WRITE" or value == None %} 
+                                    <i class="fa-solid fa-pen"></i>
+                                {% endif %}
+                            </div>
+                            <div class="col-8 fs-6">
+                                <p>{{ key }}</p>
+                            </div>
+                            <div class="col-1">
+                                <button id="removeButton" class="btn btn-sm btn-outline-danger" type="submit", name="remove", value="{{ key }}"><i class="fa-solid fa-trash"></i></button>
+                            </div>  
+                        </li>
+                    {% elif npub %}
+                        <li class="list-group-item">{{ key }}</li>
+                    {% endif %}
+                </ul>
+            {% endfor %}
+            {% if messages %}
+                {% for message in messages %}
+                    <p class="text text-danger">{{ message }}</p>
+                {% endfor %}
+            {% endif %}
+        {% endif %}
+    </div>
+        <div style="height: 15vh; overflow-y: auto;">
+        {% if nsec %}
+            <div class="text-start">
+                <label for="add_relay_url" class="form-label mt-1">Add Relay</label>
+                <div class="input-group input-group-sm">
+                    <input class="form-control" type="text", name="add_relay_url", placeholder="Enter a relay and click add"></input>
+                    <button class="btn btn-sm btn-outline-secondary" type="submit" name="add_relay" value="Save">Add</button>
+                </div>
+            </div>
+            <div class="form-check form-check-inline mt-2">
+                <input class="form-check-input", type="radio", name="relay_option" value="R"> Read <i class="fa-solid fa-eye"></i></input>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input", type="radio", name="relay_option" value="W"> Write <i class="fa-solid fa-pen"></i></input>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input", type="radio", name="relay_option" value="B"> Both <i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i></input>
+            </div>            
+        {% endif %}
+    </div>
+    <!-- Save/Refresh Button -->
+    <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+        <a href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        {% if nsec %}
+            <button class="btn btn-sm btn-primary w-50" type="submit", name="cancel", value="Cancel"><i class="fa-solid fa-trash-can-arrow-up"></i> Cancel</button>
+            <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
+        {% endif %}
+    </div>
+</form>
+
+{% endblock content %}

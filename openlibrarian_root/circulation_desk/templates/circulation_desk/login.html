@@ -1,0 +1,30 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <p class="fw-bold">Log-in</p>
+    <p>Please select from the below log-in options</p>
+</div>
+<div class="container">
+    <div class="row">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="npub" href="{% url 'circulation_desk:login-npub' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-lock"></i> NPUB (read-only)</a>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="nsec" href="{% url 'circulation_desk:login-nsec' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> NSEC (read/write)</a>
+        </div>
+    </div>
+    <div class="row mt-2">
+        <div class="col-1"></div>
+        <div class="col-10">
+            <a id="nsec" href="{% url 'circulation_desk:login-seed' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Seed Words (read/write)</a>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}

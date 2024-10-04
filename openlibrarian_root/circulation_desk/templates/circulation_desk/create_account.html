@@ -1,0 +1,65 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <div class="container mt-2">
+        <p class="fw-bold">Sign-up</p>
+        {% if not words %}
+            <p>
+                It is extremely important to save your seed words somewhere secure. 
+                These are the same as a password and should not be given out to anyone. 
+                In the event that you lose your seed words, you will not be able to recover them.
+                OpenLibrarian does not store a copy of your seed words.
+            </p>
+            
+            <p>
+                Your NSEC is your Secret Key, it is geneated from your Seed Words and can be used to login to OpenLibrarian and other Nostr powered applications.
+            </p>
+            <p>
+                Your NPUB is your Public Key, it is generated from your NSEC and can be used to share your profile with other users.  
+            </p>
+        {% endif %}
+    </div>
+    {% if words %}
+        <div class="container mt-2">
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-sm">NPUB</span>
+                <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ npub }}">
+                <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-user-check text-success"></i></span>
+            </div>
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-sm">NSEC</span>
+                <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ nsec }}">
+                <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-circle-exclamation text-danger"></i></span>
+            </div>
+            <p class="text-danger">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
+            <p class="text-danger">DO NOT SHARE your NSEC or Seed Words with anyone.</p>
+        </div>
+        <div class="container">
+            <div class="row">
+                {% for word in words %}
+                    {% if forloop.counter0|divisibleby:"3" %}
+                        </div><div class="row">
+                    {% endif %}
+                    <div class="col-4">
+                        <div class="input-group input-group-sm mb-3">
+                            <span class="input-group-text" id="inputGroup-sizing-sm">{{ forloop.counter }}</span>
+                            <input type="text" class="form-control" aria-describedby="inputGroup-sizing-sm" value="{{ word }}" readonly>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+    <div class="container">
+        <button id="seed-gen" class="btn btn-sm btn-primary" name="generate_seed" value="Generate"><i class="fa-solid fa-shuffle"></i></button>
+        <label for="seed-gen">Click here to randomly generate your account.</label>
+    </div>
+    {% if words %}
+        <p>Please make sure you’ve backed up your Seed Words before moving to the next step. There will be a test!</p>
+        <button type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
+    {% endif %}
+</form>
+
+{% endblock content %}

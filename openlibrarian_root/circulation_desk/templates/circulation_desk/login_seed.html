@@ -1,0 +1,50 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
+
+{% block content %}
+
+<!-- private_key_login_app/templates/login.html -->
+<form method="post">
+    {% csrf_token %}
+        <div class="container mt-2">
+            <p class="fw-bold">Log-in</p>
+            <p><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> NSEC (read/write)</p>
+        </div>
+        <div class="container mt-2">
+            <datalist id="word-list">
+                {% for each in word_list %}
+                    <option value="{{ each }}">
+                {% endfor %}
+            </datalist>
+            <div class="row">
+                {% for field in form.visible_fields %}
+                    {% if forloop.counter0|divisibleby:"3" %}
+                        </div><div class="row">
+                    {% endif %}
+                    <div class="col-4">
+                        <div class="input-group input-group-sm mb-3">
+                            <span class="input-group-text" id="inputGroup-sizing-sm">{{ forloop.counter }}</span>   
+                            {{ field }}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        <div>
+            {% if error_message %}
+                <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ error_message }}</p>
+            {% endif %}
+            <!-- Back/Login Buttons -->
+            <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+                <a id="nsec" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                <button id="submit" type="submit" class="btn btn-sm btn-primary w-50" name="confirm_seed"><i class="fa-solid fa-right-to-bracket"></i> Log-In</button>
+            </div>
+
+            <div id="spinnerBox" class="col mt-2 not-visible">
+                <div class="spinner-border" role="status"></div>
+            </div>
+        </div>
+</form>
+{% endblock content %}

@@ -1,0 +1,49 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
+
+{% block content %}
+
+<!-- private_key_login_app/templates/login.html -->
+<form method="post">
+    {% csrf_token %}
+    <div class="container mt-2">
+        <p class="fw-bold"><i class="fa-solid fa-people-arrows"></i> Import Social Lists</p>
+    </div>
+    {% if session.nsec %}
+        <div class="container mt-2">
+            <div class="input-group input-group-sm mb-3">
+                <span class="input-group-text" id="inputGroup-sizing-sm">NPUB</span>
+                {{ form.npub }}
+                <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-user-check text-success"></i></span>
+            </div>
+            <p>
+                Enter the public key of an account where you'd like to import the social lists from. Note that if the muted list is private for this public key, it will not be imported.
+            </p>
+        </div>
+    {% else %}
+        <p><i class="fa-solid fa-eye-slash"></i> Unavailable in Read-Only Mode</p>
+    {% endif %}
+    <div class="container">
+        {% if error_message %}
+            <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ error_message }}</p>
+        {% endif %}
+        {% if success_message %}
+            <p class="text-success"><i class="fa-solid fa-circle-check"></i> {{ success_message }}</p>
+        {% endif %}
+        <!-- Back/Login Buttons -->
+        <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+            <a href="{% url 'transfers:transfers' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            {% if session.nsec %}
+                <button id="submit" type="submit" class="btn btn-sm btn-primary w-50" name="confirm_seed"><i class="fa-solid fa-file-arrow-up"></i> Import</button>
+            {% endif %}
+        </div>
+
+        <div id="spinnerBox" class="col mt-2 not-visible">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    </div>
+</form>
+
+{% endblock content %}
