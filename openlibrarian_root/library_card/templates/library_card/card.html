@@ -26,7 +26,7 @@
             {% if picture != None %}
                 <img src="{{ picture }}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
             {% else %}
-                <img src="{% static '/images/person.jpg' %}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
+                <img src="{% static 'images/person.jpg' %}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
             {% endif %}
             {% if displayname %}
                 <h4>{{ displayname }}</h4>

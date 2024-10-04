@@ -82,7 +82,7 @@
                                 {% if result.cover == "Y" %}
                                     <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" class="img-fluid rounded" alt="cover-img">
                                 {% else %}
-                                    <img src="{% static '/images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
+                                    <img src="{% static 'images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
                                 {% endif %}
                             </div>
                             <div class="col-10" style="text-align: left">
@@ -123,7 +123,7 @@
                                 {% if result.cover == "Y" %}
                                     <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
                                 {% else %}
-                                    <img src="{% static '/images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
+                                    <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                 {% endif %}
 
                                 <p class="mt-2 container text-start">
@@ -157,7 +157,7 @@
                                 {% if result.cover == "Y" %}
                                     <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
                                 {% else %}
-                                    <img src="{% static '/images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
+                                    <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                 {% endif %}
                                 <form method="post">
                                     {% csrf_token %}
