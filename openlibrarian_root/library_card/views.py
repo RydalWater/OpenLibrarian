@@ -87,7 +87,7 @@ async def library_card(request, npub: str=None):
             if "explore" in request.POST:
 
                 # First log out of session and clear cache (including nsec)
-                request.session.clear()
+                request.session.flush()
                 cache.clear()
 
                 # Then log-in via npub
@@ -105,6 +105,6 @@ async def library_card(request, npub: str=None):
             # Clear session and head back to create and account
             if "new" in request.POST:
                 # First make sure logged out of session and clear cache (including nsec)
-                request.session.clear()
+                request.session.flush()
                 cache.clear()
                 return redirect('circulation_desk:create-account')
