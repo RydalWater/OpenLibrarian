@@ -133,7 +133,7 @@
                                             <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
                                             <div class="form-group mt-2">
                                                 <label for="hidden"><p><i class="fa-solid fa-eye-slash"></i> (hidden) </label>
-                                                <input type="checkbox" name="hidden" id="hidden" {% if book.p == "Y" %}checked{% endif %}>
+                                                <input type="checkbox" name="hidden" id="hidden" {% if book.h == "Y" %}checked{% endif %}>
                                             </div>
                                             <div class="form-group mt-2">
                                                 <select name="status" id="status" class="form-select">
