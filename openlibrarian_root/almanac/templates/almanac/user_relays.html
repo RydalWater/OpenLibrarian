@@ -3,7 +3,9 @@
 {% block content %}
 
 <div class="container mt-2">
-    <p class="fw-bold">Relays</p>
+    <div class="chapter-header">
+        <p>Relays</p>
+    </div>
 </div>
 
 <form method="post">
@@ -12,17 +14,17 @@
     <div style="height: 40vh; overflow-y: auto;">
         <div class="accordion-flush mt-2" id="relay-info">
             <div class="accordion-item">
-                <p class="accordion-header" id="headingOne">
+                <p class="accordion-header book-text" id="headingOne">
                     <button class="accordion-button collapsed d-block text-center" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
                         <i class="fa-solid fa-circle-info"></i> What is a Relay?
                     </button>
                 </p>
                 <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#relay-info">
                     <div class="accordion-body">
-                        <p class="mt-2">
-                            Relays are the backbone of the Nostr network. They are effectively databases that store your event information.
+                        <p class="mt-2 book-text">
+                            <span class="dropcap">R</span>elays are the backbone of the Nostr network. They are effectively databases that store your event information.
                         </p>
-                        <p>
+                        <p class="book-text">
                             You <b>MUST</b> have at least one relay that is read and write. You can add more if you wish but it is recommended 
                             to only have 3-5. 
                         </p>
@@ -35,7 +37,7 @@
         </div>
         {% if mod_relays %}
             {% for key, value in mod_relays.items %}
-                <ul class="list-group text-start bg-secondary-container">
+                <ul class="list-group text-start bg-secondary-container mt-1">
                     {% if nsec %}
                         <li class="list-group-item container d-flex justify-content-between align-items-center">
                             <div class="col-2">
@@ -63,15 +65,15 @@
             {% endfor %}
             {% if messages %}
                 {% for message in messages %}
-                    <p class="text text-danger">{{ message }}</p>
+                    <p class="text text-danger book-text text-center">{{ message }}</p>
                 {% endfor %}
             {% endif %}
         {% endif %}
     </div>
         <div style="height: 15vh; overflow-y: auto;">
         {% if nsec %}
-            <div class="text-start">
-                <label for="add_relay_url" class="form-label mt-1">Add Relay</label>
+            <div>
+                <label for="add_relay_url" class="form-label mt-1 book-text text-center fw-bold">Add Relay</label>
                 <div class="input-group input-group-sm">
                     <input class="form-control" type="text", name="add_relay_url", placeholder="Enter a relay and click add"></input>
                     <button class="btn btn-sm btn-outline-secondary" type="submit" name="add_relay" value="Save">Add</button>

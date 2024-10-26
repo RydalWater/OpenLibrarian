@@ -3,20 +3,22 @@
 {% block content %}
     <form method="post" class="container mt-2">
         {% csrf_token %}
-        <p class="fw-bold">Sign-up</p>
+        <div class="chapter-header">
+            <p>Sign-up</p>
+        </div>
         {% if private_key_confirmed == "Success" %}
-            <p>Success! Your account has been created.</p>
-            <p>Lets go to your <a href="{% url 'almanac:settings' %}">Almanac</a> Page and set up your profile.</p>
+            <p class="book-text text-center">Success! Your account has been created.</p>
+            <p class="book-text text-center">Lets go to your <a href="{% url 'almanac:settings' %}">Almanac</a> Page and set up your profile.</p>
         {% else %}
             <div class="container mt-2">
-                <p>To confirm you've written down your Seed Words please re-enter it below for the following Public Key.</p>
+                <p class="book-text">To confirm you've written down your Seed Words please re-enter it below for the following Public Key.</p>
                 <div class="input-group input-group-sm mb-3">
                     <span class="input-group-text" id="inputGroup-sizing-sm">NPUB</span>
                     <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ npub }}">
                     <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-user-check text-success"></i></span>
                 </div>
-                <p class="text-danger">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
-                <p class="text-danger">DO NOT SHARE your NSEC or Seed Words with anyone.</p>
+                <p class="text-danger book-text">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
+                <p class="text-danger book-text">DO NOT SHARE your NSEC or Seed Words with anyone.</p>
             </div>
             <datalist id="word-list">
                 {% for each in word_list %}

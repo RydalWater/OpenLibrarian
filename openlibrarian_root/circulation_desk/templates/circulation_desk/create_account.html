@@ -4,19 +4,21 @@
 <form method="post">
     {% csrf_token %}
     <div class="container mt-2">
-        <p class="fw-bold">Sign-up</p>
+        <div class="chapter-header">
+            <p>Sign-up</p>
+        </div>
         {% if not words %}
-            <p>
-                It is extremely important to save your seed words somewhere secure. 
+            <p class="book-text">
+                <span class="dropcap">I</span>t is extremely important to save your seed words somewhere secure. 
                 These are the same as a password and should not be given out to anyone. 
                 In the event that you lose your seed words, you will not be able to recover them.
                 OpenLibrarian does not store a copy of your seed words.
             </p>
             
-            <p>
+            <p class="book-text">
                 Your NSEC is your Secret Key, it is geneated from your Seed Words and can be used to login to OpenLibrarian and other Nostr powered applications.
             </p>
-            <p>
+            <p class="book-text">
                 Your NPUB is your Public Key, it is generated from your NSEC and can be used to share your profile with other users.  
             </p>
         {% endif %}
@@ -33,8 +35,8 @@
                 <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ nsec }}">
                 <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-circle-exclamation text-danger"></i></span>
             </div>
-            <p class="text-danger">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
-            <p class="text-danger">DO NOT SHARE your NSEC or Seed Words with anyone.</p>
+            <p class="text-danger book-text">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
+            <p class="text-danger book-text">DO NOT SHARE your NSEC or Seed Words with anyone.</p>
         </div>
         <div class="container">
             <div class="row">
@@ -54,11 +56,13 @@
     {% endif %}
     <div class="container">
         <button id="seed-gen" class="btn btn-sm btn-primary" name="generate_seed" value="Generate"><i class="fa-solid fa-shuffle"></i></button>
-        <label for="seed-gen">Click here to randomly generate your account.</label>
+        <label class="book-text" for="seed-gen">Click here to randomly generate your account.</label>
     </div>
     {% if words %}
-        <p>Please make sure you’ve backed up your Seed Words before moving to the next step. There will be a test!</p>
-        <button type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
+        <div class="container mt-2">
+            <p class="book-text">Please make sure you’ve backed up your Seed Words before moving to the next step. There will be a test!</p>
+            <button type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
+        </div>
     {% endif %}
 </form>
 
