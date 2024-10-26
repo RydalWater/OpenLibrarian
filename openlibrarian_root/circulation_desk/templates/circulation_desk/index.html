@@ -2,28 +2,30 @@
 
 {% block content %}
     <div class="container mt-2">
-        <p class="fw-bold">Circulation Desk</p>
-        <p>
-            Open Librarian was created to help you track and share your 
+        <div class="chapter-header">
+            <p>Circulation Desk</p>
+        </div>
+        <p class="book-text">
+            <span class="dropcap">O</span>pen Librarian was created to help you track and share your 
             love of books and reading. <i>It is still early in the development so please
             forgive, or better still, <a href="https://github.com/RydalWater/OpenLibrarian/issues" target="_blank">report any bugs</a> you find.</i>
         </p>
-        <p>
+        <p class="book-text">
             It is built on <a href="https://nostr.com/" target="_blank">Nostr</a> which is an open social network protocol where you
             are free to bring your profile and connections with you, or even take them to other applications on the network.
         </p>
-        <p>
+        <p class="book-text">
             The heart of this app is built on the brilliant work of the
             <a href="https://openlibrary.org" target="_blank">Open Library</a> team. Check out their work and contribute to it.
         </p>
         {% if nsec %}
             {% if profile.displayname %}
-                <p class="fw-bold">Welcome back, {{ profile.displayname }}!</p>
+                <p class="fw-bold book-text text-center">Welcome back, {{ profile.displayname }}!</p>
             {% elif nym %}
-                <p class="fw-bold">Welcome back, {{ nym }}!</p>
+                <p class="fw-bold book-text text-center">Welcome back, {{ nym }}!</p>
             {% else %}
-                <p class="fw-bold">Welcome back!</p>
-                <p>Head over to the Almanac to update your profile.</p>
+                <p class="fw-bold book-text text-center">Welcome back!</p>
+                <p class="book-text text-center">Head over to the Almanac to update your profile.</p>
             {% endif %}
         {% endif %}
     </div>

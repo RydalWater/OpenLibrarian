@@ -4,3 +4,5 @@ __pycache__*
 node_modules
 *.log
 staticfiles
+package.json
+package-lock.json

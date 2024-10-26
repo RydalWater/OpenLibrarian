@@ -12548,4 +12548,49 @@ textarea.form-control-lg {
 
 .not-visible {
   display: none;
+}
+
+.book-text {
+  text-align: justify;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.1em;
+}
+
+.dropcap {
+  float: left;
+  font-size: 3em;
+  line-height: 1;
+  padding-right: 8px;
+  padding-left: 3px;
+  font-family: "Garamond", serif;
+  color: #6b4f4f;
+}
+
+.chapter-header {
+  text-align: center;
+  font-family: "Garamond", serif;
+  font-size: 1.3em;
+}
+
+.chapter-header p {
+  display: inline-block;
+  position: relative;
+}
+
+.chapter-header p:before,
+.chapter-header p:after {
+  content: "~";
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8em;
+  color: #6b4f4f;
+}
+
+.chapter-header p:before {
+  left: -1em;
+}
+
+.chapter-header p:after {
+  right: -1em;
 }/*# sourceMappingURL=main.css.map */

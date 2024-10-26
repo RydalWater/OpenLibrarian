@@ -10,6 +10,7 @@ Open Librarian is a website for tracking and sharing a love of books. It utilize
   - Reading progress
   - Book-related social groups
 
+If you'd like to take a look at my backlog you can find it [on Craft](https://parks-take-vcv.craft.me/OpenLibrarianRoadmap).
 
 ## Open Source Stack
 Open Librarian is built on a range of Free and Open Source Software (FOSS) projects, the most prominent of which are:

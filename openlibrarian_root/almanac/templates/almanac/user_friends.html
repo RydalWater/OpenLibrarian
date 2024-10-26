@@ -6,7 +6,9 @@
 {% block content %}
 
 <div class="container mt-2">
-    <p class="fw-bold">Friends & Foes</p>
+    <div class="chapter-header">
+        <p>Friends & Foes</p>
+    </div>
 </div>
 
 <form method="post">
@@ -44,7 +46,7 @@
                             </ul>
                             {% endfor %}
                         {% else %}
-                            <p>No users currently added to your friends list.</p>
+                            <p class="book-text text-center">No users currently added to your friends list.</p>
                         {% endif %}
                     </div>
                 </div>
@@ -78,7 +80,7 @@
                             </ul>
                             {% endfor %}
                         {% else %}
-                            <p>No users currently added to your muted list.</p>
+                            <p class="book-text text-center">No users currently added to your muted list.</p>
                         {% endif %}
                     </div>
                 </div>
