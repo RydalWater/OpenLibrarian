@@ -1,5 +1,4 @@
 from django.shortcuts import render, redirect
-from django.core.cache import cache
 from django.contrib import messages
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, cache_get, cache_set, cache_key, cache_delete
 from utils.Profile import edit_profile_info, edit_relay_list, fetch_profile_info
@@ -31,7 +30,7 @@ async def user_profile(request):
         session = await async_get_session_info(request)
 
         if request.method == 'GET':
-            return render(request, 'almanac/user_profile.html', session)
+            notification = None
 
         # If POST then update the user profile
         elif request.method == 'POST' and await async_logged_in(request) and request.POST.get('save'):
@@ -43,30 +42,19 @@ async def user_profile(request):
             picture_field = request.POST.get('edit_picture', None)
 
             # Update the profile
-            nym_profile = {
-                "nym" : nym_field,
-                "nip05" : nip05_field,
-                "displayname" : displayname_field,
-                "about" : about_field,
-                "picture" : picture_field
-            }
+            session["profile"]["nym"] = nym_field
+            session["profile"]["nip05"] = nip05_field
+            session["profile"]["displayname"] = displayname_field
+            session["profile"]["about"] = about_field
+            session["profile"]["picture"] = picture_field
 
             if check_nsec(session['nsec']):
-                await edit_profile_info(nym_profile, session['relays'], session['nsec'])
+                await edit_profile_info(session["profile"], session['relays'], session['nsec'])
 
             # Update Session data and re-extract
-            profile = {
-                "nym" : nym_field,
-                "nip05" : nip05_field,
-                "displayname" : displayname_field,
-                "about" : about_field,
-                "picture" : picture_field
-            }
-
-            await async_set_session_info(request, profile=profile, nym=nym_field)
+            await async_set_session_info(request, profile=session["profile"], nym=nym_field)
             session = await async_get_session_info(request)
-
-            return render(request, 'almanac/user_profile.html', session)
+            notification = "Profile Updated"
         
         # Perform refresh of the user profile content
         if request.method == 'POST' and await async_logged_in(request) and request.POST.get('refresh'):
@@ -81,7 +69,14 @@ async def user_profile(request):
             
             await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile)
             session = await async_get_session_info(request)
-            return render(request, 'almanac/user_profile.html', session)
+            notification = "Profile Refreshed"
+
+        context  = {
+            "session": session,
+            "notification": notification
+        }
+        
+        return render(request, 'almanac/user_profile.html', context=context)
         
         # TODO: Add functionality to handle profile uploads with Nostr.Build API
 

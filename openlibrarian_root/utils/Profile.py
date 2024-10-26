@@ -25,6 +25,10 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             "displayname": metadata.get_display_name(),
             "about": metadata.get_about(),
             "picture": metadata.get_picture(),
+            "website": metadata.get_website(),
+            "banner": metadata.get_banner(),
+            "lud06": metadata.get_lud06(),
+            "lud16": metadata.get_lud16()
         }
     else:
         nym_profile = {
@@ -33,8 +37,12 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             "displayname": None,
             "about": None,
             "picture": None,
+            "website": None,
+            "banner": None,
+            "lud06": None,
+            "lud16": None
         }
-
+    
     # Request check for relay metadata event
     f_relays = Filter().kind(Kind(10002)).author(author).limit(1)
     relays_event = await nostr_get(client=client, relays_dict=relays, filters=[f_relays], wait=10, connect=False, disconnect=True)
@@ -63,6 +71,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
 
 async def edit_profile_info(nym_profile: dict, nym_relays: dict, nsec: str):
     """Updates the profile information using Relay List."""
+
     # Create profile event
     profile_meta = Metadata()
     if nym_profile["nym"] != None:
@@ -73,9 +82,17 @@ async def edit_profile_info(nym_profile: dict, nym_relays: dict, nsec: str):
         profile_meta = profile_meta.set_display_name(nym_profile["displayname"])
     if nym_profile["about"] != None:
         profile_meta = profile_meta.set_about(nym_profile["about"])
-    if nym_profile["picture"] != None:
+    if nym_profile["picture"] not in (None, ""):
         profile_meta = profile_meta.set_picture(nym_profile["picture"])
-
+    if nym_profile["website"] not in (None, ""):
+        profile_meta = profile_meta.set_website(nym_profile["website"])
+    if nym_profile["banner"] not in (None, ""):
+        profile_meta = profile_meta.set_banner(nym_profile["banner"])
+    if nym_profile["lud06"] != None:
+        profile_meta = profile_meta.set_lud06(nym_profile["lud06"])
+    if nym_profile["lud16"] != None:
+        profile_meta = profile_meta.set_lud16(nym_profile["lud16"])
+        
     # Instantiate client and set signer
     signer = NostrSigner.keys(Keys.parse(nsec))
     client = Client(signer)

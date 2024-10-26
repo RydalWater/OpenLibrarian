@@ -12,12 +12,12 @@
 <form method="post">
     {% csrf_token %}
     <!-- User Profile Info -->
-    {% if nsec %}
+    {% if session.nsec %}
         <div style="height: 55vh; overflow-y: auto;">
             <div class="input-group-sm text-start">
                 <label for="edit_nym" class="form-label">Account Nym</label>
                 {% if nym %}
-                    <input class="form-control" type="text", name="edit_nym", value="{{ nym }}"></input>
+                    <input class="form-control" type="text", name="edit_nym", value="{{ session.nym }}"></input>
                 {% else %}
                     <input class="form-control" type="text", name="edit_nym", placeholder="Enter your user nym"></input>
                 {% endif %}
@@ -37,7 +37,7 @@
                             </p>
                             <p>
                                 We <b>DO NOT</b> recommend using your real name as your Nym as it potentially creates a permanent link 
-                                etween your account and you as an individual. 
+                                between your account and you as an individual. 
                             </p>
                             <p> 
                                 If you are unsure what to put how about picking your favorite character from a book, or maybe randomly generating one.
@@ -46,32 +46,32 @@
                     </div>
                 </div>
             </div>
-            {% if profile %}
+            {% if session.profile %}
                 <div class="input-group-sm text-start">
                     <label for="edit_displayname" class="form-label mt-1">Display Name</label>
-                    {% if profile.displayname %}
-                        <input class="form-control" type="text", name="edit_displayname", value="{{ profile.displayname }}"></input>
+                    {% if session.profile.displayname %}
+                        <input class="form-control" type="text", name="edit_displayname", value="{{ session.profile.displayname }}"></input>
                     {% else %}
                         <input class="form-control" type="text", name="edit_displayname", placeholder="Enter your preferred display name"></input>
                     {% endif %}
                     <label for="edit_about" class="form-label mt-1">About</label>
-                    {% if profile.about %}
-                        <textarea class="form-control" type="text", name="edit_about", maxlength="200">{{ profile.about }}</textarea>
+                    {% if session.profile.about %}
+                        <textarea class="form-control" type="text", name="edit_about", maxlength="200">{{ session.profile.about }}</textarea>
                     {% else %}
                         <textarea class="form-control" type="text", name="edit_about", placeholder="Write a bit about yourself (max. 200 characters)" maxlength="200"></textarea>
                     {% endif %}
                     <label for="edit_picture" class="form-label mt-1">Profile Picture</label>
                     <div class="input-group input-group-sm">
-                        {% if profile.picture %}
-                            <input class="form-control" type="text", name="edit_picture", value="{{ profile.picture }}" aria-describedby="upload"></input>
+                        {% if session.profile.picture %}
+                            <input class="form-control" type="text", name="edit_picture", value="{{ session.profile.picture }}" aria-describedby="upload"></input>
                         {% else %}
                             <input class="form-control" type="text", name="edit_picture", placeholder="Enter your Picture URL" aria-describedby="upload"></input>
                         {% endif %}
                         <!-- <button class="btn btn-outline-secondary" type="button" id="upload"><i class="fa-solid fa-cloud-arrow-up"></i></button> -->
                     </div>
                     <label for="edit_nip05" class="form-label mt-1">NIP05</label>
-                    {% if profile.nip05 %}
-                        <input class="form-control" type="text", name="edit_nip05", value="{{ profile.nip05 }}"></input>
+                    {% if session.profile.nip05 %}
+                        <input class="form-control" type="text", name="edit_nip05", value="{{ session.profile.nip05 }}"></input>
                     {% else %}
                         <input class="form-control" type="text", name="edit_nip05", placeholder="Enter your NIP05"></input>
                     {% endif %}
@@ -99,7 +99,7 @@
     <!-- Save/Refresh Button -->
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
         <a href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        {% if nsec %}
+        {% if session.nsec %}
             <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
             <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
         {% endif %}
@@ -108,5 +108,10 @@
         <div class="spinner-border" role="status"></div>
     </div>
 </form>
+
+<input type="hidden" id="notification" value="{{ notification }}">
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
+<script src="{% static 'js/add-toast.js' %}"></script>
 
 {% endblock content %}
