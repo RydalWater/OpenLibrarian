@@ -49,6 +49,7 @@ async def send_notification(book: dict, nsec: str, nym_relays: dict, note_type: 
             d_tags = ast.literal_eval(os.getenv("DEFAULT_TAGS"))
             if d_tags:
                 for tag in d_tags:
+                    text = f"{text} #{tag}"
                     h_tags.append(Tag.hashtag(tag))
 
         # Build event
