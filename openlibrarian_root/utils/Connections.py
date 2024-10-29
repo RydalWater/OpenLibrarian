@@ -1,4 +1,4 @@
-from nostr_sdk import Client, Filter, Kind, KindEnum, Metadata, PublicKey, TagKind, SingleLetterTag, Alphabet, Keys, NostrSigner, EventBuilder, Contact
+from nostr_sdk import Client, Filter, Kind, KindEnum, Metadata, PublicKey, Keys, NostrSigner, EventBuilder, get_nip05_profile, Tag
 from utils.Network import nostr_get, nostr_post
 from utils.Login import check_npub, check_nsec
 
@@ -25,7 +25,8 @@ async def fetch_social_list(relays: dict, npub: str = None, list_type: str = "fo
         follow_list = []
         if eventlist:
             for tag in eventlist[0].tags():
-                follow_list.append(PublicKey.from_hex(tag.content()))
+                if tag.as_vec()[0] == "p":
+                    follow_list.append(PublicKey.from_hex(tag.content()))
 
         # Get following and related profile data
         f = Filter().kind(Kind(0)).authors(follow_list)
@@ -101,5 +102,48 @@ async def clone_follow(relays: dict, npub: str = None, nsec: str = None):
     await nostr_post(client=client, relays_dict=relays, eventbuilder=mute_builder, connect=False, disconnect=True)
     
     
+async def add_follow(relays: dict, npub: str = None, nsec: str = None, follow_id: str = None):
+    if npub in [None, ""] or check_npub(npub) is False:
+            raise Exception("Invalid or missing npub")
+    if nsec in [None, ""] or check_nsec(nsec) is False:
+            raise Exception("Invalid or missing nsec")
+    if follow_id in [None, ""]:
+        raise Exception("Missing follow value")
+    
+    # Check if follow is a valid pubkey or nip05 and get key
+    if check_npub(follow_id) is True:
+        follow_key = PublicKey.parse(follow_id)
+    else:
+        try:
+            profile = await get_nip05_profile(follow_id,None)
+            follow_key = profile.public_key()
+        except:
+           return "Invalid npub or nip05" 
 
+    # Keys
+    keys = Keys.parse(nsec)
+    
+    # Signer
+    signer = NostrSigner.keys(keys)
+    client = Client(signer)
+
+    # Request profile Metadata
+    follow_filter = Filter().kind(Kind.from_enum(KindEnum.CONTACT_LIST())).author(keys.public_key()).limit(1)
+
+    # Get following list and extract p tags
+    follow_events = await nostr_get(client=client, filters=[follow_filter], relays_dict=relays, wait=10, connect=True, disconnect=True) 
+   
+    for follow in follow_events:
+        if Tag.public_key(follow_key) not in follow.tags():
+            follow.tags().append(Tag.public_key(follow_key))
+
+            # Build follow event
+            follow_builder = EventBuilder(kind=Kind.from_enum(KindEnum.CONTACT_LIST()), tags=follow.tags(), content="")
+
+            # Post events
+            await nostr_post(client=client, relays_dict=relays, eventbuilder=follow_builder, connect=True, disconnect=True)
+            return "Added Friend."
+        
+        else:
+            return "Already Following."
 

@@ -3,7 +3,7 @@ from django.contrib import messages
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, cache_get, cache_set, cache_key, cache_delete
 from utils.Profile import edit_profile_info, edit_relay_list, fetch_profile_info
 from utils.Login import check_nsec
-from utils.Connections import fetch_social_list
+from utils.Connections import fetch_social_list, add_follow
 from nostr_sdk import Keys
 
 # Users Settings View
@@ -173,9 +173,17 @@ async def user_friends(request):
                 friends = connctions['friends']
                 muted = connctions['muted']
             
+            notification = None
+            
         # POST requests
         if request.method == 'POST':
-            if request.POST.get('refresh'):
+            if request.POST.get('refresh') or request.POST.get('follow_user'):
+
+                # Attempt to add new follow
+                if request.POST.get('follow_user'):
+                    notification = await add_follow(session['relays'], npub=session['npub'], nsec=session['nsec'], follow_id=request.POST.get('follow_user'))                    
+
+                # Fetch lists again
                 friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")
                 muted = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="mute")
                 
@@ -183,4 +191,4 @@ async def user_friends(request):
                 await cache_delete(await cache_key(key_str,session))
                 await cache_set(await cache_key(key_str,session), {'friends': friends, 'muted': muted}, 1800)
 
-        return render(request, 'almanac/user_friends.html', {'session': session, 'friends': friends, 'muted': muted})
+        return render(request, 'almanac/user_friends.html', {'session': session, 'friends': friends, 'muted': muted, 'notification': notification})

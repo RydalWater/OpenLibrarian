@@ -13,8 +13,12 @@
 
 <form method="post">
     {% csrf_token %}
-    <div style="height: 55vh; overflow-y: auto;"> 
-        <div class="accordion" id="socialAccordion">
+    <div style="height: 55vh; overflow-y: auto;">
+        <div class="input-group input-group-sm">
+            <input class="form-control" type="text", name="follow_user", placeholder="Enter a Users Public Key or NIP05 Address" aria-describedby="upload"></input>
+            <button class="btn btn-outline-secondary" type="submit" id="submit"><i class="fa-solid fa-plus"></i></button>
+        </div> 
+        <div class="accordion mt-2" id="socialAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="friends">
                     <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseFriends" aria-expanded="true" aria-controls="collapseFriends">
@@ -40,7 +44,7 @@
                                     <div class="col-md-4">
                                         <!-- <button id="removeButton" class="btn btn-sm btn-danger" name="remove", value="{{ values.npub }}"><i class="fa-solid fa-trash"></i></button> -->
                                         <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
-                                        <a id="profileButton" class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
+                                        <a class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
                                     </div>
                                 </li>
                             </ul>
@@ -93,7 +97,6 @@
         <a id="nsec" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
             <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
-            <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
         {% endif %}
     </div>
 
@@ -102,8 +105,13 @@
     </div>
 </form>
 
-<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
 
+<input type="hidden" id="notification" value="{{ notification }}">
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
+<div id="copytoastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
+
+<script src="{% static 'js/add-toast.js' %}"> </script>
 <script src="{% static 'js/copy-toast.js' %}"> </script>
+
 
 {% endblock content %}
