@@ -5,7 +5,7 @@ if (notification && notification !== "None") {
     const toastContainer = document.getElementById('toastContainer');
     const toast = document.createElement('div');
     toast.classList.add('toast', 'align-items-center', 'text-white', 'bg-success', 'border-0');
-    if (notification === "Book already in library.") {
+    if (notification === "Book already in library." || notification === "Already Following.") {
         toast.classList.remove('bg-success');
         toast.classList.add('bg-danger');
     }
