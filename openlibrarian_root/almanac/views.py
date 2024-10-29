@@ -176,7 +176,7 @@ async def user_friends(request):
             
         # POST requests
         elif request.method == 'POST':
-            print (request.POST)
+
             # Attempt to add new follow
             if request.POST.get('follow_user'):
                 notification = await add_follow(session['relays'], npub=session['npub'], nsec=session['nsec'], follow_id=request.POST.get('follow_user'))                    
