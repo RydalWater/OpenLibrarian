@@ -145,7 +145,6 @@ async def user_relays(request):
                     await edit_relay_list(session['relays'], session["mod_relays"], session['nsec'])
                     await async_set_session_info(request, relays=session["mod_relays"])
 
-
         session = await async_get_session_info(request)
         return render(request, 'almanac/user_relays.html', session)
     
@@ -172,23 +171,26 @@ async def user_friends(request):
             else:
                 friends = connctions['friends']
                 muted = connctions['muted']
-            
+
             notification = None
             
         # POST requests
-        if request.method == 'POST':
-            if request.POST.get('refresh') or request.POST.get('follow_user'):
+        elif request.method == 'POST':
+            print (request.POST)
+            # Attempt to add new follow
+            if request.POST.get('follow_user'):
+                notification = await add_follow(session['relays'], npub=session['npub'], nsec=session['nsec'], follow_id=request.POST.get('follow_user'))                    
+            elif request.POST.get('follow'):
+                notification = "Please provide npub or nip05."
+            else:
+                notification = "Refreshed."
 
-                # Attempt to add new follow
-                if request.POST.get('follow_user'):
-                    notification = await add_follow(session['relays'], npub=session['npub'], nsec=session['nsec'], follow_id=request.POST.get('follow_user'))                    
-
-                # Fetch lists again
-                friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")
-                muted = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="mute")
-                
-                # Cache the friends list for 30 minutes
-                await cache_delete(await cache_key(key_str,session))
-                await cache_set(await cache_key(key_str,session), {'friends': friends, 'muted': muted}, 1800)
+            # Fetch lists again
+            friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")
+            muted = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="mute")
+            
+            # Cache the friends list for 30 minutes
+            await cache_delete(await cache_key(key_str,session))
+            await cache_set(await cache_key(key_str,session), {'friends': friends, 'muted': muted}, 1800)
 
         return render(request, 'almanac/user_friends.html', {'session': session, 'friends': friends, 'muted': muted, 'notification': notification})

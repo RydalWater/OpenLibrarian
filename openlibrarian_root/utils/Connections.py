@@ -118,7 +118,7 @@ async def add_follow(relays: dict, npub: str = None, nsec: str = None, follow_id
             profile = await get_nip05_profile(follow_id,None)
             follow_key = profile.public_key()
         except:
-           return "Invalid npub or nip05" 
+           return "Invalid npub or nip05." 
 
     # Keys
     keys = Keys.parse(nsec)
@@ -131,14 +131,15 @@ async def add_follow(relays: dict, npub: str = None, nsec: str = None, follow_id
     follow_filter = Filter().kind(Kind.from_enum(KindEnum.CONTACT_LIST())).author(keys.public_key()).limit(1)
 
     # Get following list and extract p tags
-    follow_events = await nostr_get(client=client, filters=[follow_filter], relays_dict=relays, wait=10, connect=True, disconnect=True) 
+    follow_events = await nostr_get(client=client, filters=[follow_filter], relays_dict=relays, wait=10, connect=True, disconnect=False) 
    
     for follow in follow_events:
-        if Tag.public_key(follow_key) not in follow.tags():
-            follow.tags().append(Tag.public_key(follow_key))
+        follow_tags = follow.tags()
+        if Tag.public_key(follow_key) not in follow_tags:
+            follow_tags.append(Tag.public_key(follow_key))
 
             # Build follow event
-            follow_builder = EventBuilder(kind=Kind.from_enum(KindEnum.CONTACT_LIST()), tags=follow.tags(), content="")
+            follow_builder = EventBuilder(kind=Kind.from_enum(KindEnum.CONTACT_LIST()), tags=follow_tags, content="")
 
             # Post events
             await nostr_post(client=client, relays_dict=relays, eventbuilder=follow_builder, connect=True, disconnect=True)
