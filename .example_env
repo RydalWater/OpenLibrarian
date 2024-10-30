@@ -1,0 +1,15 @@
+# Default relays used for intial information gathering and new users
+DEFAULT_RELAYS = ['wss://relay.damus.io',"wss://relay.damus.io","wss://relay.primal.net","wss://nos.lol","wss://nostr.mom"]
+
+# Default set of tags for nostr notes
+DEFAULT_TAGS = ["Read", "Books", "Reading", "OpenLibrarian", "OpenLibrary", "Bookstr", "Readstr"]
+
+# Address to be added to the header of API requests for Open Library
+EMAIL_ADDY = 'someone@email.com'
+
+# Test mode will print nostr events as JSON to the console
+TEST_MODE = 'Y'
+
+# A test set of keys that will be used during test mode for signing events
+TEST_NPUB = 'npub.....test....xyz'
+TEST_NSEC = 'nsec.....test....xyz'
