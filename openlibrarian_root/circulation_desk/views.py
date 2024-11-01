@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.core.cache import cache
 from nostr_sdk import Keys
 from mnemonic import Mnemonic
-from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
+from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, async_get_temp_keys, async_remove_session_info
 from utils.Login import check_npub, check_nsec, check_mnemonic
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries
@@ -182,16 +182,16 @@ async def create_account_view(request):
         seed = mnemonic.generate(strength=128)
         words = seed.split(" ")
         keys = Keys.from_mnemonic(seed,"")
-        nsec = keys.secret_key().to_bech32()
-        npub = keys.public_key().to_bech32()
+        tnsec = keys.secret_key().to_bech32()
+        tnpub = keys.public_key().to_bech32()
 
         # Set Session Data
-        await async_set_session_info(request,npub=npub,nsec=nsec)
+        await async_set_session_info(request,tnpub=tnpub,tnsec=tnsec)
 
         context = {
             'words': words,
-            'nsec': nsec,
-            'npub': npub
+            'tnsec': tnsec,
+            'tnpub': tnpub
         }
         return render(request, 'circulation_desk/create_account.html', context)
     
@@ -205,13 +205,13 @@ async def create_account_view(request):
 async def create_account_confirm_view(request):
     """View for the create account confirm page of the website."""
     
+    # Get temp keys from session
+    temp_keys = await async_get_temp_keys(request)
+
     # If not already logged in then redirect to the home page
-    if await async_logged_in(request) == False:
+    if await async_logged_in(request) == False and temp_keys['tnpub'] is None:
         return redirect('circulation_desk:index')
     
-    # Default values for npub/confirmation
-    session = await async_get_session_info(request)
-
     # Get full list of possible words
     word_list = Mnemonic("english").wordlist
     
@@ -222,13 +222,14 @@ async def create_account_confirm_view(request):
             mnemonic = ' '.join([form.cleaned_data[f'word{i}'] for i in range(1, 13)])
             if check_mnemonic(mnemonic):
                 keys = Keys.from_mnemonic(mnemonic,"")
-                if keys.public_key().to_bech32() == session['npub']:
+                if keys.public_key().to_bech32() == temp_keys['tnpub']:
                     private_key_confirmed = "Success"
 
                     # Set Session Data
                     nsec = keys.secret_key().to_bech32()
-                    # Build default set of relays for user and set in session
+                    # Build default set of relays for user
                     session_relays = {}
+                    
                     mod_relays = {
                         "wss://relay.damus.io": None,
                         "wss://relay.primal.net": None,
@@ -236,8 +237,17 @@ async def create_account_confirm_view(request):
                         "wss://nostr.mom": None,
                     }
                     await edit_relay_list(session_relays, mod_relays, nsec)
-                    
-                    await async_set_session_info(request,nsec=nsec, relays=mod_relays)
+
+                    # Get default libraries and interests
+                    libraries = await fetch_libraries(npub=temp_keys['tnpub'], nsec=nsec, relays=mod_relays)
+                    # Get default interests
+                    interests = await fetch_interests(temp_keys['tnpub'], mod_relays)
+
+                    # Set Session Data
+                    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=temp_keys['tnpub'], nsec=nsec)
+
+                    # Remove temp keys from session
+                    await async_remove_session_info(request, tnpub=temp_keys['tnpub'], tnsec=temp_keys['tnsec'])
                 else:
                     private_key_confirmed = "Mnemonic does not match NPUB"
             else:
@@ -245,7 +255,7 @@ async def create_account_confirm_view(request):
 
             context = {
                 'form': form,
-                'npub': session['npub'],
+                'tnpub': temp_keys['tnpub'],
                 'private_key_confirmed': private_key_confirmed,
                 'word_list' : word_list
 
@@ -255,7 +265,7 @@ async def create_account_confirm_view(request):
     form = SeedForm()
     context = {
         'form': form,
-        'npub': session['npub'],
+        'tnpub': temp_keys['tnpub'],
         'private_key_confirmed' : None,
         'word_list' : word_list
     }

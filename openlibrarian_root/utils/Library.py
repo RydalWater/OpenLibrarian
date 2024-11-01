@@ -98,8 +98,6 @@ class Library:
                     raise Exception("Missing expected title tag.")
                 elif "d" not in tags_dict.keys():
                     raise Exception("Missing expected identifier tag.")
-                elif "i" not in tags_dict.keys():
-                    raise Exception("Missing expected external ID tag.")
                 else:
                     # Check if the identifier is valid
                     section = (list(section_title_map.keys())[list(section_title_map.values()).index(tags_dict["title"])])
@@ -114,7 +112,10 @@ class Library:
                         self.title = section_title_map[self.section]
                         self.description = section_description_map[self.section]
                         self.content = "Books & Literature (OpenLibrarian)"
-                        self.books = tags_dict["i"]
+                        if "i" in tags_dict.keys():
+                            self.books = tags_dict["i"]
+                        else:
+                            self.books = []
                         self.bevent = event
 
 

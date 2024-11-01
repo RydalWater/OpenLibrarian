@@ -14,10 +14,12 @@
 <form method="post">
     {% csrf_token %}
     <div style="height: 55vh; overflow-y: auto;">
-        <div class="input-group input-group-sm">
-            <input class="form-control" type="text", name="follow_user", placeholder="Enter a Users Public Key or NIP05 Address" aria-describedby="upload"></input>
-            <button class="btn btn-outline-secondary" type="submit" id="submit" name="follow" value="add"><i class="fa-solid fa-plus"></i></button>
-        </div> 
+        {% if session.nsec %}
+            <div class="input-group input-group-sm">
+                <input class="form-control" type="text", name="follow_user", placeholder="Enter a Users Public Key or NIP05 Address" aria-describedby="upload"></input>
+                <button class="btn btn-outline-secondary" type="submit" id="submit" name="follow" value="add"><i class="fa-solid fa-plus"></i></button>
+            </div>
+        {% endif %}
         <div class="accordion mt-2" id="socialAccordion">
             <div class="accordion-item">
                 <h2 class="accordion-header" id="friends">

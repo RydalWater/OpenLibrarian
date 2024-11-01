@@ -15,10 +15,22 @@ def get_session_info(request: object) -> dict:
         'interests': request.session.get('interests', None)
     }
 
+def get_temp_keys(request: object) -> dict:
+    """Returns the temp session information for the user signup."""
+    return {
+        'tnpub': request.session.get('tnpub', None),
+        'tnsec': request.session.get('tnsec', None)
+    }
+
 def set_session_info(request: object, **kwargs):
     """Sets the session information for the user."""
     for key, value in kwargs.items():
         request.session[key] = value
+
+def remove_session_info(request: object, **kwargs):
+    """Removes the session information for the user."""
+    for key in kwargs:
+        request.session[key] = None
 
 def logged_in(request: object) -> bool:
     """Checks if the user is logged in."""
@@ -32,9 +44,17 @@ async def async_get_session_info(request: object) -> dict:
     """Convert get_session_info to async function."""
     return await sync_to_async(get_session_info)(request)
 
+async def async_get_temp_keys(request: object) -> dict:
+    """Convert get_temp_keys to async function."""
+    return await sync_to_async(get_temp_keys)(request)
+
 async def async_set_session_info(request: object, **kwargs):
     """Convert set_session_info to async function."""
     return await sync_to_async(set_session_info)(request, **kwargs)
+
+async def async_remove_session_info(request: object, **kwargs):
+    """Convert remove_session_info to async function."""
+    return await sync_to_async(remove_session_info)(request, **kwargs)
 
 async def async_logged_in(request: object) -> bool:
     """Convert logged_in to async function."""
