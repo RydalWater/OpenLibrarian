@@ -1,7 +1,7 @@
 from .test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-
+from django.test import Client
 
 class LoginNsecFunctionalTestCase(BaseFunctionalTest):
     """
@@ -76,4 +76,21 @@ class LoginNsecUnitTestCase(BaseUnitTests):
         self.url = "/login-nsec/"
         self.template = "circulation_desk/login_nsec.html"
         self.content = ["Log-in", "NSEC (read/write)", "Back"]
-        
+    
+    def test_login_session_data(self):
+        """
+        Test Session Data after Login (NSEC)
+        """
+         # Create a test client and login with NSEC
+        client = Client()
+        response = client.get('/login-nsec/')
+        response = client.post('/login-nsec/', {'nsec': 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm'})
+
+        # Check the session variables are correct
+        self.assertEqual(client.session['npub'], 'npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n')
+        self.assertEqual(client.session['nsec'], 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm')
+        self.assertEqual(client.session['relays'], None)
+        self.assertIn('nym', client.session)
+        self.assertIn('profile', client.session)
+        self.assertIn('libraries', client.session)
+        self.assertIn('interests', client.session)

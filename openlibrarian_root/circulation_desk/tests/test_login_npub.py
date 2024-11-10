@@ -1,7 +1,7 @@
 from .test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-
+from django.test import Client
 
 class LoginNpubFunctionalTestCase(BaseFunctionalTest):
     """
@@ -76,3 +76,21 @@ class LoginNpubUnitTestCase(BaseUnitTests):
         self.url = "/login-npub/"
         self.template = "circulation_desk/login_npub.html"
         self.content = ["Log-in", "NPUB (read-only)", "Back"]
+    
+    def test_login_session_data(self):
+        """
+        Test Session Data after Login (NPUB)
+        """
+         # Create a test client and login with NPUB
+        client = Client()
+        response = client.get('/login-npub/')
+        response = client.post('/login-npub/', {'npub': 'npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n'})
+
+        # Check the session variables are correct
+        self.assertEqual(client.session['npub'], 'npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n')
+        self.assertNotIn('nsec', client.session)
+        self.assertEqual(client.session['relays'], None)
+        self.assertIn('nym', client.session)
+        self.assertIn('profile', client.session)
+        self.assertIn('libraries', client.session)
+        self.assertIn('interests', client.session)

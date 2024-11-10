@@ -1,6 +1,7 @@
 from .test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from django.test import Client
 
 
 class LoginSeedFunctionalTestCase(BaseFunctionalTest):
@@ -98,4 +99,21 @@ class LoginSeedUnitTestCase(BaseUnitTests):
         self.url = "/login-seed/"
         self.template = "circulation_desk/login_seed.html"
         self.content = ["Log-in", "Seed Words (read/write)", "Back"]
-        
+    
+    def test_login_session_data(self):
+        """
+        Test Session Data after Login (Seed)
+        """
+         # Create a test client and login with NSEC
+        client = Client()
+        response = client.get('/login-seed/')
+        response = client.post('/login-seed/', {'word1': 'engine', 'word2': 'survey', 'word3': 'rich', 'word4': 'year', 'word5': 'woman', 'word6': 'keen', 'word7': 'thrive', 'word8': 'clip', 'word9': 'patrol', 'word10': 'patrol', 'word11': 'next', 'word12': 'quantum'})
+
+        # Check the session variables are correct
+        self.assertEqual(client.session['npub'], 'npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n')
+        self.assertEqual(client.session['nsec'], 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm')
+        self.assertEqual(client.session['relays'], None)
+        self.assertIn('nym', client.session)
+        self.assertIn('profile', client.session)
+        self.assertIn('libraries', client.session)
+        self.assertIn('interests', client.session)
