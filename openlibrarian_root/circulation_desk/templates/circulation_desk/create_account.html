@@ -27,12 +27,12 @@
         <div class="container mt-2">
             <div class="input-group input-group-sm mb-3">
                 <span class="input-group-text" id="inputGroup-sizing-sm">NPUB</span>
-                <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ tnpub }}">
+                <input id="tnpub" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ tnpub }}">
                 <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-user-check text-success"></i></span>
             </div>
             <div class="input-group input-group-sm mb-3">
                 <span class="input-group-text" id="inputGroup-sizing-sm">NSEC</span>
-                <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ tnsec }}">
+                <input id="tnsec" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ tnsec }}">
                 <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-circle-exclamation text-danger"></i></span>
             </div>
             <p class="text-danger book-text">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
@@ -47,7 +47,7 @@
                     <div class="col-4">
                         <div class="input-group input-group-sm mb-3">
                             <span class="input-group-text" id="inputGroup-sizing-sm">{{ forloop.counter }}</span>
-                            <input type="text" class="form-control" aria-describedby="inputGroup-sizing-sm" value="{{ word }}" readonly>
+                            <input id="tword{{ forloop.counter }}" type="text" class="form-control" aria-describedby="inputGroup-sizing-sm" value="{{ word }}" readonly>
                         </div>
                     </div>
                 {% endfor %}
@@ -55,13 +55,13 @@
         </div>
     {% endif %}
     <div class="container">
-        <a href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <button id="seed-gen" class="btn btn-sm btn-primary" name="generate_seed" value="Generate"><i class="fa-solid fa-shuffle"></i> Generate Keys</button>
     </div>
     {% if words %}
         <div class="container mt-2">
             <p class="book-text">Please make sure you've backed up your Seed Words before moving to the next step. There will be a test!</p>
-            <button type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
+            <button id="save-seed" type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
         </div>
     {% endif %}
 </form>

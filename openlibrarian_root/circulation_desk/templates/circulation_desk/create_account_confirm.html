@@ -14,7 +14,7 @@
                 <p class="book-text">To confirm you've written down your Seed Words please re-enter it below for the following Public Key.</p>
                 <div class="input-group input-group-sm mb-3">
                     <span class="input-group-text" id="inputGroup-sizing-sm">NPUB</span>
-                    <input type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ tnpub }}">
+                    <input id="tnpub" type="text" class="form-control" aria-label="Sizing example input" aria-describedby="inputGroup-sizing-sm" readonly value="{{ tnpub }}">
                     <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-user-check text-success"></i></span>
                 </div>
                 <p class="text-danger book-text">In the event that you lose your seed words, you will not be able to recover them. Open Librarian does not store a copy.</p>
@@ -43,7 +43,8 @@
                     <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ private_key_confirmed }}</p>
                 {% endif %}
                 <div class="container mt-2">
-                    <button type="submit" class="btn btn-sm btn-primary" name="confirm_seed"><i class="fa-solid fa-check"></i> Check</button>
+                    <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                    <button id="submit" type="submit" class="btn btn-sm btn-primary" name="confirm_seed"><i class="fa-solid fa-check"></i> Check</button>
                 </div>
             </div>
         {% endif %}

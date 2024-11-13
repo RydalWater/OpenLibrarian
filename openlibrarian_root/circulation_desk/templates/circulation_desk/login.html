@@ -24,11 +24,11 @@
     <div class="row mt-2">
         <div class="col-1"></div>
         <div class="col-10">
-            <a id="nsec" href="{% url 'circulation_desk:login-seed' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Seed Words (read/write)</a>
+            <a id="seed" href="{% url 'circulation_desk:login-seed' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Seed Words (read/write)</a>
         </div>
     </div>
     <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
-        <a href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
     </div>
 </div>
 
