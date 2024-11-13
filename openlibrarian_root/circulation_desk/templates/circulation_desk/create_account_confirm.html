@@ -43,7 +43,8 @@
                     <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ private_key_confirmed }}</p>
                 {% endif %}
                 <div class="container mt-2">
-                    <button type="submit" class="btn btn-sm btn-primary" name="confirm_seed"><i class="fa-solid fa-check"></i> Check</button>
+                    <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+                    <button id="submit" type="submit" class="btn btn-sm btn-primary" name="confirm_seed"><i class="fa-solid fa-check"></i> Check</button>
                 </div>
             </div>
         {% endif %}

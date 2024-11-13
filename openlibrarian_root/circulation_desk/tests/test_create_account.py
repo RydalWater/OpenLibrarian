@@ -1,4 +1,4 @@
-from .test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from utils.Login import check_npub, check_nsec, check_mnemonic
@@ -101,3 +101,22 @@ class CreateAccountUnitTestCase(BaseUnitTests):
         self.url = "/create-account/"
         self.template = "circulation_desk/create_account.html"
         self.content = ["Sign-up", "Secret Key", "Public Key", "Generate Keys", "Back"]
+    
+    def test_redirect_post(self):
+        """
+        Redirect to index on post request (where not signing up)
+        """
+        session = self.client.session
+        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session.save()
+        response = self.client.post(f"http://127.0.0.1:8000{self.url}", data={"test": "test"})
+        self.assertRedirects(response, "/")
+    
+    def test_no_redirect_post(self):
+        """
+        Do not redirect to index on post request (where signing up)
+        """
+        response = self.client.post(f"http://127.0.0.1:8000{self.url}", data={"generate_seed": "Generate"})
+        self.assertEqual(response.status_code, 200)
+        response = self.client.post(f"http://127.0.0.1:8000{self.url}", data={"confirm_seed": "Confirm"})
+        self.assertRedirects(response, "/create-account-confirm/")

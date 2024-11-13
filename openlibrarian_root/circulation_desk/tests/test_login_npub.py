@@ -1,4 +1,4 @@
-from .test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import Client
