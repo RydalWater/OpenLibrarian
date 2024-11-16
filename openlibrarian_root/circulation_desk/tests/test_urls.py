@@ -1,6 +1,5 @@
 from django.test import TestCase
 from django.urls import reverse
-from circulation_desk import views
 
 # Unit tests for forms
 class TestUrls(TestCase):

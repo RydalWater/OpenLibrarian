@@ -16,7 +16,7 @@ class BaseFunctionalTest(TestCase):
     
     def test_click_archives(self):
         """
-        Click on archives button
+        BASE: Click on archives button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="about").click()
@@ -72,7 +72,7 @@ class BaseUnitTests(TestCase):
     # Test page returns a 200 response
     def test_page_returns_200(self):
         """
-        Page returns a 200 response
+        BASE: Page returns a 200 response
         """
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -80,7 +80,7 @@ class BaseUnitTests(TestCase):
     # Test template is correct
     def test_page_template(self):
         """
-        Check page templates (inc. base.html)
+        BASE: Check page templates (inc. base.html)
         """
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, self.template)
@@ -89,7 +89,7 @@ class BaseUnitTests(TestCase):
     # Test Page features.
     def test_page_has_content(self):
         """
-        Check page for specific fields
+        BASE: Check page for specific fields
         """
         response = self.client.get(self.url)
         for item in self.content:

@@ -18,22 +18,23 @@ class LoginNsecFunctionalTestCase(BaseFunctionalTest):
         """
         Automatic redirect when logged in (NPUB)
         """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
+        self.driver.get(f"http://127.0.0.1:8000/login-npub/")
+        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="submit").click()
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.assertNotIn(self.url, self.driver.current_url)
+        self.assertIn("Circulation Desk", self.driver.page_source)
     
     def test_redirect_nsec(self):
         """
         Automatic redirect when logged in (NSEC)
         """
-        session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
+        self.driver.get(f"http://127.0.0.1:8000/login-nsec/")
+        self.driver.find_element(by=By.ID, value="nsec").send_keys("nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm")
+        self.driver.find_element(by=By.ID, value="submit").click()
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.assertNotIn(self.url, self.driver.current_url)
+        self.assertIn("Circulation Desk", self.driver.page_source)
     
     def test_invalid_nsec(self):
         """
@@ -42,18 +43,9 @@ class LoginNsecFunctionalTestCase(BaseFunctionalTest):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="nsec").send_keys("nsecmadeup123456blahblah")
         self.driver.find_element(by=By.ID, value="submit").click()
-        self.assertIn("/login-nsec/", self.driver.current_url)
+        self.assertIn(self.url, self.driver.current_url)
         self.assertIn("Invalid NSEC", self.driver.page_source)
-    
-    def test_valid_nsec(self):
-        """
-        Test Valid NPUB value
-        """
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.driver.find_element(by=By.ID, value="nsec").send_keys("nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm")
-        self.driver.find_element(by=By.ID, value="submit").click()
-        self.assertIn("/", self.driver.current_url)
-    
+        
     def test_back(self):
         """
         Login with Back Button

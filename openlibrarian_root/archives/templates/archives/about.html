@@ -28,13 +28,13 @@
     <div class="container mt-2">
         <div class="row">
             <div class="col">
-                <a href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
+                <a id="login" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
             </div>
             <div class="col">
-                <a href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-house"></i> Home</a>
+                <a id="home" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-house"></i> Home</a>
             </div>
             <div class="col">
-                <a href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
+                <a  id="signup" href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
             </div>
         </div>
     </div>

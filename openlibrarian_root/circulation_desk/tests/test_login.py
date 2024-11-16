@@ -61,7 +61,7 @@ class LoginFunctionalTestCase(BaseFunctionalTest):
     
     def test_back(self):
         """
-        Login with Back Button
+        Test Back Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
