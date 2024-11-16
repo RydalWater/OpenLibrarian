@@ -209,7 +209,7 @@ async def create_account_confirm_view(request):
     temp_keys = await async_get_temp_keys(request)
 
     # If not already logged in then redirect to the home page
-    if await async_logged_in(request) == False and temp_keys['tnpub'] is None:
+    if await async_logged_in(request) == True or temp_keys['tnpub'] is None:
         return redirect('circulation_desk:index')
     
     # Get full list of possible words

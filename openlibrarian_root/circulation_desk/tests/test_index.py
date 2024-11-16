@@ -68,6 +68,7 @@ class BaseUnitTests(TestCase):
         self.url = "/"
         self.template = "circulation_desk/index.html"
         self.content = ["Circulation Desk", "Sign-up", "Log-in"]
+        self.redirect = False
     
     # Test page returns a 200 response
     def test_page_returns_200(self):
@@ -94,6 +95,21 @@ class BaseUnitTests(TestCase):
         response = self.client.get(self.url)
         for item in self.content:
             self.assertIn(item.encode(), response.content)
+
+    # Test  redirect when loggged
+    def test_logged_redirect(self):
+        """
+        BASE: Test the redirect response when logged in
+        """
+        if self.redirect:
+            session = self.client.session
+            session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+            session.save()
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, "/")
+        else:
+            self.skipTest("Redirect not expected")
     
 
 # Index specific unit tests
@@ -104,6 +120,7 @@ class IndexUnitTests(TestCase):
         self.url = "/"
         self.template = "circulation_desk/index.html"
         self.content = ["Circulation Desk", "Sign-up", "Log-in"]
+        self.redirect = False
 
     def test_logged_in_npub(self):
         """

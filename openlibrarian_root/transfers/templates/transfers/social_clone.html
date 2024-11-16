@@ -9,7 +9,9 @@
 <form method="post">
     {% csrf_token %}
     <div class="container mt-2">
-        <p class="fw-bold"><i class="fa-solid fa-people-arrows"></i> Import Social Lists</p>
+        <div class="chapter-header">
+            <p>Import Social Lists</p>
+        </div>
     </div>
     {% if session.nsec %}
         <div class="container mt-2">
@@ -18,7 +20,7 @@
                 {{ form.npub }}
                 <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-user-check text-success"></i></span>
             </div>
-            <p>
+            <p class="book-text text-center">
                 Enter the public key of an account where you'd like to import the social lists from. Note that if the muted list is private for this public key, it will not be imported.
             </p>
         </div>

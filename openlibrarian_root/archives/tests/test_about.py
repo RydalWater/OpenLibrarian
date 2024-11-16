@@ -52,3 +52,4 @@ class AboutUnitTestCase(BaseUnitTests):
         self.url = "/archives/"
         self.template = "archives/about.html"
         self.content = ["Current Features", "Privacy", "Log-in", "Home", "Sign-up"]
+        self.redirect = False

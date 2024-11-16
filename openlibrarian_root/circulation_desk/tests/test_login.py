@@ -2,7 +2,6 @@ from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 
-
 class LoginFunctionalTestCase(BaseFunctionalTest):
     """
     Functional Tests for the login page
@@ -13,27 +12,7 @@ class LoginFunctionalTestCase(BaseFunctionalTest):
         """
         self.url = "/login/"
         self.driver = webdriver.Firefox()
-    
-    def test_redirect_npub(self):
-        """
-        Automatic redirect when logged in (NPUB)
-        """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
-    
-    def test_redirect_nsec(self):
-        """
-        Automatic redirect when logged in (NSEC)
-        """
-        session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.redirect = True
     
     def test_login_npub(self):
         """
@@ -65,7 +44,7 @@ class LoginFunctionalTestCase(BaseFunctionalTest):
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
-        self.assertIn("/", self.driver.current_url)
+        self.assertIn("Circulation Desk", self.driver.page_source)
 
     def tearDown(self):
         """
@@ -81,3 +60,4 @@ class LoginUnitTestCase(BaseUnitTests):
         self.url = "/login/"
         self.template = "circulation_desk/login.html"
         self.content = ["Log-in", "NPUB (read-only)", "NSEC (read/write)", "Seed Words (read/write)", "Back"]
+        self.redirect = True

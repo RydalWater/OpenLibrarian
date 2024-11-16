@@ -9,12 +9,12 @@ class TestUrls(TestCase):
     def setUp(self):
         pass
     
-    def test_about_url(self):
+    def test_index_url(self):
         """
-        Test about url in Archives
+        Test index url in Transfers
         """
-        url = reverse('archives:about')
-        self.assertEqual(url, '/archives/')
-        
+        url = reverse('transfers:transfers')
+        self.assertEqual(url, '/transfers/')
+
     def tearDown(self):
         pass

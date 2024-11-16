@@ -37,6 +37,7 @@ class LogoutUnitTestCase(BaseUnitTests):
         self.url = "/logout/"
         self.template = "circulation_desk/logout.html"
         self.content = ["logged out", "Back to Circulation Desk"]
+        self.redirect = False
 
     def test_logout_after_login_npub(self):
         """
