@@ -1,4 +1,5 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.forms import NpubForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import Client
@@ -66,3 +67,19 @@ class LoginNpubUnitTestCase(BaseUnitTests):
         self.assertIn('profile', client.session)
         self.assertIn('libraries', client.session)
         self.assertIn('interests', client.session)
+    
+    def test_post_form_invalid(self):
+        """
+        Test invalid form (empty)
+        """
+        # Check form returns false
+        data = {'npub': ''}
+        form = NpubForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-npub/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+

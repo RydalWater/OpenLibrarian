@@ -1,7 +1,9 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.forms import SeedForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import Client
+from mnemonic import Mnemonic
 
 class LoginSeedFunctionalTestCase(BaseFunctionalTest):
     """
@@ -97,3 +99,38 @@ class LoginSeedUnitTestCase(BaseUnitTests):
         self.assertIn('profile', client.session)
         self.assertIn('libraries', client.session)
         self.assertIn('interests', client.session)
+
+    def test_post_form_invalid(self):
+        """
+        Test invalid form (empty)
+        """
+        # Check form returns false
+        data = {'word1': '', 'word2': '', 'word3': '', 'word4': '', 'word5': '', 'word6': '', 'word7': '', 'word8': '', 'word9': '', 'word10': '', 'word11': '', 'word12': ''}
+        form = SeedForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-seed/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+    
+    def test_post_form_invalid_seed(self):
+        """
+        Test invalid form (value)
+        """
+        # Check form returns true
+        data={'word1': 'apple', 'word2': 'banana', 'word3': 'carrot', 'word4': 'date', 'word5': 'egg', 'word6': 'fish', 'word7': 'grape', 'word8': 'honey', 'word9': 'ice', 'word10': 'juice', 'word11': 'kiwi', 'word12': 'lemon'}
+        form = SeedForm(data)
+        self.assertTrue(form.is_valid())
+
+        # Check seed is invalid
+        self.assertFalse(Mnemonic(language='english').check(mnemonic='apple banana carrot date egg fish grape honey ice juice kiwi lemon'))
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-seed/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertIn('error_message', response.context)
+        self.assertIn('word_list', response.context)

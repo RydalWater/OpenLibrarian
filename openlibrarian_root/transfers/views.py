@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from utils.Session import async_get_session_info, async_logged_in
 from utils.Login import check_npub, check_npub_of_nsec
 from utils.Connections import clone_follow
-from circulation_desk.forms import npubForm
+from circulation_desk.forms import NpubForm
 
 # Create your views here.
 async def transfers(request):
@@ -27,7 +27,7 @@ async def social_clone(request):
             return render(request, 'transfers/social_clone.html', session)
 
     if request.method == 'GET':
-        form = npubForm()
+        form = NpubForm()
         context = {
             'form': form,
             'session': session
@@ -35,7 +35,7 @@ async def social_clone(request):
         return render(request, 'transfers/social_clone.html', context)
 
     if request.method == 'POST':
-        form = npubForm(request.POST)
+        form = NpubForm(request.POST)
         if not form.is_valid():
             context = {
                 'form': form,
@@ -81,7 +81,7 @@ async def profile_clone(request):
             return render(request, 'transfers/profile_clone.html', session)
 
     if request.method == 'GET':
-        form = npubForm()
+        form = NpubForm()
         context = {
             'form': form,
             'session': session
@@ -89,7 +89,7 @@ async def profile_clone(request):
         return render(request, 'transfers/profile_clone.html', context)
 
     if request.method == 'POST':
-        form = npubForm(request.POST)
+        form = NpubForm(request.POST)
         if not form.is_valid():
             context = {
                 'form': form,

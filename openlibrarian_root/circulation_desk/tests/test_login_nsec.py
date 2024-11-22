@@ -1,7 +1,9 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.forms import NsecForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import Client
+from nostr_sdk import Keys
 
 class LoginNsecFunctionalTestCase(BaseFunctionalTest):
     """
@@ -66,3 +68,38 @@ class LoginNsecUnitTestCase(BaseUnitTests):
         self.assertIn('profile', client.session)
         self.assertIn('libraries', client.session)
         self.assertIn('interests', client.session)
+
+    def test_post_form_invalid(self):
+        """
+        Test invalid form (empty)
+        """
+        # Check form returns false
+        data = {'nsec': ''}
+        form = NsecForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-nsec/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+    
+    def test_post_form_invalid_nsec(self):
+        """
+        Test invalid form (value)
+        """
+        # Check form returns true
+        data={'nsec': 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm12345'}
+        form = NsecForm(data)
+        self.assertTrue(form.is_valid())
+
+        # Check NSEC rasies exception
+        with self.assertRaises(Exception):
+            Keys.parse(data['nsec'])
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-nsec/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertIn('error_message', response.context)

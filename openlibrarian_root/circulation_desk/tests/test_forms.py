@@ -1,5 +1,5 @@
 from django.test import TestCase
-from circulation_desk.forms import npubForm, nsecForm, SeedForm
+from circulation_desk.forms import NpubForm, NsecForm, SeedForm
 
 # Unit tests for forms
 class TestForms(TestCase):
@@ -11,18 +11,18 @@ class TestForms(TestCase):
     
     def test_npub_form(self):
         """
-        Test npubForm from Circulation Desk
+        Test NpubForm from Circulation Desk
         """
         data = {'npub': 'npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n'}
-        form = npubForm(data)
+        form = NpubForm(data)
         self.assertTrue(form.is_valid())
 
     def test_nsec_form(self):
         """
-        Test nsecForm from Circulation Desk
+        Test NsecForm from Circulation Desk
         """
         data = {'nsec': 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm'}
-        form = nsecForm(data)
+        form = NsecForm(data)
         self.assertTrue(form.is_valid())
 
     def test_seed_form(self):
