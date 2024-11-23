@@ -1,7 +1,6 @@
 from django.test import TestCase
 from utils.Book import Book, get_cover
 import aiohttp
-import responses
 
 class BookUnitTest(TestCase):
     def setUp(self):
