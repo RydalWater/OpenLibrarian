@@ -14,29 +14,29 @@ class AboutFunctionalTestCase(BaseFunctionalTest):
         self.url = "/archives/"
         self.driver = webdriver.Firefox()
         
-    def test_home(self):
+    def test_back(self):
         """
-        Test home button
+        Test back button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.driver.find_element(by=By.ID, value="home").click()
+        self.driver.find_element(by=By.ID, value="back").click()
         self.assertIn("/", self.driver.current_url)
     
-    def test_login(self):
+    def test_update(self):
         """
-        Test login button
+        Test updates button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.driver.find_element(by=By.ID, value="login").click()
-        self.assertIn("/login/", self.driver.current_url)
+        self.driver.find_element(by=By.ID, value="updates").click()
+        self.assertIn("/archives/updates/", self.driver.current_url)
     
-    def test_signup(self):
+    def test_privacy(self):
         """
-        Test signup button
+        Test privacy button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.driver.find_element(by=By.ID, value="signup").click()
-        self.assertIn("/create-account/", self.driver.current_url)
+        self.driver.find_element(by=By.ID, value="privacy").click()
+        self.assertIn("/archives/privacy/", self.driver.current_url)
 
     def tearDown(self):
         """
@@ -51,5 +51,5 @@ class AboutUnitTestCase(BaseUnitTests):
     def setUp(self):
         self.url = "/archives/"
         self.template = "archives/about.html"
-        self.content = ["Current Features", "Privacy", "Log-in", "Home", "Sign-up"]
+        self.content = ["About", "Updates & Features", "Privacy Policy", "Back"]
         self.redirect = False

@@ -1,0 +1,19 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+    <div class="container mt-2">
+        <div class="chapter-header">
+            <p>Privacy</p>
+        </div>
+        <p class="book-text"><span class="dropcap">W</span>e don't collect any personal information. Your keys and other data live on your browser in the cache and all signatures happen locally, there is no backend server.</p>
+        <p class="book-text">We do not track you except with cross-site request forgery protection. Therefore, we are not responsible for any misuse of this app.</p>
+        <p class="book-text">Similarly, we are not responsible for any data which you share with relays please review the relay specific data policies (where available) for more details.</p>
+        <p class="book-text">This app is open source and available under MIT License on <a href="https://github.com/RydalWater/OpenLibrarian" target="_blank">GitHub</a>.</p>
+        <p class="book-text text-center"><b>Thank you for using Open Librarian!</b></p>
+    </div>
+    <div class="container">
+        <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
+            <a id="back" href="{% url 'archives:about' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        </div>
+    </div>
+{% endblock content %}

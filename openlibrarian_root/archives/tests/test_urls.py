@@ -15,6 +15,20 @@ class TestUrls(TestCase):
         """
         url = reverse('archives:about')
         self.assertEqual(url, '/archives/')
+    
+    def test_updates_url(self):
+        """
+        Test updates url in Archives
+        """
+        url = reverse('archives:updates')
+        self.assertEqual(url, '/archives/updates/')
+    
+    def test_privacy_url(self):
+        """
+        Test privacy url in Archives
+        """
+        url = reverse('archives:privacy')
+        self.assertEqual(url, '/archives/privacy/')
         
     def tearDown(self):
         pass
