@@ -17,7 +17,7 @@
         {% if session.nsec %}
             <div class="input-group input-group-sm">
                 <input class="form-control" type="text", name="follow_user", placeholder="Enter a Users Public Key or NIP05 Address" aria-describedby="upload"></input>
-                <button class="btn btn-outline-secondary" type="submit" id="submit" name="follow" value="add"><i class="fa-solid fa-plus"></i></button>
+                <button class="btn btn-outline-secondary" type="submit" id="follow" name="follow" value="Follow"><i class="fa-solid fa-plus"></i></button>
             </div>
         {% endif %}
         <div class="accordion mt-2" id="socialAccordion">
@@ -96,9 +96,9 @@
     
     <!-- Save/Refresh Button -->
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
-        <a id="nsec" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
-            <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
         {% endif %}
     </div>
 

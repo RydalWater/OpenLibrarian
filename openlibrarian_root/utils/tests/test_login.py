@@ -41,6 +41,9 @@ class LoginUnitTests(TestCase):
         nsec = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
         npub = "npub1039j8zfxafe5xtx5qhmjf02rv7upgwgx54kd35e5qehj36egkjuqx9f704"
         self.assertFalse(check_npub_of_nsec(npub, nsec))
+
+        npub = ""
+        self.assertFalse(check_npub_of_nsec(npub, nsec))
     
     def test_check_npub_of_nsec_valid(self):
         """
@@ -52,9 +55,15 @@ class LoginUnitTests(TestCase):
 
     def test_check_mnemonic_invalid(self):
         """
-        Test Invalid Mnemonic value
+        Test Invalid Mnemonic values
         """
         mnemonic = "apple banana cherry date egg fig grape honey ice juice kiwi lemon"
+        self.assertFalse(check_mnemonic(mnemonic))
+
+        mnemonic = "apple banana cherry date egg fig grape honey ice juice kiwi"
+        self.assertFalse(check_mnemonic(mnemonic))
+
+        mnemonic = "apple banana cherry date egg fig grape honey ice juice kiwi lemon mango"
         self.assertFalse(check_mnemonic(mnemonic))
     
     def test_check_mnemonic_valid(self):

@@ -3,7 +3,6 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from utils.Login import check_npub, check_nsec, check_mnemonic
 
-
 class CreateAccountFunctionalTestCase(BaseFunctionalTest):
     """
     Functional Tests for the create account page
@@ -14,35 +13,15 @@ class CreateAccountFunctionalTestCase(BaseFunctionalTest):
         """
         self.url = "/create-account/"
         self.driver = webdriver.Firefox()
-    
-    def test_redirect_npub(self):
-        """
-        Automatic redirect when logged in (NPUB)
-        """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
-    
-    def test_redirect_nsec(self):
-        """
-        Automatic redirect when logged in (NSEC)
-        """
-        session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.redirect = True
     
     def test_back(self):
         """
-        Login with Back Button
+        Test Back Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
-        self.assertIn("/", self.driver.current_url)
+        self.assertIn("Circulation Desk", self.driver.page_source)
     
     def test_generate_keys(self):
         """
@@ -101,6 +80,7 @@ class CreateAccountUnitTestCase(BaseUnitTests):
         self.url = "/create-account/"
         self.template = "circulation_desk/create_account.html"
         self.content = ["Sign-up", "Secret Key", "Public Key", "Generate Keys", "Back"]
+        self.redirect = True
     
     def test_redirect_post(self):
         """

@@ -3,32 +3,34 @@
 {% block content %}
 
 <div class="container mt-2">
-    <p class="fw-bold">Transfers</p>
-    <p>Here you'll be able to import existing content from elsewhere or export your content.</p>
+    <div class="chapter-header">
+        <p>Transfers</p>
+    </div>
+    <p class="book-text text-center">Here you'll be able to import existing content from elsewhere or export your content.</p>
 </div>
 
 <div class="container">
     <div class="row">
         <div class="col-1"></div>
         <div class="col-10">
-            <a id="npub" href="{% url 'transfers:social_clone' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-people-arrows"></i> Import Social Lists</a>
+            <a id="social" href="{% url 'transfers:social_clone' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-people-arrows"></i> Import Social Lists</a>
         </div>
     </div>
     <div class="row mt-2">
         <div class="col-1"></div>
         <div class="col-10">
-            <a id="nsec" href="{% url 'transfers:profile_clone' %}" class="btn btn-sm btn-primary w-100 disabled"><i class="fa-solid fa-id-badge"></i> Import Profile</a>
+            <a id="profile" href="{% url 'transfers:profile_clone' %}" class="btn btn-sm btn-primary w-100 disabled"><i class="fa-solid fa-id-badge"></i> Import Profile</a>
         </div>
     </div>
     <div class="row mt-2">
         <div class="col-1"></div>
         <div class="col-10">
-            <a id="nsec" href="{% url 'transfers:transfers' %}" class="btn btn-sm btn-primary w-100 disabled"><i class="fa-solid fa-list-check"></i> Import Reading Lists</a>
+            <a id="reading" href="{% url 'transfers:transfers' %}" class="btn btn-sm btn-primary w-100 disabled"><i class="fa-solid fa-list-check"></i> Import Reading Lists</a>
         </div>
     </div>
 
     <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
-        <a href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
     </div>
 </div>
 

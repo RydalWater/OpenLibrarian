@@ -7,7 +7,7 @@ from utils.Login import check_npub, check_nsec, check_mnemonic
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries
 from utils.Interests import fetch_interests
-from circulation_desk.forms import SeedForm, npubForm, nsecForm
+from circulation_desk.forms import SeedForm, NpubForm, NsecForm
 import asyncio
 
 # Basic view for home page
@@ -34,14 +34,14 @@ async def login_npub_view(request):
         return redirect('circulation_desk:index')
     
     if request.method == 'GET':
-        form = npubForm()
+        form = NpubForm()
         context = {
             'form': form
         }
         return render(request, 'circulation_desk/login_npub.html', context)
 
     if request.method == 'POST':
-        form = npubForm(request.POST)
+        form = NpubForm(request.POST)
         if not form.is_valid():
             context = {
                 'form': form
@@ -75,14 +75,14 @@ async def login_nsec_view(request):
         return redirect('circulation_desk:index')
     
     if request.method == 'GET':
-        form = nsecForm()
+        form = NsecForm()
         context = {
             'form': form
         }
         return render(request, 'circulation_desk/login_nsec.html', context)
 
     if request.method == 'POST':
-        form = nsecForm(request.POST)
+        form = NsecForm(request.POST)
         if not form.is_valid():
             context = {
                 'form': form
@@ -209,7 +209,7 @@ async def create_account_confirm_view(request):
     temp_keys = await async_get_temp_keys(request)
 
     # If not already logged in then redirect to the home page
-    if await async_logged_in(request) == False and temp_keys['tnpub'] is None:
+    if await async_logged_in(request) == True or temp_keys['tnpub'] is None:
         return redirect('circulation_desk:index')
     
     # Get full list of possible words

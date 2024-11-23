@@ -1,8 +1,9 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.forms import SeedForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import Client
-
+from mnemonic import Mnemonic
 
 class LoginSeedFunctionalTestCase(BaseFunctionalTest):
     """
@@ -14,27 +15,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         """
         self.url = "/login-seed/"
         self.driver = webdriver.Firefox()
-    
-    def test_redirect_npub(self):
-        """
-        Automatic redirect when logged in (NPUB)
-        """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
-    
-    def test_redirect_nsec(self):
-        """
-        Automatic redirect when logged in (NSEC)
-        """
-        session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.redirect = True
     
     def test_invalid_seed(self):
         """
@@ -75,7 +56,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="word11").send_keys("next")
         self.driver.find_element(by=By.ID, value="word12").send_keys("quantum")
         self.driver.find_element(by=By.ID, value="submit").click()
-        self.assertIn("/", self.driver.current_url)
+        self.assertNotIn("/login-seed/", self.driver.current_url)
     
     def test_back(self):
         """
@@ -99,6 +80,7 @@ class LoginSeedUnitTestCase(BaseUnitTests):
         self.url = "/login-seed/"
         self.template = "circulation_desk/login_seed.html"
         self.content = ["Log-in", "Seed Words (read/write)", "Back"]
+        self.redirect = True
     
     def test_login_session_data(self):
         """
@@ -117,3 +99,38 @@ class LoginSeedUnitTestCase(BaseUnitTests):
         self.assertIn('profile', client.session)
         self.assertIn('libraries', client.session)
         self.assertIn('interests', client.session)
+
+    def test_post_form_invalid(self):
+        """
+        Test invalid form (empty)
+        """
+        # Check form returns false
+        data = {'word1': '', 'word2': '', 'word3': '', 'word4': '', 'word5': '', 'word6': '', 'word7': '', 'word8': '', 'word9': '', 'word10': '', 'word11': '', 'word12': ''}
+        form = SeedForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-seed/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+    
+    def test_post_form_invalid_seed(self):
+        """
+        Test invalid form (value)
+        """
+        # Check form returns true
+        data={'word1': 'apple', 'word2': 'banana', 'word3': 'carrot', 'word4': 'date', 'word5': 'egg', 'word6': 'fish', 'word7': 'grape', 'word8': 'honey', 'word9': 'ice', 'word10': 'juice', 'word11': 'kiwi', 'word12': 'lemon'}
+        form = SeedForm(data)
+        self.assertTrue(form.is_valid())
+
+        # Check seed is invalid
+        self.assertFalse(Mnemonic(language='english').check(mnemonic='apple banana carrot date egg fish grape honey ice juice kiwi lemon'))
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-seed/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+        self.assertIn('error_message', response.context)
+        self.assertIn('word_list', response.context)

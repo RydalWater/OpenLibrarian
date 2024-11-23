@@ -29,13 +29,13 @@ async def send_notification(book: dict, nsec: str, nym_relays: dict, note_type: 
         # Construct event
         if text is None:
             if note_type == "st":
-                text = f"I just started reading '{title}' by {author} and am tracking my progress on www.OpenLibrarian.com"
+                text = f"I just started reading '{title}' by {author} and am tracking my progress on www.OpenLibrarian.com \n"
             elif note_type == "en" and score:
-                text = f"I just finished reading '{title}' by {author} and gave it {score} out of 5 stars! \n\n I am tracking my progress on www.OpenLibrarian.com"
+                text = f"I just finished reading '{title}' by {author} and gave it {score} out of 5 stars! \n\n I am tracking my progress on www.OpenLibrarian.com \n"
             elif note_type == "en" and score:
-                text = f"I just finished reading '{title}' by {author}. \n\n I am tracking my progress on www.OpenLibrarian.com"
+                text = f"I just finished reading '{title}' by {author}. \n\n I am tracking my progress on www.OpenLibrarian.com \n"
             elif note_type == "rv":
-                text = f"I just reviewed '{title}' by {author} and gave it {score} out of 5 stars! \n\n I am tracking my ratings on www.OpenLibrarian.com"
+                text = f"I just reviewed '{title}' by {author} and gave it {score} out of 5 stars! \n\n I am tracking my ratings on www.OpenLibrarian.com \n"
         elif text:
             # TODO: Add ability for users to change their notification message text. 
             pass

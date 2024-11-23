@@ -1,4 +1,5 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.forms import NpubForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import Client
@@ -13,27 +14,7 @@ class LoginNpubFunctionalTestCase(BaseFunctionalTest):
         """
         self.url = "/login-npub/"
         self.driver = webdriver.Firefox()
-    
-    def test_redirect_npub(self):
-        """
-        Automatic redirect when logged in (NPUB)
-        """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
-    
-    def test_redirect_nsec(self):
-        """
-        Automatic redirect when logged in (NSEC)
-        """
-        session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.redirect = True
     
     def test_invalid_npub(self):
         """
@@ -45,18 +26,9 @@ class LoginNpubFunctionalTestCase(BaseFunctionalTest):
         self.assertIn("/login-npub/", self.driver.current_url)
         self.assertIn("Invalid NPUB", self.driver.page_source)
     
-    def test_valid_npub(self):
-        """
-        Test Valid NPUB value
-        """
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
-        self.driver.find_element(by=By.ID, value="submit").click()
-        self.assertIn("/", self.driver.current_url)
-    
     def test_back(self):
         """
-        Login with Back Button
+        Test Back Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
@@ -76,6 +48,7 @@ class LoginNpubUnitTestCase(BaseUnitTests):
         self.url = "/login-npub/"
         self.template = "circulation_desk/login_npub.html"
         self.content = ["Log-in", "NPUB (read-only)", "Back"]
+        self.redirect = True
     
     def test_login_session_data(self):
         """
@@ -94,3 +67,19 @@ class LoginNpubUnitTestCase(BaseUnitTests):
         self.assertIn('profile', client.session)
         self.assertIn('libraries', client.session)
         self.assertIn('interests', client.session)
+    
+    def test_post_form_invalid(self):
+        """
+        Test invalid form (empty)
+        """
+        # Check form returns false
+        data = {'npub': ''}
+        form = NpubForm(data)
+        self.assertFalse(form.is_valid())
+
+        # Test post request with invalid data
+        client = Client()
+        response = client.post('/login-npub/', data)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('form', response.context)
+

@@ -1,9 +1,10 @@
-from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
+from circulation_desk.tests.test_index import BaseFunctionalTest
+from circulation_desk.forms import SeedForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from utils.Login import check_npub, check_nsec, check_mnemonic
 from django.test import TestCase, Client
-
+from mnemonic import Mnemonic
+from nostr_sdk import Keys
 
 class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
     """
@@ -15,37 +16,17 @@ class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
         """
         self.url = "/create-account-confirm/"
         self.driver = webdriver.Firefox()
-    
-    def test_redirect_npub(self):
-        """
-        Automatic redirect when logged in (NPUB)
-        """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
-    
-    def test_redirect_nsec(self):
-        """
-        Automatic redirect when logged in (NSEC)
-        """
-        session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        self.assertIn("/", self.driver.current_url)
+        self.redirect = True
     
     def test_back(self):
         """
-        Login with Back Button
+        Test Back Button
         """
         self.driver.get("http://127.0.0.1:8000/create-account/")
         self.driver.find_element(by=By.ID, value="seed-gen").click()
         self.driver.find_element(by=By.ID, value="save-seed").click()
         self.driver.find_element(by=By.ID, value="back").click()
-        self.assertIn("/", self.driver.current_url)
+        self.assertIn("Circulation Desk", self.driver.page_source)
     
     def test_correct_seed(self):
         """
@@ -128,3 +109,101 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         response = self.client.get(self.url)
         for item in self.content:
             self.assertIn(item.encode(), response.content)
+    
+    def test_logged_redirect(self):
+        """
+        Test the redirect response when logged in
+        """
+        session = self.client.session
+        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+    
+    def test_tnpub_redirect(self):
+        """
+        Test the redirect response when tnpub is None
+        """
+        session = self.client.session
+        session["tnpub"] = None
+        session.save()
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 302)
+    
+    def test_post_valid_form_invalid_mnemonic(self):
+        """
+        Post with valid form but invalid mnemonic
+        """
+        session = self.client.session
+        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session.save()
+        form_data = {'word1': 'apple', 'word2': 'banana', 'word3': 'carrot', 'word4': 'date', 'word5': 'egg', 'word6': 'fish', 'word7': 'grape', 'word8': 'honey', 'word9': 'ice', 'word10': 'jelly', 'word11': 'kumquat', 'word12': 'lemon'}
+        word_list = Mnemonic("english").wordlist 
+        form = SeedForm(form_data)
+        self.assertTrue(form.is_valid())
+        # Check context values
+        response = self.client.post(self.url, data=form_data)
+        self.assertEqual(response.context["tnpub"], "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.assertEqual(response.context["private_key_confirmed"],"Invalid mnemonic")
+        self.assertEqual(response.context["word_list"], word_list)
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_invalid_form(self):
+        """
+        Post with invalid form
+        """
+        session = self.client.session
+        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session.save()
+        form_data = {'word1': 'apple', 'word2': 'banana', 'word3': 'carrot', 'word4': 'date'}
+        word_list = Mnemonic("english").wordlist 
+        form = SeedForm(form_data)
+        self.assertFalse(form.is_valid())
+        # Check context values
+        response = self.client.post(self.url, data=form_data)
+        self.assertEqual(response.context["tnpub"], "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.assertEqual(response.context["private_key_confirmed"],None)
+        self.assertEqual(response.context["word_list"], word_list)
+        self.assertEqual(response.status_code, 200)
+    
+    def test_post_valid_mnemonic_fail_npub(self):
+        """
+        Post with valid mnemonic not matching npub
+        """
+        session = self.client.session
+        keys = Keys.generate()
+        session["tnsec"] = keys.secret_key().to_bech32()
+        session["tnpub"] = keys.public_key().to_bech32()
+        session.save()
+        form_data = {'word1':'engine', 'word2':'survey', 'word3':'rich', 'word4':'year', 'word5':'woman', 'word6':'keen', 'word7':'thrive', 'word8':'clip', 'word9':'patrol', 'word10':'patrol', 'word11':'next', 'word12':'quantum'}
+        form = SeedForm(form_data)
+        self.assertTrue(form.is_valid())
+        # Check context values
+        response = self.client.post(self.url, data=form_data)
+        self.assertEqual(response.context["tnpub"], session["tnpub"])
+        self.assertEqual(response.context["private_key_confirmed"],"Mnemonic does not match NPUB")
+        self.assertEqual(response.status_code, 200)
+    
+    def test_post_success(self):
+        """
+        Post with valid mnemonic matching npub (success)
+        """
+        session = self.client.session
+        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session.save()
+        form_data = {'word1':'engine', 'word2':'survey', 'word3':'rich', 'word4':'year', 'word5':'woman', 'word6':'keen', 'word7':'thrive', 'word8':'clip', 'word9':'patrol', 'word10':'patrol', 'word11':'next', 'word12':'quantum'}
+        form = SeedForm(form_data)
+        self.assertTrue(form.is_valid())
+        response = self.client.post(self.url, data=form_data)
+        self.assertEqual(response.status_code, 200)
+        session = self.client.session
+        self.assertEqual(session["tnpub"], None)
+        self.assertEqual(session["tnsec"], None)
+        self.assertEqual(session["npub"], "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.assertEqual(session["nsec"], "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm")
+        self.assertIn("libraries", session.keys())
+        self.assertIn("interests", session.keys())
+        self.assertIn("relays", session.keys())

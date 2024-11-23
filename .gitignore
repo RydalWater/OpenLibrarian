@@ -6,3 +6,5 @@ node_modules
 staticfiles
 package.json
 package-lock.json
+.coverage
+/htmlcov

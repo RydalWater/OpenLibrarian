@@ -16,7 +16,7 @@ class BaseFunctionalTest(TestCase):
     
     def test_click_archives(self):
         """
-        Click on archives button
+        BASE: Click on archives button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="about").click()
@@ -68,11 +68,12 @@ class BaseUnitTests(TestCase):
         self.url = "/"
         self.template = "circulation_desk/index.html"
         self.content = ["Circulation Desk", "Sign-up", "Log-in"]
+        self.redirect = False
     
     # Test page returns a 200 response
     def test_page_returns_200(self):
         """
-        Page returns a 200 response
+        BASE: Page returns a 200 response
         """
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -80,7 +81,7 @@ class BaseUnitTests(TestCase):
     # Test template is correct
     def test_page_template(self):
         """
-        Check page templates (inc. base.html)
+        BASE: Check page templates (inc. base.html)
         """
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, self.template)
@@ -89,11 +90,26 @@ class BaseUnitTests(TestCase):
     # Test Page features.
     def test_page_has_content(self):
         """
-        Check page for specific fields
+        BASE: Check page for specific fields
         """
         response = self.client.get(self.url)
         for item in self.content:
             self.assertIn(item.encode(), response.content)
+
+    # Test  redirect when loggged
+    def test_logged_redirect(self):
+        """
+        BASE: Test the redirect response when logged in
+        """
+        if self.redirect:
+            session = self.client.session
+            session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+            session.save()
+            response = self.client.get(self.url)
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(response.url, "/")
+        else:
+            self.skipTest("Redirect not expected")
     
 
 # Index specific unit tests
@@ -104,6 +120,7 @@ class IndexUnitTests(TestCase):
         self.url = "/"
         self.template = "circulation_desk/index.html"
         self.content = ["Circulation Desk", "Sign-up", "Log-in"]
+        self.redirect = False
 
     def test_logged_in_npub(self):
         """

@@ -83,17 +83,17 @@
                 {% endif %}
                 <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
                     {% if owner %}
-                        <button type="submit" name="home" value="true" class="btn btn-sm btn-secondary w-50">
+                        <button type="submit" id="home" name="home" value="true" class="btn btn-sm btn-secondary w-50">
                             <i class="fa-solid fa-home"></i> Home
                         </button>
-                        <button id="copyButton" value="{{ request.build_absolute_uri }}" name="share" value="true" class="btn btn-sm btn-primary w-50">
+                        <button id="copyButton" id="share" value="{{ request.build_absolute_uri }}" name="share" value="true" class="btn btn-sm btn-primary w-50">
                             <i class="fa-solid fa-share"></i> Share
                         </button>
                     {% else %}
-                        <button type="submit" name="explore" value="true" class="btn btn-sm btn-secondary w-50">
+                        <button type="submit" id="explore" name="explore" value="true" class="btn btn-sm btn-secondary w-50">
                             <i class="fa-solid fa-magnifying-glass"></i> Explore
                         </button>
-                        <button type="submit" name="new" value="true" class="btn btn-sm btn-primary w-50">
+                        <button type="submit" id="new" name="new" value="true" class="btn btn-sm btn-primary w-50">
                             <i class="fa-solid fa-plus"></i> New
                         </button>
                     {% endif %}
