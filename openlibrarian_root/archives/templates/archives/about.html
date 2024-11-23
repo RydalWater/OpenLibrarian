@@ -3,41 +3,25 @@
 {% block content %}
     <div class="container mt-2">
         <div class="chapter-header">
-            <p>Current Features</p>
+            <p>About</p>
         </div>
-        <ul class="list-group text-start">
-            <li class="list-group-item">User profile</li>
-            <li class="list-group-item">Relays</li>
-            <li class="list-group-item">Friends</li>
-            <li class="list-group-item">Search for Books</li>
-            <li class="list-group-item">Interests</li>
-            <li class="list-group-item">Manage Library Shelves</li>
-            <li class="list-group-item">Import Friends/Foes Lists</li>
-        </ul>
+        <p class="book-text text-center">This section includes useful information about Open Librarian and our policies.</p>
     </div>
-    <div class="container mt-2">
-        <div class="chapter-header">
-            <p>Privacy</p>
-        </div>
-        <p class="book-text"><span class="dropcap">W</span>e don't collect any personal information. Your keys and other data live on your browser in the cache and all signatures happen locally, there is no backend server.</p>
-        <p class="book-text">We do not track you except with cross-site request forgery protection. Therefore, we are not responsible for any misuse of this app.</p>
-        <p class="book-text">Similarly, we are not responsible for any data which you share with relays please review the relay specific data policies (where available) for more details.</p>
-        <p class="book-text">This app is open source and available under MIT License on <a href="https://github.com/RydalWater/OpenLibrarian" target="_blank">GitHub</a>. <b>Thank you for using Open Librarian!</b></p>
-    </div>
-{% if not npub %}
-    <div class="container mt-2">
+    <div class="container">
         <div class="row">
-            <div class="col">
-                <a id="login" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
-            </div>
-            <div class="col">
-                <a id="home" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-house"></i> Home</a>
-            </div>
-            <div class="col">
-                <a  id="signup" href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
+            <div class="col-1"></div>
+            <div class="col-10">
+                <a id="updates" href="{% url 'archives:updates' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-newspaper"></i> Updates & Features</a>
             </div>
         </div>
+        <div class="row mt-2">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <a id="privacy" href="{% url 'archives:privacy' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-lock"></i> Privacy Policy</a>
+            </div>
+        </div>
+        <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
+            <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        </div>
     </div>
-{% endif %}
-
 {% endblock content %}

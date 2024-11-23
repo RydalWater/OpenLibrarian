@@ -1,0 +1,53 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% block content %}
+    <div class="container mt-2">
+        <div class="chapter-header">
+            <p>Features</p>
+        </div>
+
+        <!-- Features Section -->
+        <div class="mb-2">
+            <ul class="list-inline">
+                <li class="list-inline-item badge rounded-pill bg-primary">User profile</li>
+                <li class="list-inline-item badge rounded-pill bg-primary">Relays</li>
+                <li class="list-inline-item badge rounded-pill bg-primary">Friends</li>
+                <li class="list-inline-item badge rounded-pill bg-primary">Interests</li>
+                <li class="list-inline-item badge rounded-pill bg-primary">Search Books</li>
+                <li class="list-inline-item badge rounded-pill bg-primary">Manage Library Shelves</li>
+                <li class="list-inline-item badge rounded-pill bg-primary">Import Friends/Foes</li>
+            </ul>
+        </div>
+
+        <!-- Updates Section -->
+        <div class="container mt-2">
+            <div class="chapter-header">
+                <p>Releases</p>
+            </div>
+        </div>
+          
+        <!-- Accordion for Release Notes -->
+        <div class="accordion" id="releaseNotesAccordion" style="height: 40vh; overflow-y: auto;">
+            {% for version, release_info in release_info.items %}
+                <div class="accordion-item">
+                    <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="false" aria-controls="collapse{{ forloop.counter }}">
+                            {{ version }} - [{{ release_info.release_date }}]
+                        </button>
+                    </h2>
+                    <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#releaseNotesAccordion">
+                        <div class="accordion-body px-0">
+                            <div class="accordion-body"><pre class="text-start text-wrap custom-pre-style">{{ release_info.release_notes | safe }}</pre></div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="container">
+        <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
+            <a id="back" href="{% url 'archives:about' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        </div>
+    </div>
+
+{% endblock content %}

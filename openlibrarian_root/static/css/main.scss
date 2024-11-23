@@ -79,3 +79,9 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 .chapter-header p:after {
   right: -1em;
 }
+.custom-pre-style {
+  margin: 0;
+  padding: 0;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
