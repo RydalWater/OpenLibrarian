@@ -38,7 +38,7 @@ class Book:
                 self.isbn = kwargs["url"].split("/")[4].split(".")[0]
                 self.url = kwargs["url"] 
             if "Hidden" in self.isbn:   
-                self.title = f"Mysterious Book"
+                self.title = "Mysterious Book"
                 self.author = "Unknown Author"
                 self.cover = "M"
             else:   

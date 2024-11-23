@@ -182,8 +182,10 @@ async def user_friends(request):
                 notification = await add_follow(session['relays'], npub=session['npub'], nsec=session['nsec'], follow_id=request.POST.get('follow_user'))                    
             elif request.POST.get('follow'):
                 notification = "Please provide npub or nip05."
-            else:
+            elif request.POST.get('refresh'):
                 notification = "Refreshed."
+            else:
+                raise Exception("Invalid request.")
 
             # Fetch lists again
             friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")

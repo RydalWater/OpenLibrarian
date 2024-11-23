@@ -1,7 +1,7 @@
-from circulation_desk.tests.test_index import BaseFunctionalTest
-from django.test import TestCase, LiveServerTestCase
+from django.test import TestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from time import sleep
 
 
 class CardFunctionalTestCase(TestCase):
@@ -39,6 +39,7 @@ class CardFunctionalTestCase(TestCase):
         self.driver.get(f"http://127.0.0.1:8000/login-nsec/")
         self.driver.find_element(by=By.ID, value="nsec").send_keys("nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm")
         self.driver.find_element(by=By.ID, value="submit").click()
+        sleep(1)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.assertIn("Home", self.driver.page_source)
         self.assertIn("Share", self.driver.page_source)

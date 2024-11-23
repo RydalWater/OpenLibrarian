@@ -76,7 +76,7 @@
                 <label for="add_relay_url" class="form-label mt-1 book-text text-center fw-bold">Add Relay</label>
                 <div class="input-group input-group-sm">
                     <input class="form-control" type="text", name="add_relay_url", placeholder="Enter a relay and click add"></input>
-                    <button class="btn btn-sm btn-outline-secondary" type="submit" name="add_relay" value="Save">Add</button>
+                    <button class="btn btn-sm btn-outline-secondary" type="submit" name="add_relay" value="Add">Add</button>
                 </div>
             </div>
             <div class="form-check form-check-inline mt-2">
@@ -92,7 +92,7 @@
     </div>
     <!-- Save/Refresh Button -->
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
-        <a href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if nsec %}
             <button class="btn btn-sm btn-primary w-50" type="submit", name="cancel", value="Cancel"><i class="fa-solid fa-trash-can-arrow-up"></i> Cancel</button>
             <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
