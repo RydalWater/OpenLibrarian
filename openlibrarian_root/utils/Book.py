@@ -1,6 +1,7 @@
 import aiohttp, asyncio, os
 
 api_url = "https://openlibrary.org/search.json"
+alt_api_url = "https://www.googleapis.com/books/v1/volumes"
 
 email_address = os.getenv("EMAIL_ADDY")
 
@@ -12,7 +13,23 @@ async def get_cover(session: aiohttp.ClientSession, isbn: str, size: str):
     """Get cover image from Open Library API"""
     image = f"https://covers.openlibrary.org/b/isbn/{isbn}-{size}.jpg"
     async with session.get(image) as response:
-        return "Y" if "content-type" in response.headers else "N"
+        if "content-type" in response.headers:
+            return image 
+        else:
+            response = await session.get(alt_api_url, params={"q": "isbn:" + isbn})
+            if response.status != 200:
+                return "N"
+            else:
+                data = await response.json()
+                if "items" in data and "imageLinks" in data["items"][0]["volumeInfo"]:
+                    image = data["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
+                    async with session.get(image) as response:
+                        if "content-type" in response.headers:
+                            return image
+                        else:
+                            return "N"
+                else:
+                    return "N"
 
 class Book:
     """
@@ -73,7 +90,7 @@ class Book:
                             else:
                                 self.author = "Unknown Author"
         
-                            self.cover = await get_cover(session, self.isbn, "S")
+                            self.cover = await get_cover(session, self.isbn, "M")
         
                     except Exception as e:
                         print(f"An error occurred: {e}")            

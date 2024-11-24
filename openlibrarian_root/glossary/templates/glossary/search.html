@@ -81,8 +81,8 @@
                     <div class="card mb-2">
                         <div class="d-flex flex-wrap align-items-center g-0">
                             <div class="col-2 image-container p-1">
-                                {% if result.cover == "Y" %}
-                                    <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" class="img-fluid rounded" alt="cover-img">
+                                {% if result.cover != "N" %}
+                                    <img src="{{ result.cover }}" class="img-fluid rounded" alt="cover-img">
                                 {% else %}
                                     <img src="{% static 'images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
                                 {% endif %}
@@ -122,8 +122,8 @@
                                 <h1 class="modal-title fs-5" id="BookDetails">{{ result.title }}</h1>
                             </div>
                             <div class="modal-body">
-                                {% if result.cover == "Y" %}
-                                    <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
+                                {% if result.cover != "N" %}
+                                    <img src="{{ result.cover }}" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
                                 {% else %}
                                     <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                 {% endif %}
@@ -156,8 +156,8 @@
                                 <h1 class="modal-title fs-5" id="AddBook">{{ result.title }}</h1>
                             </div>
                             <div class="modal-body">
-                                {% if result.cover == "Y" %}
-                                    <img src="https://covers.openlibrary.org/b/isbn/{{result.isbn}}-M.jpg" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
+                                {% if result.cover != "N" %}
+                                    <img src="{{ result.cover }}" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
                                 {% else %}
                                     <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                 {% endif %}

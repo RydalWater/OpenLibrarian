@@ -1,10 +1,12 @@
-import aiohttp, asyncio
+import aiohttp, asyncio, os
 from utils.Book import get_cover
 
 api_url = "https://openlibrary.org/search.json"
 
+email_address = os.getenv("EMAIL_ADDY")
+
 headers = {
-    "User-Agent": "Unknown Application (no name yet, watch this space!!) - mynima@protonmail.com",
+    "User-Agent": f"Open Librarian (A FOSS book tracker powered by Nostr) - {email_address}",
 }
 
 async def search_books(**kwargs):
@@ -58,7 +60,7 @@ async def search_books(**kwargs):
                 
                 # List of tasks to gather covers concurrently
                 cover_tasks = [
-                    get_cover(session, doc["isbn"][0], "S") for doc in valid_docs
+                    get_cover(session, doc["isbn"][0], "M") for doc in valid_docs
                 ]
                 
                 # Gather all cover tasks concurrently
