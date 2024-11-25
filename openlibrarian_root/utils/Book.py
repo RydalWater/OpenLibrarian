@@ -68,31 +68,49 @@ class Book:
                 self.hidden = "N"
     
     async def get_book(self):
-        """Get book information from Open Library API using ISBN endpoint"""
+        """Get book information from Open Library API using ISBN endpoint (falling back to google books API)"""
         if self.url != "":
+            alt_api = False
+            alt_url = ""
             async with aiohttp.ClientSession() as session:
                 if self.author is None:
                     try:
                         async with session.get(self.url, headers=headers) as response:
-                            if response.status != 200:
-                                print(f"Error: {response.status} with ISBN: {self.isbn}")
-                                return None
-        
-                            response_json = await response.json()
-                            self.title = response_json["title"]
-        
-                            if "authors" in response_json:
-                                author_urls = [f"https://openlibrary.org{author['key']}.json" for author in response_json["authors"] if author.get('key')]
-                                author_responses = await asyncio.gather(*[self.fetch_author(session, url) for url in author_urls])
-        
-                                authors = [author["name"] for author in author_responses if author]
-                                self.author = ", ".join(authors)
+                            if response.status == 200:
+                                response_json = await response.json()
+                                self.title = response_json["title"]
+            
+                                if "authors" in response_json:
+                                    author_urls = [f"https://openlibrary.org{author['key']}.json" for author in response_json["authors"] if author.get('key')]
+                                    author_responses = await asyncio.gather(*[self.fetch_author(session, url) for url in author_urls])
+            
+                                    authors = [author["name"] for author in author_responses if author]
+                                    self.author = ", ".join(authors)
+                                else:
+                                    self.author = "Unknown Author"
                             else:
-                                self.author = "Unknown Author"
+                                alt_api = True
+                                alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
+                        if alt_api:
+                            async with session.get(alt_url, headers=headers) as response:
+                                if response.status == 200:
+                                    response_json = await response.json()
+                                    self.title = response_json["items"][0]["volumeInfo"]["title"]
+                                    authors = [author for author in response_json["items"][0]["volumeInfo"]["authors"]]
+                                    self.author = ", ".join(authors)
+                                    if self.author == None:
+                                        self.author = "Cannot find author"
+                                    if self.title == None:
+                                        self.title = "Cannot find title"
+                                else:
+                                    print(f"Error: {response.status} with ISBN: {self.isbn}")
+                                    return self
         
-                            self.cover = await get_cover(session, self.isbn, "M")
+
+                        self.cover = await get_cover(session, self.isbn, "M")
         
                     except Exception as e:
+                        print(self.isbn)
                         print(f"An error occurred: {e}")            
             return self
         else:

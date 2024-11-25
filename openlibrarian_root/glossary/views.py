@@ -50,7 +50,7 @@ async def search(request):
             if request.POST.get('add_book') and request.POST.get('shelf') != "":
                 
                 # Add book to library if not already in library
-                isbn = request.POST.get('book_isbn')
+                isbn = request.POST.get('version')
                 shelf = request.POST.get('shelf')
                 if request.POST.get('hidden'):
                     hidden = "Y"

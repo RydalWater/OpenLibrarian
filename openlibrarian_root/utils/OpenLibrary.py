@@ -57,12 +57,18 @@ async def search_books(**kwargs):
                     doc for doc in docs 
                     if "author_name" in doc and "isbn" in doc
                 ]
-                
+
+
                 # List of tasks to gather covers concurrently
-                cover_tasks = [
-                    get_cover(session, doc["isbn"][0], "M") for doc in valid_docs
-                ]
-                
+                if "isbn" in params.keys():
+                    cover_tasks = [
+                        get_cover(session, params["isbn"], "M") 
+                    ]
+                else:
+                    cover_tasks = [
+                        get_cover(session, doc["isbn"][0], "M") for doc in valid_docs
+                    ]
+                    
                 # Gather all cover tasks concurrently
                 covers = await asyncio.gather(*cover_tasks)
                 
@@ -71,7 +77,13 @@ async def search_books(**kwargs):
                 for doc, cover in zip(valid_docs, covers):
                     title = doc["title"]
                     author_name = ", ".join(doc["author_name"])
-                    isbn = doc["isbn"][0]
+                    if "isbn" in params.keys():
+                        isbn = params["isbn"]
+                    elif len(doc["isbn"]) == 1:
+                        isbn = doc["isbn"][0]
+                    else:
+                        isbn = "Multiple ISBNs"
+                    isbns = doc["isbn"]
                     publish_date = doc.get("publish_date", [None])[0]
                     has_fulltext = doc["has_fulltext"]
                     number_of_pages_median = doc.get("number_of_pages_median")
@@ -82,6 +94,7 @@ async def search_books(**kwargs):
                             "title": title,
                             "author_name": author_name,
                             "isbn": isbn,
+                            "isbns_m": isbns,
                             "publish_date": publish_date,
                             "number_of_pages_median": number_of_pages_median,
                             "ratings_average": ratings_average,
