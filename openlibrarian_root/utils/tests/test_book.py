@@ -1,6 +1,6 @@
 from django.test import TestCase
 from utils.Book import Book, get_cover
-import aiohttp
+import aiohttp, requests
 
 class BookUnitTest(TestCase):
     def setUp(self):
@@ -12,6 +12,7 @@ class BookUnitTest(TestCase):
         """
         test_isbn_raw = "978-0-141-03058-6"
         test_isbn_clean = "9780141030586"
+        response = requests.get(f"https://openlibrary.org/isbn/{test_isbn_clean}.json")
         book1 = Book(isbn=test_isbn_raw)
         self.assertEqual(book1.isbn, test_isbn_clean)
         self.assertEqual(book1.url, f"https://openlibrary.org/isbn/{test_isbn_clean}.json")
@@ -68,14 +69,14 @@ class BookUnitTest(TestCase):
             "i": "9780141030586",
             "t": "Old Ways",
             "a": "Robert Macfarlane",
-            "c": "Y",
+            "c": "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg",
             "h": "N"
         }
         book1 = Book(dict=test_dict)
         self.assertEqual(book1.isbn, "9780141030586")
         self.assertEqual(book1.title, "Old Ways")
         self.assertEqual(book1.author, "Robert Macfarlane")
-        self.assertEqual(book1.cover, "Y")
+        self.assertEqual(book1.cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
         self.assertEqual(book1.hidden, "N")
     
     def test_book_concise(self):
@@ -86,7 +87,7 @@ class BookUnitTest(TestCase):
             "i": "9780141030586",
             "t": "Old Ways",
             "a": "Robert Macfarlane",
-            "c": "Y",
+            "c": "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg",
             "h": "N"
         }
         book1 = Book(dict=test_dict)
@@ -98,11 +99,11 @@ class BookUnitTest(TestCase):
         """
         async with aiohttp.ClientSession() as session:
             cover = await get_cover(session,"9780141030586", "S")
-            self.assertEqual(cover, "Y")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
             cover = await get_cover(session,"9780141030586", "M")
-            self.assertEqual(cover, "Y")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg")
             cover = await get_cover(session,"9780141030586", "L")
-            self.assertEqual(cover, "Y")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-L.jpg")
             cover = await get_cover(session,"9408466502123", "S")
             self.assertEqual(cover, "N")
     
@@ -123,8 +124,7 @@ class BookUnitTest(TestCase):
         self.assertEqual(book1_dict["t"], "Old Ways")
         self.assertEqual(book1_dict["a"], "Robert Macfarlane")
         self.assertEqual(book1_dict["i"], "9780141030586")
-        self.assertEqual(book1_dict["c"], "Y")
+        self.assertEqual(book1_dict["c"], "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg")
         self.assertEqual(book1_dict["h"], "Y")
         book1_detailed = book1.detailed()
         self.assertEqual(book1_dict, book1_detailed)
-    

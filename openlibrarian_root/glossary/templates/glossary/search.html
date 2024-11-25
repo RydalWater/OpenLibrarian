@@ -102,9 +102,11 @@
                                         <button type="button" class="btn btn-sm btn-secondary" data-bs-toggle="modal" data-bs-target="#viewModal{{ forloop.counter }}">
                                             <i class="fa-solid fa-circle-info"></i>
                                         </button>
-                                        <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addModal{{ forloop.counter }}">
-                                            <i class="fa-solid fa-plus"></i>
-                                        </button> 
+                                        {% if session.nsec %}
+                                            <button type="button" class="btn btn-sm btn-primary" data-bs-toggle="modal" data-bs-target="#addModal{{ forloop.counter }}">
+                                                <i class="fa-solid fa-plus"></i>
+                                            </button> 
+                                        {% endif %}
                                     </div>
                                 </div>
                             </div>
@@ -157,13 +159,12 @@
                             </div>
                             <div class="modal-body">
                                 {% if result.cover != "N" %}
-                                    <img src="{{ result.cover }}" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
+                                    <img id="book_cover" src="{{ result.cover }}" alt="cover" class="img-thubmail rounded" style="max-width: 200px; max-height: auto">
                                 {% else %}
-                                    <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
+                                    <img id="book_cover" src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                 {% endif %}
                                 <form method="post">
                                     {% csrf_token %}
-                                    <input type="hidden" name="book_isbn" value="{{ result.isbn }}">
                                     <div class="form-group mt-2">
                                         <label for="book_status">Status:</label>
                                         <select class="form-select" name="shelf" id="shelf">
@@ -173,7 +174,18 @@
                                             <option value="TRW">To Read (want)</option>
                                             <option value="TRS">To Read (on the shelf)</option>
                                         </select>
-                                        
+                                        {%  if result.isbn == "Multiple ISBNs"%}
+                                            <label for="book_isbn">Version:</label>
+                                            <select class="form-select" name="version" id="version" required>
+                                                {% for v in result.isbns_m %}
+                                                    <option value="{{ v }}">{{ v }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <p>Pick the ISBN version, if you know it. Otherwise, pick based on the cover (multiple version may have the same cover art).</p>
+                                        {% else %}
+                                            <label for="book_isbn">Version:</label>
+                                            <input type="text" class="form-control" name="version" id="version" value="{{ result.isbn }}" readonly>
+                                        {% endif %}
                                         <div class="modal-footer">
                                             <div class="form-group mt-2">
                                                 <label for="hidden"><p><i class="fa-solid fa-eye-slash"></i> (hidden) </label>
@@ -201,4 +213,45 @@
 <div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
 
 <script src="{% static 'js/add-toast.js' %}"></script>
+
+<script defer>
+        // Get the select element and the image element
+    const versionSelect = document.getElementById('version');
+    const bookCoverImage = document.getElementById('book_cover');
+
+    // Get the list of ISBN values
+    const isbnValues = Array.from(versionSelect.options).map((option) => option.value);
+
+    // Precache the images
+    isbnValues.forEach((isbn) => {
+    const apiUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+    fetch(apiUrl, { method: 'HEAD' });
+    });
+
+    // Add an event listener to the select element
+    versionSelect.addEventListener('change', (e) => {
+    // Get the selected ISBN value
+    const selectedIsbn = e.target.value;
+
+    // Construct the API URL
+    const apiUrl = `https://covers.openlibrary.org/b/isbn/${selectedIsbn}-M.jpg`;
+
+    // Make a HEAD request to the API
+    fetch(apiUrl, { method: 'HEAD' })
+        .then((response) => {
+        // Check if the response headers contain 'content-type'
+        if (response.headers.has('content-type')) {
+            // Update the image src with the API URL
+            bookCoverImage.src = apiUrl;
+        } else {
+            // Update the image src with the default image
+            bookCoverImage.src = "{% static 'images/book.jpg' %}";
+        }
+        })
+        .catch((error) => {
+        console.error(error);
+        });
+    });
+</script>
+
 {% endblock content %}
