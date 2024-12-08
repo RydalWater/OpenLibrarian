@@ -1,6 +1,8 @@
 from django.test import TestCase
 from utils.Book import Book, get_cover
-import aiohttp, requests
+import aiohttp, requests, asyncio
+from aioresponses import aioresponses
+from unittest import IsolatedAsyncioTestCase
 
 class BookUnitTest(TestCase):
     def setUp(self):
@@ -128,3 +130,129 @@ class BookUnitTest(TestCase):
         self.assertEqual(book1_dict["h"], "Y")
         book1_detailed = book1.detailed()
         self.assertEqual(book1_dict, book1_detailed)
+
+class TestBook(IsolatedAsyncioTestCase):
+    async def test_timeout_exception_first_request(self):
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', exception=asyncio.TimeoutError())
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Cannot find title (API Down)")
+            self.assertEqual(book.author, "Cannot find author (API Down)")
+            self.assertIsNone(book.cover)
+
+    async def test_timeout_exception_second_request(self):
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=404)
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', exception=asyncio.TimeoutError())
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Cannot find title (API Down)")
+            self.assertEqual(book.author, "Cannot find author (API Down)")
+            self.assertIsNone(book.cover)
+
+    async def test_successful_first_request(self):
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=200, payload={"title": "To Kill a Mockingbird", "authors": [{"key": "/authors/JK_Rowling"}]})
+            mocked.get('https://openlibrary.org/authors/JK_Rowling.json', status=200, payload={"name": "J.K. Rowling"})
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "To Kill a Mockingbird")
+            self.assertEqual(book.author, "J.K. Rowling")
+            self.assertIsNotNone(book.cover)
+
+    async def test_successful_second_request(self):
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=404)
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={"items": [{"volumeInfo": {"title": "Harry Potter and the Philosopher's Stone", "authors": ["J.K. Rowling"]}}]})
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Harry Potter and the Philosopher's Stone")
+            self.assertEqual(book.author, "J.K. Rowling")
+            self.assertIsNotNone(book.cover)
+
+    async def test_api_down(self):
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=500)
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=500)
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Cannot find title (API Down)")
+            self.assertEqual(book.author, "Cannot find author (API Down)")
+            self.assertIsNone(book.cover)
+
+    async def test_get_cover_api_down(self):
+        """
+        Test get_cover when the APIs are down
+        """
+        with aioresponses() as mocked:
+            mocked.get('https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg', status=500)
+            mocked.get('https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg', status=500)
+            mocked.get('https://covers.openlibrary.org/b/isbn/9780141030586-L.jpg', status=500)
+            mocked.get('https://www.googleapis.com/books/v1/volumes', status=500)
+            async with aiohttp.ClientSession() as session:
+                cover = await get_cover(session, "9780141030586", "S")
+                self.assertEqual(cover, "N")
+                cover = await get_cover(session, "9780141030586", "M")
+                self.assertEqual(cover, "N")
+                cover = await get_cover(session, "9780141030586", "L")
+                self.assertEqual(cover, "N")
+                cover = await get_cover(session, "9408466502123", "S")
+                self.assertEqual(cover, "N")
+
+    async def test_get_cover_alternative_success(self):
+        """
+        Test get_cover when the first try block fails and the second try block succeeds
+        """
+        with aioresponses() as mocked:
+            # Mock the first try block to fail with a 404 status
+            mocked.get('https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg', status=404)
+            
+            # Mock the second try block to succeed with a 200 status and a valid response
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={
+                "kind": "books#volumes",
+                "totalItems": 1,
+                "items": [
+                    {
+                        "volumeInfo": {
+                            "imageLinks": {
+                                "thumbnail": "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
+                            }
+                        }
+                    }
+                ]
+            })
+            mocked.get('http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api', status=200)
+            
+            async with aiohttp.ClientSession() as session:
+                cover = await get_cover(session, "9780141030586", "S")
+                self.assertEqual(cover, "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api")
+
+    async def test_get_cover_alternative_failure(self):
+        """
+        Test get_cover when the first try block fails and the second try block fails
+        """
+        with aioresponses() as mocked:
+            # Mock the first try block to fail with a 404 status
+            mocked.get('https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg', status=404)
+
+            # Mock the second try block to succeed with a 200 status and a valid response
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={
+                "kind": "books#volumes",
+                "totalItems": 1,
+                "items": [
+                    {
+                        "volumeInfo": {
+                            "imageLinks": {
+                                "thumbnail": "https://example.com/thumbnail.jpg"
+                            }
+                        }
+                    }
+                ]
+            })
+            # Mock the third try block to fail with a ClientError
+            mocked.get('https://example.com/thumbnail.jpg', exception=aiohttp.ClientError())
+            
+            async with aiohttp.ClientSession() as session:
+                cover = await get_cover(session, "9780141030586", "S")
+                self.assertEqual(cover, "N")

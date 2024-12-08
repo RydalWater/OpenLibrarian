@@ -12,24 +12,29 @@ headers = {
 async def get_cover(session: aiohttp.ClientSession, isbn: str, size: str):
     """Get cover image from Open Library API"""
     image = f"https://covers.openlibrary.org/b/isbn/{isbn}-{size}.jpg"
-    async with session.get(image) as response:
-        if "content-type" in response.headers:
-            return image 
-        else:
-            response = await session.get(alt_api_url, params={"q": "isbn:" + isbn})
-            if response.status != 200:
-                return "N"
-            else:
-                data = await response.json()
-                if "items" in data and "imageLinks" in data["items"][0]["volumeInfo"]:
-                    image = data["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
+    try:
+        async with session.get(image) as response:
+            if response.status == 200 and "content-type" in response.headers:
+                return image
+    except Exception as e:
+        pass
+
+    try:
+        response = await session.get(alt_api_url, params={"q": "isbn:" + isbn}, timeout=10)
+        if response.status == 200:
+            data = await response.json()
+            if "items" in data and "imageLinks" in data["items"][0]["volumeInfo"]:
+                image = data["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
+                try:
                     async with session.get(image) as response:
                         if "content-type" in response.headers:
                             return image
-                        else:
-                            return "N"
-                else:
-                    return "N"
+                except Exception as e:
+                    pass
+    except Exception as e:
+        pass
+
+    return "N"
 
 class Book:
     """
@@ -74,6 +79,8 @@ class Book:
             alt_url = ""
             async with aiohttp.ClientSession() as session:
                 if self.author is None:
+
+                    # Trying the first connection
                     try:
                         async with session.get(self.url, headers=headers) as response:
                             if response.status == 200:
@@ -91,6 +98,13 @@ class Book:
                             else:
                                 alt_api = True
                                 alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
+                    except Exception as e:
+                        # print(f"Error (OL API): {e} with ISBN: {self.isbn}")
+                        alt_api = True
+                        alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
+                    
+                    # Trying the second connection if the first failed (without exception)
+                    try:
                         if alt_api:
                             async with session.get(alt_url, headers=headers) as response:
                                 if response.status == 200:
@@ -103,15 +117,19 @@ class Book:
                                     if self.title == None:
                                         self.title = "Cannot find title"
                                 else:
-                                    print(f"Error: {response.status} with ISBN: {self.isbn}")
+                                    # print(f"Error: {response.status} with ISBN: {self.isbn}")
+                                    self.title = "Cannot find title (API Down)"
+                                    self.author = "Cannot find author (API Down)"
                                     return self
-        
-
-                        self.cover = await get_cover(session, self.isbn, "M")
-        
+                                                   
                     except Exception as e:
-                        print(self.isbn)
-                        print(f"An error occurred: {e}")            
+                        # print(f"Error (GOOGLE API): {e} with ISBN: {self.isbn}")
+                        self.title = "Cannot find title (API Down)"
+                        self.author = "Cannot find author (API Down)"
+                        return self
+
+                # Get Covers 
+                self.cover = await get_cover(session, self.isbn, "M")
             return self
         else:
             return self
@@ -121,7 +139,6 @@ class Book:
         """Fetch author information from Open Library API"""
         async with session.get(url, headers=headers) as response:
             if response.status != 200:
-                print(f"Error: {response.status} with author URL: {url}")
                 return None
     
             response_json = await response.json()
