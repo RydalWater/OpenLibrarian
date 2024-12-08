@@ -20,8 +20,10 @@
                 <a id="privacy" href="{% url 'archives:privacy' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-lock"></i> Privacy Policy</a>
             </div>
         </div>
-        <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
-            <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        </div>
+        {% if not session.nsec and not session.npub %}
+            <div class="gap-2 mx-auto d-flex justify-content-center mt-2">
+                <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            </div>
+        {% endif %}
     </div>
 {% endblock content %}
