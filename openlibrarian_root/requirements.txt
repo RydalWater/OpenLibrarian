@@ -15,7 +15,7 @@ constantly==23.10.4
 coverage==7.6.7
 cryptography==43.0.1
 daphne==4.1.2
-Django==5.0.9
+Django==5.0.10
 django-async==0.7.3
 exceptiongroup==1.2.2
 frozenlist==1.4.1
