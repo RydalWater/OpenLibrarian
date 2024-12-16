@@ -120,6 +120,10 @@ class Progress:
                 raise ValueError("Current pages cannot be greater than max pages")
             self.progress = str(round((int(self.current)/int(self.max))*100))
 
+        # Reset ended if progress is not 100
+        if self.progress != "100":
+            self.ended = "NA"
+
         return self
     
     def parse_event(self, event: Event = None, isbn: str = None):
@@ -200,14 +204,15 @@ class Progress:
             async with session.get(f"https://openlibrary.org/isbn/{self.isbn}.json", headers=headers, timeout=10) as response:
                 if response.status == 200:
                     data = await response.json()
-                    self.default_pages = str(data["number_of_pages"])
-                    return self
-                else:
-                    async with session.get(f"{alt_api_url}",params={"q": "isbn:" + self.isbn}, timeout=10) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
-                            return self           
+                    if "number_of_pages" in data:
+                        self.default_pages = str(data["number_of_pages"])
+                        return self
+                
+                async with session.get(f"{alt_api_url}",params={"q": "isbn:" + self.isbn}, timeout=10) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+                        return self           
         self.default_pages = "NOT AVAILABLE"
         return self
     
@@ -311,21 +316,19 @@ class Progress:
         return self.__dict__()
 
 # Fetch progress objects
-async def fetch_progress(npub: str, relays: dict, nsec: str = None, isbns: list = None):
+async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     """
     Fetch progress objects from relays
     input: npub (str), relays (dict), nsec (str), isbns (list)
-    output: dict
+    output: list
     """
     # Check if npub and nsec are valid
-    if isbns in [None, []]:
+    if isbns == []:
+        return []
+    elif isbns == None:
         raise Exception("No ISBNs provided.")
     elif npub in [None, ""] or check_npub(npub) is False:
         raise Exception("No npub provided or invalid npub.")
-    elif nsec in [None, ""] or (nsec not in [None, ""] and check_nsec(nsec) is False):
-        raise Exception("No nsec provided or invalid nsec.")
-    elif nsec is not None and check_npub_of_nsec(npub, nsec) is False:
-        raise Exception("Npub and nsec do not match.")
     else:
         ids = [hashlib.sha256(isbn.encode()).hexdigest() for isbn in isbns]
 
@@ -336,7 +339,12 @@ async def fetch_progress(npub: str, relays: dict, nsec: str = None, isbns: list 
         # get events
         events = await nostr_get(client=client, wait=10, filters=[filter], relays_dict=relays)
         if events in [None, []]:
-            return []
+            # Create new progress objects
+            for isbn in isbns:
+                new_tasks = [Progress().new(isbn=isbn) for isbn in isbns]
+                progress_events = await asyncio.gather(*new_tasks)
+
+            return [progress_events.detailed() for progress_events in progress_events]
 
         # Parse events
         progress_events = []
@@ -344,8 +352,13 @@ async def fetch_progress(npub: str, relays: dict, nsec: str = None, isbns: list 
             progress_events.append(Progress().parse_event(event))
         
         # Run get_default_pages as tasks and gather
-        tasks = [progress_events.get_default_pages() for progress_events in progress_events]
+        tasks = [progress_event.get_default_pages() for progress_event in progress_events]
         progress_events = await asyncio.gather(*tasks)
 
         # Convert to dictionaries and return
-        return {progress_events.detailed() for progress_events in progress_events}
+        for isbn in isbns:
+            if isbn not in [progress_event.isbn for progress_event in progress_events]:
+                new_tasks = [Progress().new(isbn=isbn) for isbn in isbns]
+                additional_progress = await asyncio.gather(*new_tasks)
+                progress_events = progress_events + additional_progress
+        return [progress_events.detailed() for progress_events in progress_events]

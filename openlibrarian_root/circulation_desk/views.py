@@ -7,6 +7,7 @@ from utils.Login import check_npub, check_nsec, check_mnemonic
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries
 from utils.Interests import fetch_interests
+from utils.Progress import fetch_progress, Progress
 from circulation_desk.forms import SeedForm, NpubForm, NsecForm
 import asyncio
 
@@ -59,7 +60,17 @@ async def login_npub_view(request):
             libraries, interests = await asyncio.gather(*tasks)
             nym = profile.get('nym')
 
-            await async_set_session_info(request, npub=npub, nym=nym, relays=relays, profile=profile, interests=interests, libraries=libraries)
+            # Get list of ISBNs and then create progress object
+            isbns = []
+            for library in libraries:
+                if library["s"] in ("CR", "HR"):
+                    for book in library["b"]:
+                        if "Hidden" not in book["i"]:
+                            isbns.append(book["i"])
+            progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+
+ 
+            await async_set_session_info(request, npub=npub, nym=nym, relays=relays, profile=profile, interests=interests, libraries=libraries, progress=progress)
             return redirect('circulation_desk:index')
         else:
             context = {
@@ -103,7 +114,16 @@ async def login_nsec_view(request):
             libraries, interests = await asyncio.gather(*tasks)
             nym = profile.get('nym')
 
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile, libraries=libraries, interests=interests)
+            # Get list of ISBNs and then create progress object
+            isbns = []
+            for library in libraries:
+                if library["s"] in ("CR", "HR"):
+                    for book in library["b"]:
+                        if "Hidden" not in book["i"]:
+                            isbns.append(book["i"])
+            progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+
+            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
             return redirect('circulation_desk:index')
         else:
             context = {
@@ -150,7 +170,16 @@ async def login_seed_view(request):
             libraries, interests = await asyncio.gather(*tasks)
             nym = profile.get('nym')
 
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile, libraries=libraries, interests=interests)
+            # Get list of ISBNs and then create progress object
+            isbns = []
+            for library in libraries:
+                if library["s"] in ("CR", "HR"):
+                    for book in library["b"]:
+                        if "Hidden" not in book["i"]:
+                            isbns.append(book["i"])
+            progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+
+            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
             return redirect('circulation_desk:index')
         else:
             context = {
@@ -242,9 +271,11 @@ async def create_account_confirm_view(request):
                     libraries = await fetch_libraries(npub=temp_keys['tnpub'], nsec=nsec, relays=mod_relays)
                     # Get default interests
                     interests = await fetch_interests(temp_keys['tnpub'], mod_relays)
+                    # Set Default Progress
+                    progress = []
 
                     # Set Session Data
-                    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=temp_keys['tnpub'], nsec=nsec)
+                    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=temp_keys['tnpub'], nsec=nsec, progress=progress)
 
                     # Remove temp keys from session
                     await async_remove_session_info(request, tnpub=temp_keys['tnpub'], tnsec=temp_keys['tnsec'])

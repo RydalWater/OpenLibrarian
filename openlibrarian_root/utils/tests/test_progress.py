@@ -98,7 +98,7 @@ class ProgressUnitTests(TestCase):
         progress = Progress()
         self.assertRaises(ValueError, progress.parse_event, event=event, isbn=ISBN)
     
-    def test_progress_parse_dict(self):
+    async def test_progress_parse_dict(self):
         """
         Test parsing of progress dict
         """
@@ -139,6 +139,17 @@ class ProgressUnitTests(TestCase):
         # Parse Invalid dict
         progress = Progress()
         self.assertRaises(ValueError, progress.parse_dict, data="Test")
+
+        # Test creating new and then parsing
+        progress = Progress()
+        progress = await progress.new(ISBN2)
+        progress.parse_dict(data)
+
+        self.assertEqual(progress.isbn, ISBN2)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN2.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pct")
+        self.assertEqual(progress.current, "100")
+        self.assertEqual(progress.max, "100")
     
     def test_progress_to_dict(self):
         """
@@ -501,40 +512,30 @@ class ProgressUnitTests(TestCase):
         """
         Test fetching progress
         """
-        nsec = KEYS.secret_key().to_bech32()
-        nsec_wrong = "nsec123456"
         npub = KEYS.public_key().to_bech32()
-        npub_wrong = "npub123456"
         relays = {"wss://relay.damus.io": None}
         isbns = [ISBN, ISBN2]
         npub_new = Keys.generate().public_key().to_bech32()
+        result = await fetch_progress(isbns=[], npub=npub, relays=relays)
+        self.assertEqual(result, [])
         with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=[], npub=npub, relays=relays, nsec=nsec)
+            await fetch_progress(isbns=None, npub=npub, relays=relays)
         self.assertEqual(str(e.exception), "No ISBNs provided.")
         with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=None, npub=npub, relays=relays, nsec=nsec)
-        self.assertEqual(str(e.exception), "No ISBNs provided.")
-        with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=["9780141030586"], npub=None, relays=relays, nsec=nsec)
+            await fetch_progress(isbns=["9780141030586"], npub=None, relays=relays)
         self.assertEqual(str(e.exception), "No npub provided or invalid npub.")
         with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=["9780141030586"], npub="", relays=relays, nsec=nsec)
+            await fetch_progress(isbns=["9780141030586"], npub="", relays=relays)
         self.assertEqual(str(e.exception), "No npub provided or invalid npub.")
         with self.assertRaises(Exception) as e:
             await fetch_progress(isbns=["9780141030586"], npub="npub123456", relays=relays)
         self.assertEqual(str(e.exception), "No npub provided or invalid npub.")
-        with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=["9780141030586"], npub=npub, nsec="", relays=relays)
-        self.assertEqual(str(e.exception), "No nsec provided or invalid nsec.")
-        with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=["9780141030586"], npub=npub, nsec=nsec_wrong, relays=relays)
-        self.assertEqual(str(e.exception), "No nsec provided or invalid nsec.")
-        with self.assertRaises(Exception) as e:
-            await fetch_progress(isbns=["9780141030586"], npub=npub_new, nsec=nsec, relays=relays)
-        self.assertEqual(str(e.exception), "Npub and nsec do not match.")
 
-        result = await fetch_progress(isbns=isbns, npub=npub, nsec=nsec, relays=relays)
-        self.assertEqual(result, [])
+        # For empty list create new objects
+        result = await fetch_progress(isbns=isbns, npub=npub, relays=relays)
+        new_list = [await Progress().new(isbn=isbn) for isbn in isbns]
+        detailed_list = [progress.detailed() for progress in new_list]
+        self.assertEqual(result, detailed_list)
 
     def tearDown(self):
         pass
