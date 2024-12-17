@@ -211,8 +211,9 @@ class Progress:
                 async with session.get(f"{alt_api_url}",params={"q": "isbn:" + self.isbn}, timeout=10) as response:
                     if response.status == 200:
                         data = await response.json()
-                        self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
-                        return self           
+                        if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
+                            self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+
         self.default_pages = "NOT AVAILABLE"
         return self
     

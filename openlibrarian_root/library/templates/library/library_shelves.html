@@ -314,6 +314,11 @@
     </div>
 </form>
 
+<input type="hidden" id="notification" value="{{ notification }}">
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
+<script src="{% static 'js/add-toast.js' %}"></script>
+
 <script>
     // Get all radio buttons with the name "unitRadio"
     const unitRadios = document.querySelectorAll('input[name="unitRadio"]');
