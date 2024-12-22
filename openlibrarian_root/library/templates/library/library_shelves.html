@@ -66,14 +66,16 @@
                                         <p class="fw-lighter fw-semibold lh-me">{{ book.t }} <br><i class="fw-lighter fst-italic">- {{ book.a }}</i></p>
                                     </div>
                                     {% if library.s == "CR" %}
-                                        {% for progress in session.progress %}
-                                            {% for isbn, progress_obj in progress.items %}
-                                                {% if isbn == book.i %}
-                                                    <div class="row progress mb-1 ms-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 20px">
-                                                        <div class="progress-bar progress-bar-striped" style="width: {{ progress_obj.progress }}%">{{ progress_obj.progress }}%</div>
-                                                    </div>
-                                                {% endif %}
-                                            {% endfor %}
+                                        {% for isbn, progress_obj in session.progress.items %}
+                                            {% if isbn == book.i %}
+                                                <div class="row progress mb-1 ms-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 20px">
+                                                    <div class="progress-bar progress-bar-striped" style="width: {{ progress_obj.progress }}%">{{ progress_obj.progress }}%</div>
+                                                </div>
+                                            {% elif isbn == "Hidden" %}
+                                                <div class="row progress mb-1 ms-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 20px">
+                                                    <div class="progress-bar progress-bar-striped bg-secondary" style="width: 50%">UNK%</div>
+                                                </div>
+                                            {% endif %}
                                         {% endfor %}
                                     {% endif %}
                                 </div>
@@ -171,65 +173,59 @@
                                                         <input type="checkbox" name="hidden" id="hidden" {% if book.h == "Y" %}checked{% endif %}>
                                                     </div>
                                                         {% if library.s in "CR,HR" %}
-                                                            {% for progress in session.progress %}
-                                                                {% for isbn, progress_obj in progress.items %}
-                                                                    {% if isbn == book.i %}
-                                                                        <div class="input-group mt-1">
-                                                                            <span class="input-group-text">Started</span>
-                                                                            <input type="date" class="form-control" id="stDt" name="stDt" value="{{ progress_obj.st }}">
-                                                                        </div>
-                                                                    {% endif %}
-                                                                {% endfor %}
+                                                            {% for isbn, progress_obj in session.progress.items %}
+                                                                {% if isbn == book.i %}
+                                                                    <div class="input-group mt-1">
+                                                                        <span class="input-group-text">Started</span>
+                                                                        <input type="date" class="form-control" id="stDt" name="stDt" value="{{ progress_obj.st }}">
+                                                                    </div>
+                                                                {% endif %}
                                                             {% endfor %}
                                                         {% endif %}
                                                         {% if library.s in "HR" %}
-                                                            {% for progress in session.progress %}
-                                                                {% for isbn, progress_obj in progress.items %}
-                                                                    {% if isbn == book.i %}
-                                                                        <div class="input-group mt-1">
-                                                                            <span class="input-group-text">Finished</span>
-                                                                            <input type="date" class="form-control" id="enDt" name="enDt" value="{{ progress_obj.en }}">
-                                                                        </div>
-                                                                    {% endif %}
-                                                                {% endfor %}
+                                                            {% for isbn, progress_obj in session.progress.items %}
+                                                                {% if isbn == book.i %}
+                                                                    <div class="input-group mt-1">
+                                                                        <span class="input-group-text">Finished</span>
+                                                                        <input type="date" class="form-control" id="enDt" name="enDt" value="{{ progress_obj.en }}">
+                                                                    </div>
+                                                                {% endif %}
                                                             {% endfor %}
                                                         {% endif %}
                                                     {% if library.s == "CR" %}
-                                                        {% for progress in session.progress %}
-                                                                {% for isbn, progress_obj in progress.items %}
-                                                                    {% if isbn == book.i %}
-                                                                        <div class="form-group d-inline-flex gap-3 mt-2">
-                                                                            <div class="form-check">
-                                                                                <input type="radio" class="form-check-input" name="unitRadio" id="unitPages" value="pages" {% if progress_obj.unit == "pages" %}checked{% endif %}>
-                                                                                <label for="unitPages" class="form-check-label">Pages</label>
-                                                                            </div>
-                                                                            <div class="form-check">
-                                                                                <input type="radio" class="form-check-input" name="unitRadio" id="unitPct" value="pct" {% if progress_obj.unit == "pct" %}checked{% endif %}>
-                                                                                <label for="unitPct" class="form-check-label">%</label>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group d-inline-flex gap-1">
-                                                                            <div class="input-group" id="maxPageGroup" {% if progress_obj.unit == "pct" %}style="display: none;"{% endif %}>
-                                                                                <span class="input-group-text">Total</span>
-                                                                                <input type="number" class="form-control" id="maxPage" name="maxPage" max="10000" {% if progress_obj.unit == "pct" and progress_obj.max != "NOT AVAILABLE" %} value="{{ progress_obj.default }}" {% else %} value="{{ progress_obj.max }}" {% endif %}>
-                                                                            </div>
-                                                                            <div class="input-group" id="currentPageGroup" {% if progress_obj.unit == "pct" %}style="display: none;"{% endif %}>
-                                                                                <span class="input-group-text">Current</span>
-                                                                                <input type="number" class="form-control" id="currentPage" name="currentPage" min="0" max="10000" {% if progress_obj.unit == "pct" %} value="0" {% else %} value="{{ progress_obj.curr }}" {% endif %}>
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="form-group d-inline-flex gap-1">
-                                                                            <div class="input-group" id="maxPctGroup" {% if progress_obj.unit == "pages" %}style="display: none;"{% endif %}>
-                                                                                <span class="input-group-text">Total</span>
-                                                                                <input type="number" class="form-control" id="maxPct" name="maxPct" value="100" disabled>
-                                                                            </div>
-                                                                            <div class="input-group" id="currentPctGroup" {% if progress_obj.unit == "pages" %}style="display: none;"{% endif %}>
-                                                                                <span class="input-group-text">Current</span>
-                                                                                <input type="number" class="form-control" id="currentPct" name="currentPct" min="0" max="100" {% if progress_obj.unit == "pct" %} value="{{ progress_obj.curr }}" {% else %} value="0" {% endif %}>
-                                                                            </div>
-                                                                        </div>
-                                                                {% endif %}
-                                                            {% endfor %}
+                                                        {% for isbn, progress_obj in session.progress.items %}
+                                                            {% if isbn == book.i %}
+                                                                <div class="form-group d-inline-flex gap-3 mt-2">
+                                                                    <div class="form-check">
+                                                                        <input type="radio" class="form-check-input" name="unitRadio" id="unitPages" value="pages" {% if progress_obj.unit == "pages" %}checked{% endif %}>
+                                                                        <label for="unitPages" class="form-check-label">Pages</label>
+                                                                    </div>
+                                                                    <div class="form-check">
+                                                                        <input type="radio" class="form-check-input" name="unitRadio" id="unitPct" value="pct" {% if progress_obj.unit == "pct" %}checked{% endif %}>
+                                                                        <label for="unitPct" class="form-check-label">%</label>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group d-inline-flex gap-1">
+                                                                    <div class="input-group" id="maxPageGroup" {% if progress_obj.unit == "pct" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Total</span>
+                                                                        <input type="number" class="form-control" id="maxPage" name="maxPage" max="10000" {% if progress_obj.unit == "pct" and progress_obj.max != "NOT AVAILABLE" %} value="{{ progress_obj.default }}" {% else %} value="{{ progress_obj.max }}" {% endif %}>
+                                                                    </div>
+                                                                    <div class="input-group" id="currentPageGroup" {% if progress_obj.unit == "pct" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Current</span>
+                                                                        <input type="number" class="form-control" id="currentPage" name="currentPage" min="0" max="10000" {% if progress_obj.unit == "pct" %} value="0" {% else %} value="{{ progress_obj.curr }}" {% endif %}>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group d-inline-flex gap-1">
+                                                                    <div class="input-group" id="maxPctGroup" {% if progress_obj.unit == "pages" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Total</span>
+                                                                        <input type="number" class="form-control" id="maxPct" name="maxPct" value="100" disabled>
+                                                                    </div>
+                                                                    <div class="input-group" id="currentPctGroup" {% if progress_obj.unit == "pages" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Current</span>
+                                                                        <input type="number" class="form-control" id="currentPct" name="currentPct" min="0" max="100" {% if progress_obj.unit == "pct" %} value="{{ progress_obj.curr }}" {% else %} value="0" {% endif %}>
+                                                                    </div>
+                                                                </div>
+                                                            {% endif %}
                                                         {% endfor %}
                                                     {% endif %}
                                                     <button type="submit" name="update" value="true" class="btn btn-sm btn-primary mt-2">
@@ -307,7 +303,7 @@
     {% csrf_token %}
     <!-- Save/Refresh Button -->
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
-        <a href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
             <button id="submit-search" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
         {% endif %}

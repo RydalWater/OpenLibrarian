@@ -34,7 +34,7 @@ class RelaysFunctionalTestCase(TestCase):
         """
         self.driver.close()
 
-class RelaysUnitTestCase(SettingsUnitTestCase):
+class RelaysUnitTestCase(TestCase):
     """
     Unit Tests for the relays page
     """

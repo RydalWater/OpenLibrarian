@@ -213,6 +213,7 @@ class Progress:
                         data = await response.json()
                         if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
                             self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+                            return self
 
         self.default_pages = "NOT AVAILABLE"
         return self
@@ -296,17 +297,15 @@ class Progress:
         output: dict
         """
         return {
-            self.isbn: {
-                "id": self.identifier,
-                "exid": self.external_id,
-                "unit": self.unit,
-                "curr": self.current,
-                "max": self.max,
-                "st": self.started,
-                "en": self.ended,
-                "default": self.default_pages,
-                "progress": self.progress
-            }
+            "id": self.identifier,
+            "exid": self.external_id,
+            "unit": self.unit,
+            "curr": self.current,
+            "max": self.max,
+            "st": self.started,
+            "en": self.ended,
+            "default": self.default_pages,
+            "progress": self.progress
         }
 
     def detailed(self):
@@ -321,7 +320,7 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     """
     Fetch progress objects from relays
     input: npub (str), relays (dict), nsec (str), isbns (list)
-    output: list
+    output: dict
     """
     # Check if npub and nsec are valid
     if isbns == []:
@@ -345,7 +344,7 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
                 new_tasks = [Progress().new(isbn=isbn) for isbn in isbns]
                 progress_events = await asyncio.gather(*new_tasks)
 
-            return [progress_events.detailed() for progress_events in progress_events]
+            return {progress_event.isbn: progress_event.detailed() for progress_event in progress_events}
 
         # Parse events
         progress_events = []
@@ -362,4 +361,4 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
                 new_tasks = [Progress().new(isbn=isbn) for isbn in isbns]
                 additional_progress = await asyncio.gather(*new_tasks)
                 progress_events = progress_events + additional_progress
-        return [progress_events.detailed() for progress_events in progress_events]
+        return {progress_event.isbn: progress_event.detailed() for progress_event in progress_events}

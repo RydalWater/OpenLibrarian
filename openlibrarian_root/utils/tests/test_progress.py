@@ -169,17 +169,15 @@ class ProgressUnitTests(TestCase):
         progress.progress = "100"
 
         data = {
-            ISBN: {
-                "id": hashlib.sha256(ISBN.encode()).hexdigest(),
-                "exid": "isbn",
-                "unit": "pct",
-                "curr": "100",
-                "max": "100",
-                "st": "2021-06-01",
-                "en": "2021-09-02",
-                "default": "423",
-                "progress" : "100"
-            },
+            "id": hashlib.sha256(ISBN.encode()).hexdigest(),
+            "exid": "isbn",
+            "unit": "pct",
+            "curr": "100",
+            "max": "100",
+            "st": "2021-06-01",
+            "en": "2021-09-02",
+            "default": "423",
+            "progress" : "100"
         }
 
         self.assertEqual(progress.detailed(), data)
@@ -288,7 +286,7 @@ class ProgressUnitTests(TestCase):
         # Test failure of first call
         with aioresponses() as mocked:
             mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=404)
-            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={"items": [{"volumeInfo": {"pageCount": 100}}]})
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={"items": [{"volumeInfo":{"pageCount": "100"}}]})
             progress = Progress()
             progress.isbn = "9780141030586"
             await progress.get_default_pages()
@@ -534,8 +532,8 @@ class ProgressUnitTests(TestCase):
         # For empty list create new objects
         result = await fetch_progress(isbns=isbns, npub=npub, relays=relays)
         new_list = [await Progress().new(isbn=isbn) for isbn in isbns]
-        detailed_list = [progress.detailed() for progress in new_list]
-        self.assertEqual(result, detailed_list)
+        detailed_dict = {progress.isbn: progress.detailed() for progress in new_list}
+        self.assertEqual(result, detailed_dict)
 
     def tearDown(self):
         pass
