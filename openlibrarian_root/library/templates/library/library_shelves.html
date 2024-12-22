@@ -62,10 +62,22 @@
                                             </div>
                                         </div>
                                     {% endif %}
-                                    <div class="row text-start">
-                                        <p class="fw-lighter fw-semibold">{{ book.t }}</p>
-                                        <p class="fw-lighter fst-italic">- {{ book.a }}</p>
+                                    <div class="row text-start text-wrap">
+                                        <p class="fw-lighter fw-semibold lh-me">{{ book.t }} <br><i class="fw-lighter fst-italic">- {{ book.a }}</i></p>
                                     </div>
+                                    {% if library.s == "CR" %}
+                                        {% for isbn, progress_obj in session.progress.items %}
+                                            {% if isbn == book.i %}
+                                                <div class="row progress mb-1 ms-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 20px">
+                                                    <div class="progress-bar progress-bar-striped" style="width: {{ progress_obj.progress }}%">{{ progress_obj.progress }}%</div>
+                                                </div>
+                                            {% elif isbn == "Hidden" %}
+                                                <div class="row progress mb-1 ms-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 20px">
+                                                    <div class="progress-bar progress-bar-striped bg-secondary" style="width: 50%">UNK%</div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
                                 </div>
                                 <div class="col-1 p-1">
                                     {% if book.h == "Y" %}
@@ -76,6 +88,7 @@
                                 </div>
                             </div>
                         </div>
+                        <!-- Information Modal -->
                         <div class="modal fade" id="info{{ forloop.counter }}{{ library.i }}" tabindex="-1" aria-labelledby="info{{ forloop.counter }}{{ library.i }}Label" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
@@ -98,6 +111,8 @@
                                 </div>
                             </div>
                         </div>
+        
+                        <!-- Remove Modal -->
                         <div class="modal fade" id="remove{{ forloop.counter }}{{ library.i }}" tabindex="-1" aria-labelledby="remove{{ forloop.counter }}{{ library.i }}Label" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
@@ -117,6 +132,8 @@
                                 </div>
                             </div>
                         </div>
+        
+                        <!-- Details Modal -->
                         <div class="modal fade" id="details{{ forloop.counter }}{{ library.i }}" tabindex="-1" aria-labelledby="details{{ forloop.counter }}{{ library.i }}Label" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content">
@@ -130,58 +147,140 @@
                                     {% else %}
                                         <img src="{% static 'images/book.jpg' %}" class="img-fluid rounded" alt="cover-img">
                                     {% endif %}
-                                        <form method="post">
-                                            {% csrf_token %}
-                                            <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
-                                            <div class="form-group mt-2">
-                                                <label for="hidden"><p><i class="fa-solid fa-eye-slash"></i> (hidden) </label>
-                                                <input type="checkbox" name="hidden" id="hidden" {% if book.h == "Y" %}checked{% endif %}>
-                                            </div>
-                                            <div class="form-group mt-2">
-                                                <select name="status" id="status" class="form-select">
-                                                    {% if library.s == "CR" %}
-                                                        <option value="">--- Rate this book ---</option>
-                                                    {% else %}
-                                                        <option value="">--- Select a shelf ---</option>
-                                                    {% endif %}
-                                                    {% if library.s == "HR" %}
-                                                        <option value="CR">Reading</option>
-                                                        <option value="TRW">To Read (want)</option>
-                                                        <option value="TRS">To Read (on the shelf)</option>
-                                                    {% elif library.s == "CR" %}
-                                                        <option value="0">0 - I want my time back!</option>
-                                                        <option value="0.5">0.5</option>
-                                                        <option value="1">1 - Meh!</option>
-                                                        <option value="1.5">1.5</option>
-                                                        <option value="2">2 - OK</option>
-                                                        <option value="2.5">2.5</option>
-                                                        <option value="3">3 - Good</option>
-                                                        <option value="3.5">3.5</option>
-                                                        <option value="4">4 - May read this again</option>
-                                                        <option value="4.5">4.5</option>
-                                                        <option value="5">5 - Can't wait to read again!</option>
-                                                    {% elif library.s == "TRW" %}
-                                                        <option value="HR">Have read</option>
-                                                        <option value="CR">Reading</option>
-                                                        <option value="TRS">To Read (on the shelf)</option>
-                                                    {% elif library.s == "TRS" %}
-                                                        <option value="HR">Have read</option>
-                                                        <option value="CR">Reading</option>
-                                                        <option value="TRW">To Read (want)</option>
-                                                    {% endif %}
-                                                </select>
-                                            </div>
-                                            <button type="submit" name="update_privacy" value="true" class="btn btn-sm btn-secondary mt-2">
-                                                Update Privacy 
-                                            </button>
-                                            <button type="submit" name="update_library" value="true" class="btn btn-sm btn-primary mt-2">
+                                        <!-- Nav tabs -->
+                                        <ul class="nav nav-tabs mt-2" id="detailsTabs{{ forloop.counter }}{{ library.i }}" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                            <button class="nav-link active" id="update-form-tab-{{ forloop.counter }}{{ library.i }}" data-bs-toggle="tab" data-bs-target="#update-form-{{ forloop.counter }}{{ library.i }}" type="button" role="tab" aria-controls="update-form" aria-selected="true">Update</button>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                            <button class="nav-link" id="move-form-tab-{{ forloop.counter }}{{ library.i }}" data-bs-toggle="tab" data-bs-target="#move-form-{{ forloop.counter }}{{ library.i }}" type="button" role="tab" aria-controls="move-form" aria-selected="false">
                                                 {% if library.s == "CR" %}
-                                                    Finished!
+                                                    Finished
                                                 {% else %}
-                                                    Update
+                                                    Move Book
                                                 {% endif %}
                                             </button>
-                                        </form>
+                                            </li>
+                                        </ul>
+                                        <!-- Tab panes -->
+                                        <div class="tab-content" id="detailsTabsContent{{ forloop.counter }}{{ library.i }}">
+                                            <div class="tab-pane fade show active" id="update-form-{{ forloop.counter }}{{ library.i }}" role="tabpanel" aria-labelledby="update-form-tab">
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
+                                                    <div class="form-group mt-2">
+                                                        <label for="hidden"><p><i class="fa-solid fa-eye-slash"></i> (hidden) </label>
+                                                        <input type="checkbox" name="hidden" id="hidden" {% if book.h == "Y" %}checked{% endif %}>
+                                                    </div>
+                                                        {% if library.s in "CR,HR" %}
+                                                            {% for isbn, progress_obj in session.progress.items %}
+                                                                {% if isbn == book.i %}
+                                                                    <div class="input-group mt-1">
+                                                                        <span class="input-group-text">Started</span>
+                                                                        <input type="date" class="form-control" id="stDt" name="stDt" value="{{ progress_obj.st }}">
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                        {% if library.s in "HR" %}
+                                                            {% for isbn, progress_obj in session.progress.items %}
+                                                                {% if isbn == book.i %}
+                                                                    <div class="input-group mt-1">
+                                                                        <span class="input-group-text">Finished</span>
+                                                                        <input type="date" class="form-control" id="enDt" name="enDt" value="{{ progress_obj.en }}">
+                                                                    </div>
+                                                                {% endif %}
+                                                            {% endfor %}
+                                                        {% endif %}
+                                                    {% if library.s == "CR" %}
+                                                        {% for isbn, progress_obj in session.progress.items %}
+                                                            {% if isbn == book.i %}
+                                                                <div class="form-group d-inline-flex gap-3 mt-2">
+                                                                    <div class="form-check">
+                                                                        <input type="radio" class="form-check-input" name="unitRadio" id="unitPages" value="pages" {% if progress_obj.unit == "pages" %}checked{% endif %}>
+                                                                        <label for="unitPages" class="form-check-label">Pages</label>
+                                                                    </div>
+                                                                    <div class="form-check">
+                                                                        <input type="radio" class="form-check-input" name="unitRadio" id="unitPct" value="pct" {% if progress_obj.unit == "pct" %}checked{% endif %}>
+                                                                        <label for="unitPct" class="form-check-label">%</label>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group d-inline-flex gap-1">
+                                                                    <div class="input-group" id="maxPageGroup" {% if progress_obj.unit == "pct" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Total</span>
+                                                                        <input type="number" class="form-control" id="maxPage" name="maxPage" max="10000" {% if progress_obj.unit == "pct" and progress_obj.max != "NOT AVAILABLE" %} value="{{ progress_obj.default }}" {% else %} value="{{ progress_obj.max }}" {% endif %}>
+                                                                    </div>
+                                                                    <div class="input-group" id="currentPageGroup" {% if progress_obj.unit == "pct" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Current</span>
+                                                                        <input type="number" class="form-control" id="currentPage" name="currentPage" min="0" max="10000" {% if progress_obj.unit == "pct" %} value="0" {% else %} value="{{ progress_obj.curr }}" {% endif %}>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="form-group d-inline-flex gap-1">
+                                                                    <div class="input-group" id="maxPctGroup" {% if progress_obj.unit == "pages" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Total</span>
+                                                                        <input type="number" class="form-control" id="maxPct" name="maxPct" value="100" disabled>
+                                                                    </div>
+                                                                    <div class="input-group" id="currentPctGroup" {% if progress_obj.unit == "pages" %}style="display: none;"{% endif %}>
+                                                                        <span class="input-group-text">Current</span>
+                                                                        <input type="number" class="form-control" id="currentPct" name="currentPct" min="0" max="100" {% if progress_obj.unit == "pct" %} value="{{ progress_obj.curr }}" {% else %} value="0" {% endif %}>
+                                                                    </div>
+                                                                </div>
+                                                            {% endif %}
+                                                        {% endfor %}
+                                                    {% endif %}
+                                                    <button type="submit" name="update" value="true" class="btn btn-sm btn-primary mt-2">
+                                                        Update 
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            <div class="tab-pane fade" id="move-form-{{ forloop.counter }}{{ library.i }}" role="tabpanel" aria-labelledby="move-form-tab">
+                                                <form method="post" class="d-inline-flex gap-1">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
+                                                    <div class="form-group mt-2">
+                                                        <select name="status" id="status" class="form-select">
+                                                            {% if library.s == "CR" %}
+                                                                <option value="">--- Rate this book ---</option>
+                                                            {% else %}
+                                                                <option value="">--- Select a shelf ---</option>
+                                                            {% endif %}
+                                                            {% if library.s == "HR" %}
+                                                                <option value="CR">Reading</option>
+                                                                <option value="TRW">To Read (want)</option>
+                                                                <option value="TRS">To Read (on the shelf)</option>
+                                                            {% elif library.s == "CR" %}
+                                                                <option value="0">0 - I want my time back!</option>
+                                                                <option value="0.5">0.5</option>
+                                                                <option value="1">1 - Meh!</option>
+                                                                <option value="1.5">1.5</option>
+                                                                <option value="2">2 - OK</option>
+                                                                <option value="2.5">2.5</option>
+                                                                <option value="3">3 - Good</option>
+                                                                <option value="3.5">3.5</option>
+                                                                <option value="4">4 - May read this again</option>
+                                                                <option value="4.5">4.5</option>
+                                                                <option value="5">5 - Can't wait to read again!</option>
+                                                            {% elif library.s == "TRW" %}
+                                                                <option value="HR">Have read</option>
+                                                                <option value="CR">Reading</option>
+                                                                <option value="TRS">To Read (on the shelf)</option>
+                                                            {% elif library.s == "TRS" %}
+                                                                <option value="HR">Have read</option>
+                                                                <option value="CR">Reading</option>
+                                                                <option value="TRW">To Read (want)</option>
+                                                            {% endif %}
+                                                        </select>
+                                                    </div>
+                                                    <button type="submit" name="moved" value="true" class="btn btn-sm btn-primary mt-2">
+                                                        {% if library.s == "CR" %}
+                                                            Finished!
+                                                        {% else %}
+                                                            Move
+                                                        {% endif %}
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -204,11 +303,50 @@
     {% csrf_token %}
     <!-- Save/Refresh Button -->
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
-        <a href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+        <a id="back" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
             <button id="submit-search" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
         {% endif %}
     </div>
 </form>
+
+<input type="hidden" id="notification" value="{{ notification }}">
+<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
+
+<script src="{% static 'js/add-toast.js' %}"></script>
+
+<script>
+    // Get all radio buttons with the name "unitRadio"
+    const unitRadios = document.querySelectorAll('input[name="unitRadio"]');
+    
+    // Add an event listener to each radio button
+    unitRadios.forEach((radio) => {
+        radio.addEventListener('change', () => {
+            // Get the parent element of the radio button (the form-group)
+            const parent = radio.closest('.form-group');
+    
+            // Get the maxPageGroup, currentPageGroup, maxPctGroup, and currentPctGroup
+            const maxPageGroup = parent.nextElementSibling.querySelector('#maxPageGroup');
+            const currentPageGroup = parent.nextElementSibling.querySelector('#currentPageGroup');
+            const maxPctGroup = parent.nextElementSibling.nextElementSibling.querySelector('#maxPctGroup');
+            const currentPctGroup = parent.nextElementSibling.nextElementSibling.querySelector('#currentPctGroup');
+    
+            // If the unit is "pages", show maxPageGroup and currentPageGroup, and hide maxPctGroup and currentPctGroup
+            if (radio.value === 'pages') {
+                maxPageGroup.style.display = '';
+                currentPageGroup.style.display = '';
+                maxPctGroup.style.display = 'none';
+                currentPctGroup.style.display = 'none';
+            }
+            // If the unit is "pct", show maxPctGroup and currentPctGroup, and hide maxPageGroup and currentPageGroup
+            else if (radio.value === 'pct') {
+                maxPageGroup.style.display = 'none';
+                currentPageGroup.style.display = 'none';
+                maxPctGroup.style.display = '';
+                currentPctGroup.style.display = '';
+            }
+        });
+    });
+</script>
 
 {% endblock content %}

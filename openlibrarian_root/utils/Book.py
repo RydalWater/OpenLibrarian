@@ -1,6 +1,5 @@
 import aiohttp, asyncio, os
 
-api_url = "https://openlibrary.org/search.json"
 alt_api_url = "https://www.googleapis.com/books/v1/volumes"
 
 email_address = os.getenv("EMAIL_ADDY")

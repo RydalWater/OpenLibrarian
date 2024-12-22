@@ -12,7 +12,8 @@ def get_session_info(request: object) -> dict:
         'relays': request.session.get('relays', None),
         'mod_relays': request.session.get('mod_relays', None),
         'libraries': request.session.get('libraries', None),
-        'interests': request.session.get('interests', None)
+        'interests': request.session.get('interests', None),
+        'progress' : request.session.get('progress', None)
     }
 
 def get_temp_keys(request: object) -> dict:
