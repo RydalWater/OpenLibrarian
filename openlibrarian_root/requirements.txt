@@ -60,5 +60,5 @@ urllib3==2.2.2
 websocket-client==1.8.0
 whitenoise==6.7.0
 wsproto==1.2.0
-yarl==1.9.4
+yarl==1.12.0
 zope.interface==7.1.1
