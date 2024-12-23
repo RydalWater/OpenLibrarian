@@ -330,8 +330,9 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     elif npub in [None, ""] or check_npub(npub) is False:
         raise Exception("No npub provided or invalid npub.")
     else:
-        ids = [hashlib.sha256(isbn.encode()).hexdigest() for isbn in isbns]
-
+        id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
+        ids = id_isbn_map.keys()
+        print(id_isbn_map)
         # Instantiate client and set signer
         filter = Filter().author(PublicKey.from_bech32(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
         client = Client(None)
@@ -349,7 +350,9 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
         # Parse events
         progress_events = []
         for event in events:
-            progress_events.append(Progress().parse_event(event))
+            if event.identifier() in id_isbn_map.keys():
+                isbn = id_isbn_map[event.identifier()]
+                progress_events.append(Progress().parse_event(event,isbn=isbn))
         
         # Run get_default_pages as tasks and gather
         tasks = [progress_event.get_default_pages() for progress_event in progress_events]
