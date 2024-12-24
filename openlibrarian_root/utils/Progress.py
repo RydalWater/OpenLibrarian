@@ -156,14 +156,61 @@ class Progress:
                     self.started = tag.as_vec()[1]
                 elif tag.as_vec()[0] == "ended":
                     self.ended = tag.as_vec()[1]
+            
+            # Populate missing fields
+            if self.identifier is None:
+                self.identifier = hashlib.sha256(self.isbn.encode()).hexdigest()
+            if self.external_id is None:
+                self.external_id = "isbn"
+            if self.unit is None:
+                self.unit = "pages"
+            if self.current is None:
+                self.current = "0"
+            if self.max is None:
+                self.max = "0"
+            if self.started is None:
+                self.started = "NA"
+            if self.ended is None:
+                self.ended = "NA"
+
+            # Set bevent and default_pages
             self.bevent = None
             self.default_pages = None
+
+            # Prevent negative values
+            try:
+                int_current = int(self.current)
+            except:
+                int_current = False
+            try:
+                int_max = int(self.max)
+            except:
+                int_max = False
+
+            if int_current < 0 or int_current == False:
+                self.current = "0"
+            if int_max < 0 or int_max == False:
+                self.max = "0"
+            
+            # Handle progress (pct)
             if self.unit == "pct":
-                self.progress = self.current
+                self.max = "100"
+                if int_current > 100:
+                    self.current = "100"
+                    self.progress = "100"
+                else:
+                    self.progress = self.current
+            # Handle progress (pages)
             elif self.unit == "pages":
-                if int(self.max) < int(self.current):
-                    raise ValueError("Current pages cannot be greater than max pages")
-                self.progress = str(round((int(self.current)/int(self.max))*100))
+                if int_current > int_max:
+                    self.max = self.current
+                    self.progress = "100"
+                elif int_max == 0:
+                    self.progress = "0"
+                elif int_current == 0:
+                    self.progress = "0"
+                else:
+                    self.progress = str(round((int_current/int_max)*100))
             return self
     
     # Parse from dictionary
@@ -201,20 +248,23 @@ class Progress:
         if self.isbn is None:
             raise ValueError("ISBN not set")
         async with aiohttp.ClientSession() as session:
-            async with session.get(f"https://openlibrary.org/isbn/{self.isbn}.json", headers=headers, timeout=10) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    if "number_of_pages" in data:
-                        self.default_pages = str(data["number_of_pages"])
-                        return self
-                
-                async with session.get(f"{alt_api_url}",params={"q": "isbn:" + self.isbn}, timeout=10) as response:
+            try:
+                async with session.get(f"https://openlibrary.org/isbn/{self.isbn}.json", headers=headers, timeout=10) as response:
                     if response.status == 200:
                         data = await response.json()
-                        if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
-                            self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+                        if "number_of_pages" in data:
+                            self.default_pages = str(data["number_of_pages"])
                             return self
-
+                    
+                    async with session.get(f"{alt_api_url}",params={"q": "isbn:" + self.isbn}, timeout=10) as response:
+                        if response.status == 200:
+                            data = await response.json()
+                            if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
+                                self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+                                return self
+            finally:
+                await session.close()
+            
         self.default_pages = "NOT AVAILABLE"
         return self
     
@@ -332,13 +382,13 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     else:
         id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
         ids = id_isbn_map.keys()
-        print(id_isbn_map)
         # Instantiate client and set signer
         filter = Filter().author(PublicKey.from_bech32(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
         client = Client(None)
 
         # get events
         events = await nostr_get(client=client, wait=10, filters=[filter], relays_dict=relays)
+
         if events in [None, []]:
             # Create new progress objects
             for isbn in isbns:
@@ -350,18 +400,24 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
         # Parse events
         progress_events = []
         for event in events:
-            if event.identifier() in id_isbn_map.keys():
+            if event.identifier() in ids:
                 isbn = id_isbn_map[event.identifier()]
                 progress_events.append(Progress().parse_event(event,isbn=isbn))
         
-        # Run get_default_pages as tasks and gather
+        # Set up get_default_pages as tasks
         tasks = [progress_event.get_default_pages() for progress_event in progress_events]
-        progress_events = await asyncio.gather(*tasks)
 
-        # Convert to dictionaries and return
+        # Get new progress objects for all isbns where events are not availabe
+        new_isbns = []
         for isbn in isbns:
             if isbn not in [progress_event.isbn for progress_event in progress_events]:
-                new_tasks = [Progress().new(isbn=isbn) for isbn in isbns]
-                additional_progress = await asyncio.gather(*new_tasks)
-                progress_events = progress_events + additional_progress
-        return {progress_event.isbn: progress_event.detailed() for progress_event in progress_events}
+                new_isbns.append(isbn)
+
+        # Set up new progress objects as tasks
+        new_tasks = [Progress().new(isbn=new) for new in new_isbns]
+        
+        # Async gather all tasks
+        progress_all = await asyncio.gather(*(tasks + new_tasks))
+        
+        # Convert to dictionaries and return
+        return {progress.isbn: progress.detailed() for progress in progress_all}
