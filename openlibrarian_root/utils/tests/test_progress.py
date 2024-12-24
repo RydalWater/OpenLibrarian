@@ -3,19 +3,21 @@ from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, A
 from utils.Progress import Progress, fetch_progress
 import datetime, hashlib
 from aioresponses import aioresponses
+from unittest.mock import patch
 
 
 ISBN = "9780141030586"
 ISBN2 = "0140232699"
+ISBN3 = "9780007560776"
 KEYS = Keys.generate()
 
 class ProgressUnitTests(TestCase):
     def setUp(self):
         pass
     
-    def test_progress_parse_event(self):
+    def test_progress_parse_event_pages(self):
         """
-        Test parsing of progress event
+        Test parsing of progress event (pages)
         """        
         tags = [
             Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
@@ -30,7 +32,6 @@ class ProgressUnitTests(TestCase):
         content=""
         event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
 
-        # Parse Valid event (pages)
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
 
@@ -45,7 +46,10 @@ class ProgressUnitTests(TestCase):
         self.assertEqual(progress.external_id, "isbn")
         self.assertEqual(progress.bevent, None)
 
-        # Parse Valid event (pct)
+    def test_progress_parse_event_pct(self):
+        """
+        Test parsing of progress event (pct)
+        """     
         tags = [
             Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
             Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
@@ -55,8 +59,10 @@ class ProgressUnitTests(TestCase):
             Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
             Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
         ]
+        content=""
+        kind = Kind(30250)
         event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
-        
+
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
 
@@ -71,33 +77,252 @@ class ProgressUnitTests(TestCase):
         self.assertEqual(progress.external_id, "isbn")
         self.assertEqual(progress.bevent, None)
 
+    def test_progress_parse_event_none(self):
+        """
+        Test parsing of progress event (none)
+        """    
         progress = Progress()
-        # Parse None event
         self.assertEqual(progress, progress.parse_event(event=None, isbn=ISBN))
-        # Parse Invalid event
+    
+    def test_progress_parse_event_invalid(self):
+        """
+        Test parsing of progress event (invalid)
+        """    
+        progress = Progress()
         self.assertRaises(ValueError, progress.parse_event, event="Test", isbn=ISBN2)
 
-        # Parse Invalid kind
+    def test_progress_parse_event_invalid_kind(self):
+        """
+        Test parsing of progress event (invalid kind)
+        """
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pct"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["100"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["100"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
+        ]
         kind4 = Kind(30251)
-        event4 = EventBuilder(kind=kind4, content=content, tags=tags).to_event(keys=KEYS)
-        self.assertRaises(ValueError, progress.parse_event, event=event4, isbn=ISBN)
+        content=""
+        event = EventBuilder(kind=kind4, content=content, tags=tags).to_event(keys=KEYS)
 
-        # Parse Invalid max/current
+        progress = Progress()
+        self.assertRaises(ValueError, progress.parse_event, event=event, isbn=ISBN)
+
+    def test_progress_parse_event_max_gt_current(self):
+        """
+        Test parsing of progress event (max > current)
+        """   
         tags = [
             Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
             Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
             Tag.custom(TagKind.UNKNOWN("unit"), ["pages"]),
-            Tag.custom(TagKind.UNKNOWN("current"),["300"]),
-            Tag.custom(TagKind.UNKNOWN("max"), ["200"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["200"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["100"]),
             Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
             Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
         ]
-
+        kind = Kind(30250)
+        content=""
         event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
-
+                
         progress = Progress()
-        self.assertRaises(ValueError, progress.parse_event, event=event, isbn=ISBN)
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pages")
+        self.assertEqual(progress.current, "200")
+        self.assertEqual(progress.max, "200")  # max is updated to current
+        self.assertEqual(progress.started, "2021-01-09")
+        self.assertEqual(progress.ended, "2021-03-10")
+        self.assertEqual(progress.progress, "100")
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
+
+    def test_progress_parse_event_pct_gt_100(self):
+        """
+        Test parsing of progress event (max pct > 100)
+        """   
+        # Test current greater than 100 (pct)
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pct"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["150"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["100"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
+        ]
+        kind = Kind(30250)
+        content=""
+        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+                
+        progress = Progress()
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pct")
+        self.assertEqual(progress.current, "100")  # current is capped at 100
+        self.assertEqual(progress.max, "100")
+        self.assertEqual(progress.started, "2021-01-09")
+        self.assertEqual(progress.ended, "2021-03-10")
+        self.assertEqual(progress.progress, "100")
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
+        
+    def test_progress_parse_event_max_0(self):
+        """
+        Test parsing of progress event (max == 0)
+        """   
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pages"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["0"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["0"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
+        ]
+        kind = Kind(30250)
+        content=""
+        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+                
+        progress = Progress()
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pages")
+        self.assertEqual(progress.current, "0")
+        self.assertEqual(progress.max, "0")
+        self.assertEqual(progress.started, "2021-01-09")
+        self.assertEqual(progress.ended, "2021-03-10")
+        self.assertEqual(progress.progress, "0")
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
+
+    def test_progress_parse_event_current_0(self):
+        """
+        Test parsing of progress event (current == 0)
+        """   
+        # Test current is 0 (pages)
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pages"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["0"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["100"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
+        ]
+        kind = Kind(30250)
+        content=""
+        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+                
+        progress = Progress()
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pages")
+        self.assertEqual(progress.current, "0")
+        self.assertEqual(progress.max, "100")
+        self.assertEqual(progress.started, "2021-01-09")
+        self.assertEqual(progress.ended, "2021-03-10")
+        self.assertEqual(progress.progress, "0")
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
     
+    def test_progress_parse_event_missing_fields(self):
+        """
+        Test parsing of progress event (missing fields)
+        """   
+        tags = [
+        ]
+        kind = Kind(30250)
+        content=""
+        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+                
+        progress = Progress()
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
+        self.assertEqual(progress.unit, "pages")
+        self.assertEqual(progress.current, "0")
+        self.assertEqual(progress.max, "0")
+        self.assertEqual(progress.started, "NA")
+        self.assertEqual(progress.ended, "NA")
+        self.assertEqual(progress.progress, "0")
+    
+    def test_progress_parse_event_non_numeric_fields(self):
+        """
+        Test parsing of progress event (non numeric fields)
+        """   
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pct"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["Apple"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["Bear"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
+        ]
+        kind = Kind(30250)
+        content=""
+        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+                
+        progress = Progress()
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pct")
+        self.assertEqual(progress.current, "0")
+        self.assertEqual(progress.max, "100")
+        self.assertEqual(progress.started, "2021-01-09")
+        self.assertEqual(progress.ended, "2021-03-10")
+        self.assertEqual(progress.progress, "0")
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
+    
+    def test_progress_parse_event_negative_values(self):
+        """
+        Test parsing of progress event (negative values)
+        """   
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pct"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["-1"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["-1"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-09"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-03-10"]),
+        ]
+        kind = Kind(30250)
+        content=""
+        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+                
+        progress = Progress()
+        progress.parse_event(event=event, isbn=ISBN)
+        
+        self.assertEqual(progress.isbn, ISBN)
+        self.assertEqual(progress.identifier, hashlib.sha256(ISBN.encode()).hexdigest())
+        self.assertEqual(progress.unit, "pct")
+        self.assertEqual(progress.current, "0")
+        self.assertEqual(progress.max, "100")
+        self.assertEqual(progress.started, "2021-01-09")
+        self.assertEqual(progress.ended, "2021-03-10")
+        self.assertEqual(progress.progress, "0")
+        self.assertEqual(progress.external_id, "isbn")
+        self.assertEqual(progress.bevent, None)
+
     async def test_progress_parse_dict(self):
         """
         Test parsing of progress dict
@@ -534,6 +759,50 @@ class ProgressUnitTests(TestCase):
         new_list = [await Progress().new(isbn=isbn) for isbn in isbns]
         detailed_dict = {progress.isbn: progress.detailed() for progress in new_list}
         self.assertEqual(result, detailed_dict)
+
+    @patch('utils.Progress.nostr_get')
+    async def test_fetch_progress(self, mock_nostr_get):
+        """
+        Test fetching progress
+        """
+
+        # Mock events
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pages"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["100"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["300"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-01-01"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["NA"]),
+        ]
+        kind = Kind(30250)
+        content=""
+        event1 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        
+        tags = [
+            Tag.identifier(hashlib.sha256(ISBN2.encode()).hexdigest()),
+            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(TagKind.UNKNOWN("unit"), ["pct"]),
+            Tag.custom(TagKind.UNKNOWN("current"),["50"]),
+            Tag.custom(TagKind.UNKNOWN("max"), ["100"]),
+            Tag.custom(TagKind.UNKNOWN("started"), ["2021-06-01"]),
+            Tag.custom(TagKind.UNKNOWN("ended"), ["2021-06-02"]),
+        ]
+
+        event2 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        events = [event1, event2]
+
+        mock_nostr_get.return_value = events
+        actual = await fetch_progress(isbns=[ISBN, ISBN2, ISBN3], npub=KEYS.public_key().to_bech32(), relays={"wss://relay.damus.io": None})
+
+        parsed1 = await Progress().parse_event(event=event1, isbn=ISBN).get_default_pages()
+        parsed2 = await Progress().parse_event(event=event2, isbn=ISBN2).get_default_pages()
+        new = await Progress().new(isbn=ISBN3)
+        new = await new.get_default_pages()
+
+        expected = {ISBN: parsed1.detailed(), ISBN2: parsed2.detailed(), ISBN3: new.detailed()}
+        self.assertEqual(actual, expected)
 
     def tearDown(self):
         pass
