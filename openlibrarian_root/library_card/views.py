@@ -5,6 +5,7 @@ from utils.Profile import fetch_profile_info
 from utils.Library import fetch_libraries
 from utils.Interests import fetch_interests
 from utils.Login import check_npub
+from utils.Progress import fetch_progress
 from utils.Constants import INTERESTS_HASHMAP
 import asyncio
 
@@ -25,11 +26,22 @@ async def library_card(request, npub: str=None):
                 profile = session['profile']
                 interest_list = session['interests']
                 libraries = session['libraries']
+                progress = session['progress']
                 owner = True
             else:
                 profile, relays = await fetch_profile_info(npub=npub)
                 tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
                 libraries, interest_list = await asyncio.gather(*tasks)
+
+                    # Get list of ISBNs and then create progress object
+                isbns = []
+                for library in libraries:
+                    if library["s"] == "CR":
+                        for book in library["b"]:
+                            if "Hidden" not in book["i"]:
+                                isbns.append(book["i"])
+                progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+
                 nym = profile['nym']
                 owner = False
 
@@ -45,16 +57,18 @@ async def library_card(request, npub: str=None):
             if len(interests) == 0:
                 interests.append("No interests set, they are an enigma!")
 
-            current_books = []
+            current_books = {}
             to_read = 0
             read = 0
+            current = 0
             for library in libraries:
                 if library["s"] == "CR":
                     for book in library["b"]:
+                        current += 1
                         if book["h"] == "N":
-                            current_books.append(f"{book['t']} by {book['a']}")
+                            current_books[f"{current}"] = {"t": book["t"], "a": book["a"], "i" : book["i"]}
                         else:
-                            current_books.append("A Mysterious Book by and Unknown Author")
+                            current_books[f"{current}"] = {"t": "A Mysterious Book", "a": "Unknown Author", "i" : "hidden"}
                 elif library["s"] in("TRS", "TRW"):
                     for book in library["b"]:
                         to_read += 1
@@ -62,8 +76,8 @@ async def library_card(request, npub: str=None):
                     for book in library["b"]:
                         read += 1
             
-            if len(current_books) == 0:
-                current_books.append("This user is currently between books.")
+            if current_books == {}:
+                current_books[f"{current}"] = {"t": "This user is currently between books."}
 
             context = {
                 'nym': nym,
@@ -74,7 +88,8 @@ async def library_card(request, npub: str=None):
                 'current_books': current_books,
                 'to_read': to_read,
                 'read': read,
-                'owner': owner
+                'owner': owner,
+                'progress': progress
             }
             
             return render(request, 'library_card/card.html', context)
