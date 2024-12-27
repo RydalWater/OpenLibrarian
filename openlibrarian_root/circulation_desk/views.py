@@ -9,7 +9,7 @@ from utils.Library import fetch_libraries
 from utils.Interests import fetch_interests
 from utils.Progress import fetch_progress, Progress
 from circulation_desk.forms import SeedForm, NpubForm, NsecForm
-import asyncio
+import asyncio, os, ast
 
 # Basic view for home page
 async def index(request):
@@ -259,12 +259,12 @@ async def create_account_confirm_view(request):
                     # Build default set of relays for user
                     session_relays = {}
                     
-                    mod_relays = {
-                        "wss://relay.damus.io": None,
-                        "wss://relay.primal.net": None,
-                        "wss://nos.lol": None,
-                        "wss://nostr.mom": None,
-                    }
+                    # Set default session relays
+                    default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+                    mod_relays = {}
+                    for relay in default_relays:
+                        mod_relays[relay] = None
+   
                     await edit_relay_list(session_relays, mod_relays, nsec)
 
                     # Get default libraries and interests

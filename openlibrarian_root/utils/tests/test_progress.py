@@ -1,7 +1,7 @@
 from django.test import TestCase
-from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, Alphabet
+from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Event
 from utils.Progress import Progress, fetch_progress
-import datetime, hashlib
+import datetime, hashlib, sys, io
 from aioresponses import aioresponses
 from unittest.mock import patch
 
@@ -728,8 +728,19 @@ class ProgressUnitTests(TestCase):
             await progress.publish_event(nsec=nsec, nym_relays={"wss://relay.damus.io": None})
         self.assertEqual(str(e.exception), "Not a valid builder object.")
         progress.build_event()
+
+        # Publish and capture output
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         result = await progress.publish_event(nsec=nsec, nym_relays={"wss://relay.damus.io": None})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
         self.assertEqual(result, "Published event.")
+        # Extract event string and look for content
+        event_str = output.split("\n")[2]
+        self.assertIn('"tags":[["d","648370d3279993b70d7f75625d765e08ddcbb4db5262ebd2e9db0d666c0b8412"],["k","isbn"],["unit","pct"],["current","50"],["max","100"],["started","2021-06-01"],["ended","2021-06-02"]]', event_str)
+        self.assertIn('"content":""', event_str)
+        self.assertIn('"kind":30250', event_str)
 
     async def test_progress_fetch(self):
         """
@@ -738,7 +749,6 @@ class ProgressUnitTests(TestCase):
         npub = KEYS.public_key().to_bech32()
         relays = {"wss://relay.damus.io": None}
         isbns = [ISBN, ISBN2]
-        npub_new = Keys.generate().public_key().to_bech32()
         result = await fetch_progress(isbns=[], npub=npub, relays=relays)
         self.assertEqual(result, [])
         with self.assertRaises(Exception) as e:

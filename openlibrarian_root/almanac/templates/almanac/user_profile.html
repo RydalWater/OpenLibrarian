@@ -18,7 +18,7 @@
         <div style="height: 55vh; overflow-y: auto;">
             <div class="input-group-sm text-start">
                 <label for="edit_nym" class="form-label book-text">Account Nym</label>
-                {% if nym %}
+                {% if session.nym %}
                     <input class="form-control" type="text", name="edit_nym", value="{{ session.nym }}"></input>
                 {% else %}
                     <input class="form-control" type="text", name="edit_nym", placeholder="Enter your user nym"></input>

@@ -14,7 +14,7 @@ class BookUnitTest(TestCase):
         """
         test_isbn_raw = "978-0-141-03058-6"
         test_isbn_clean = "9780141030586"
-        response = requests.get(f"https://openlibrary.org/isbn/{test_isbn_clean}.json")
+        
         book1 = Book(isbn=test_isbn_raw)
         self.assertEqual(book1.isbn, test_isbn_clean)
         self.assertEqual(book1.url, f"https://openlibrary.org/isbn/{test_isbn_clean}.json")

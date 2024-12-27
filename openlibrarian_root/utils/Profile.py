@@ -1,5 +1,6 @@
 from nostr_sdk import Client, Filter, Kind, Metadata, PublicKey, Keys, NostrSigner, RelayMetadata, EventBuilder
 from utils.Network import nostr_get, nostr_post, nostr_post_profile
+import os, ast
 
 
 async def fetch_profile_info(relays:list|dict = None, npub: str = None):
@@ -97,13 +98,23 @@ async def edit_profile_info(nym_profile: dict, nym_relays: dict, nsec: str):
     signer = NostrSigner.keys(Keys.parse(nsec))
     client = Client(signer)
 
-    # Set the write relays
+    # Post the event
     await nostr_post_profile(client=client, profile_meta=profile_meta, relays_dict=nym_relays)
 
 
 async def edit_relay_list(session_relays: dict, mod_relays: dict, nsec: str):
     """Updates the Relay List information."""
     update = False
+
+    # Handle None
+    if session_relays == None:
+        session_relays = {}
+    if mod_relays == None:
+        # Set default session relays
+        default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+        mod_relays = {}
+        for relay in default_relays:
+            mod_relays[relay] = None
 
     # Check for changes
     if len(session_relays) != len(mod_relays):
@@ -132,3 +143,6 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict, nsec: str):
 
         # Post event
         await nostr_post(client=client, eventbuilder=eventbuilder, relays_dict=new_relays)
+
+
+    return update
