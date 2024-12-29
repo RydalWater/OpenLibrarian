@@ -5,6 +5,10 @@ from selenium.webdriver.common.by import By
 from django.test import TestCase, Client
 from mnemonic import Mnemonic
 from nostr_sdk import Keys
+import io, sys
+
+TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+TC_NSEC = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
 
 class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
     """
@@ -78,8 +82,8 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Page returns a 200 response
         """
         session = self.client.session
-        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["tnsec"] = TC_NSEC
+        session["tnpub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -90,8 +94,8 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Check page templates (inc. base.html)
         """
         session = self.client.session
-        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["tnsec"] = TC_NSEC
+        session["tnpub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, self.template)
@@ -103,8 +107,8 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Check page for specific fields
         """
         session = self.client.session
-        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["tnsec"] = TC_NSEC
+        session["tnpub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
         for item in self.content:
@@ -115,7 +119,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Test the redirect response when logged in
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["npub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
@@ -135,8 +139,8 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Post with valid form but invalid mnemonic
         """
         session = self.client.session
-        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["tnsec"] = TC_NSEC
+        session["tnpub"] = TC_NPUB
         session.save()
         form_data = {'word1': 'apple', 'word2': 'banana', 'word3': 'carrot', 'word4': 'date', 'word5': 'egg', 'word6': 'fish', 'word7': 'grape', 'word8': 'honey', 'word9': 'ice', 'word10': 'jelly', 'word11': 'kumquat', 'word12': 'lemon'}
         word_list = Mnemonic("english").wordlist 
@@ -144,7 +148,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         self.assertTrue(form.is_valid())
         # Check context values
         response = self.client.post(self.url, data=form_data)
-        self.assertEqual(response.context["tnpub"], "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.assertEqual(response.context["tnpub"], TC_NPUB)
         self.assertEqual(response.context["private_key_confirmed"],"Invalid mnemonic")
         self.assertEqual(response.context["word_list"], word_list)
         self.assertEqual(response.status_code, 200)
@@ -154,8 +158,8 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Post with invalid form
         """
         session = self.client.session
-        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["tnsec"] = TC_NSEC
+        session["tnpub"] = TC_NPUB
         session.save()
         form_data = {'word1': 'apple', 'word2': 'banana', 'word3': 'carrot', 'word4': 'date'}
         word_list = Mnemonic("english").wordlist 
@@ -163,7 +167,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         self.assertFalse(form.is_valid())
         # Check context values
         response = self.client.post(self.url, data=form_data)
-        self.assertEqual(response.context["tnpub"], "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.assertEqual(response.context["tnpub"], TC_NPUB)
         self.assertEqual(response.context["private_key_confirmed"],None)
         self.assertEqual(response.context["word_list"], word_list)
         self.assertEqual(response.status_code, 200)
@@ -191,19 +195,31 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         Post with valid mnemonic matching npub (success)
         """
         session = self.client.session
-        session["tnsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["tnpub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["tnsec"] = TC_NSEC
+        session["tnpub"] = TC_NPUB
         session.save()
         form_data = {'word1':'engine', 'word2':'survey', 'word3':'rich', 'word4':'year', 'word5':'woman', 'word6':'keen', 'word7':'thrive', 'word8':'clip', 'word9':'patrol', 'word10':'patrol', 'word11':'next', 'word12':'quantum'}
         form = SeedForm(form_data)
         self.assertTrue(form.is_valid())
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, data=form_data)
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+        event_str = output.split("\n")[2]
+        self.assertIn('["r","wss://nos.lol/"]', event_str)
+        self.assertIn('["r","wss://relay.damus.io/"]', event_str)
+        self.assertIn('["r","wss://nostr.mom/"]', event_str)
+        self.assertIn('["r","wss://relay.primal.net/"]', event_str)
+        self.assertIn('"content":""', event_str)
+        self.assertIn('"kind":10002', event_str)
         self.assertEqual(response.status_code, 200)
         session = self.client.session
         self.assertEqual(session["tnpub"], None)
         self.assertEqual(session["tnsec"], None)
-        self.assertEqual(session["npub"], "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
-        self.assertEqual(session["nsec"], "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm")
+        self.assertEqual(session["npub"], TC_NPUB)
+        self.assertEqual(session["nsec"], TC_NSEC)
         self.assertIn("libraries", session.keys())
         self.assertIn("interests", session.keys())
         self.assertIn("relays", session.keys())
+        

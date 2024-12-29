@@ -372,20 +372,14 @@ class ShelvesUnitTestCase(TestCase):
         self.assertIn('"content":""', event_str1)
         self.assertIn('"kind":30250', event_str1)
 
-        # Review Event string for notification update
-        event_str2 = output.split("\n")[6]
-        self.assertIn('"tags":[["t","Read"],["t","Books"],["t","Reading"],["t","OpenLibrarian"],["t","OpenLibrary"],["t","Bookstr"],["t","Readstr"]]', event_str2)
-        self.assertIn('"content":"I just finished reading ', event_str2)
-        self.assertIn('"kind":1', event_str2)
-
         # Review Event string for library update (HR)
-        event_str3 = output.split("\n")[10]
+        event_str3 = output.split("\n")[6]
         self.assertIn('"tags":[["d","e1d342f8901e9db6dcd671b974e130f8bc5353f7"],["title","Have Read"],["description","Books I have finished reading"]]', event_str3)
         self.assertIn('"content":"Books & Literature (OpenLibrarian):', event_str3)
         self.assertIn('"kind":30003', event_str3)
 
         # Review Event string for library update (TRW)
-        event_str4 = output.split("\n")[14]
+        event_str4 = output.split("\n")[10]
         self.assertIn(""" "tags":[["d","f76a2d0c13b20a32eeefc4e4f5b393f7b0d6dccc"],["title","To Read (W)"],["description","Books I want to read but don't own yet"]] """.strip(), event_str4)
         self.assertIn('"content":"Books & Literature (OpenLibrarian):', event_str4)
         self.assertIn('"kind":30003', event_str4)
@@ -444,7 +438,7 @@ class ShelvesUnitTestCase(TestCase):
         session.save()
         capturedOutput = io.StringIO()
         sys.stdout = capturedOutput
-        response = self.client.post(self.url, {"moved": "true", "book_info":"fe7046323fc3ccc7c6b2748ba58295fc4206a1a3-9780007560776", "status":"HR"})
+        response = self.client.post(self.url, {"moved": "true", "book_info":"fe7046323fc3ccc7c6b2748ba58295fc4206a1a3-9780007560776", "status":"4"})
         sys.stdout = sys.__stdout__
         output = capturedOutput.getvalue().strip()
         hr_books = []
@@ -479,6 +473,7 @@ class ShelvesUnitTestCase(TestCase):
         event_str2 = output.split("\n")[6]
         self.assertIn('"tags":[["t","Read"],["t","Books"],["t","Reading"],["t","OpenLibrarian"],["t","OpenLibrary"],["t","Bookstr"],["t","Readstr"]]', event_str2)
         self.assertIn('"content":"I just finished reading ', event_str2)
+        self.assertIn('and gave it 4 out of 5 stars! ', event_str2)
         self.assertIn('"kind":1', event_str2)
 
         # Review Event string for library update (HR)

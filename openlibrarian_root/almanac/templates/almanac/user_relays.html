@@ -20,9 +20,9 @@
                     </button>
                 </p>
                 <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#relay-info">
-                    <div class="accordion-body">
+                    <div class="accordion-body pe-2">
                         <p class="mt-2 book-text">
-                            <span class="dropcap">R</span>elays are the backbone of the Nostr network. They are effectively databases that store your event information.
+                            <span class="dropcap">R</span>elays are the backbone of the Nostr network. They are effectively act as databases that store your event information.
                         </p>
                         <p class="book-text">
                             You <b>MUST</b> have at least one relay that is read and write. You can add more if you wish but it is recommended 
@@ -35,43 +35,47 @@
                 </div>
             </div>
         </div>
-        {% if mod_relays %}
-            {% for key, value in mod_relays.items %}
-                <ul class="list-group text-start bg-secondary-container mt-1">
-                    {% if nsec %}
-                        <li class="list-group-item container d-flex justify-content-between align-items-center">
-                            <div class="col-2">
-                                {% if value == "READ" or value == None %} 
-                                <i class="fa-solid fa-eye"></i>
+        {% for key, value in session.mod_relays.items %}
+            <ul class="list-group text-start bg-secondary-container mt-1">
+                {% if session.nsec %}
+                    <li class="list-group-item container d-inline-flex justify-content-between text-secondary">
+                        <div class="col-1 d-inline-flex align-items-center">
+                            {% if value == "READ" or value == None %} 
+                            <i class="fa-solid fa-eye"></i>
+                            {% endif %}
+                            {% if value == None %}
+                                /
+                            {% endif %}
+                            {% if value == "WRITE" or value == None %} 
+                                <i class="fa-solid fa-pen"></i>
+                            {% endif %}
+                        </div>
+                        <div class="col-8 d-inline-flex align-items-center">
+                            <span class="book-text fs-6">{{ key }}</span>
+                        </div>
+                        <div class="col-1 d-inline-flex align-items-center">
+                            <button id="removeButton" class="btn btn-sm btn-outline-danger" type="submit", name="remove", value="{{ key }}"><i class="fa-solid fa-trash"></i></button>
+                            {% if session.def_relays == True %}
+                                {% if key in default_relays %}
+                                    <i class="ms-1 fa-solid fa-globe text-secondary"></i>
                                 {% endif %}
-                                {% if value == None %}
-                                    /
-                                {% endif %}
-                                {% if value == "WRITE" or value == None %} 
-                                    <i class="fa-solid fa-pen"></i>
-                                {% endif %}
-                            </div>
-                            <div class="col-8 fs-6">
-                                <p>{{ key }}</p>
-                            </div>
-                            <div class="col-1">
-                                <button id="removeButton" class="btn btn-sm btn-outline-danger" type="submit", name="remove", value="{{ key }}"><i class="fa-solid fa-trash"></i></button>
-                            </div>  
-                        </li>
-                    {% elif npub %}
-                        <li class="list-group-item">{{ key }}</li>
-                    {% endif %}
-                </ul>
+                            {% endif %}
+                        </div>  
+                    </li>
+                {% elif npub %}
+                    <li class="list-group-item">{{ key }}</li>
+                {% endif %}
+            </ul>
+        {% endfor %}
+        {% if messages %}
+            {% for message in messages %}
+                <p class="text text-danger book-text text-center">{{ message }}</p>
             {% endfor %}
-            {% if messages %}
-                {% for message in messages %}
-                    <p class="text text-danger book-text text-center">{{ message }}</p>
-                {% endfor %}
-            {% endif %}
         {% endif %}
+
     </div>
         <div style="height: 15vh; overflow-y: auto;">
-        {% if nsec %}
+        {% if session.nsec %}
             <div>
                 <label for="add_relay_url" class="form-label mt-1 book-text text-center fw-bold">Add Relay</label>
                 <div class="input-group input-group-sm">
@@ -93,7 +97,7 @@
     <!-- Save/Refresh Button -->
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
         <a id="back" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
-        {% if nsec %}
+        {% if session.nsec %}
             <button class="btn btn-sm btn-primary w-50" type="submit", name="cancel", value="Cancel"><i class="fa-solid fa-trash-can-arrow-up"></i> Cancel</button>
             <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
         {% endif %}

@@ -3,6 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 
+TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+TC_NSEC = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
 
 class SettingsFunctionalTestCase(TestCase):
     """
@@ -15,7 +17,7 @@ class SettingsFunctionalTestCase(TestCase):
         self.url = "/almanac/"
         self.driver = webdriver.Firefox()
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
-        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
         self.driver.find_element(by=By.ID, value="submit").click()
         sleep(1)
 
@@ -24,6 +26,7 @@ class SettingsFunctionalTestCase(TestCase):
         Test Almanac Profile Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        sleep(1)
         self.driver.find_element(by=By.ID, value="profile").click()
         self.assertIn("/profile/", self.driver.current_url)
     
@@ -32,6 +35,7 @@ class SettingsFunctionalTestCase(TestCase):
         Test Almanac Relays Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        sleep(1)
         self.driver.find_element(by=By.ID, value="relays").click()
         self.assertIn("/relays/", self.driver.current_url)
     
@@ -40,6 +44,7 @@ class SettingsFunctionalTestCase(TestCase):
         Test Almanac Friends Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        sleep(1)
         self.driver.find_element(by=By.ID, value="friends").click()
         self.assertIn("/friends/", self.driver.current_url)
     
@@ -48,6 +53,7 @@ class SettingsFunctionalTestCase(TestCase):
         Test Almanac Export/Import Button
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        sleep(1)
         self.driver.find_element(by=By.ID, value="transfers").click()
         self.assertIn("/transfers/", self.driver.current_url)
 
@@ -77,8 +83,8 @@ class SettingsUnitTestCase(TestCase):
 
         # Set session with login both NPUB and NSEC
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -88,7 +94,7 @@ class SettingsUnitTestCase(TestCase):
         session.save()
         self.assertNotIn("npub", session)
         self.assertNotIn("nsec", session)
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["npub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -99,8 +105,8 @@ class SettingsUnitTestCase(TestCase):
         Check page templates (inc. base.html) when logged in
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session.save()
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, self.template)
@@ -111,7 +117,7 @@ class SettingsUnitTestCase(TestCase):
         session.save()
         self.assertNotIn("npub", session)
         self.assertNotIn("nsec", session)
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["npub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
         self.assertTemplateUsed(response, self.template)
@@ -123,8 +129,8 @@ class SettingsUnitTestCase(TestCase):
         Check page for specific fields when logged in
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session.save()
         response = self.client.get(self.url)
         for item in self.content:
@@ -135,7 +141,7 @@ class SettingsUnitTestCase(TestCase):
         session.save()
         self.assertNotIn("npub", session)
         self.assertNotIn("nsec", session)
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["npub"] = TC_NPUB
         session.save()
         response = self.client.get(self.url)
 

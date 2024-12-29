@@ -185,6 +185,7 @@
                                         {% else %}
                                             <label for="book_isbn">Version:</label>
                                             <input type="text" class="form-control" name="version" id="version" value="{{ result.isbn }}" readonly>
+                                            <input type="text" class="form-control" name="default_pages" id="default_pages" value="{{ result.number_of_pages_median }}" hidden>
                                         {% endif %}
                                         <div class="modal-footer">
                                             <div class="form-group mt-2">

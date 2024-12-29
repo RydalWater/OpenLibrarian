@@ -5,7 +5,11 @@ import os, ast
 
 async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     """Fetches the profile information from Nostr Default Relay."""
-    # Get defauilt relays
+    # Check if relays is a dict
+    drelays = None
+    if relays:
+        if type(relays) == dict:
+            drelays = relays
 
     # Open client connection
     client = Client(None)
@@ -15,7 +19,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
 
     # Request profile Metadata
     f_meta = Filter().kind(Kind(0)).author(author).limit(1)
-    metaevent = await nostr_get(client=client, relays_dict=relays, filters=[f_meta], wait=10, disconnect=False)
+    metaevent = await nostr_get(client=client, relays_dict=drelays, filters=[f_meta], wait=10, disconnect=False)
 
     # If metadata is available extract relevant information
     if metaevent:
@@ -46,9 +50,9 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     
     # Request check for relay metadata event
     f_relays = Filter().kind(Kind(10002)).author(author).limit(1)
-    relays_event = await nostr_get(client=client, relays_dict=relays, filters=[f_relays], wait=10, connect=False, disconnect=True)
+    relays_event = await nostr_get(client=client, relays_dict=drelays, filters=[f_relays], wait=10, connect=False, disconnect=True)
 
-    # If metadata is available extract relevant information and append default if none
+    # If relays data is available extract relevant otherwise, use input or default relays.
     if relays_event:
         nym_relays = {}
         for tag in relays_event[0].tags():
@@ -62,12 +66,43 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             nym_relays[url] = rw
     else:
         if relays:
-            nym_relays = {relay: None for relay in relays}
+            if type(relays) == list:
+                nym_relays = {relay: None for relay in relays}
+            elif type(relays) == dict:
+                nym_relays = relays
+            else:
+                nym_relays = None
         else:
             nym_relays = None
+    
+    # Make sure there is at least one read and one write relay if not add default relays
+    has_read = False
+    has_write = False
+    if nym_relays:
+        for each in nym_relays:
+            if nym_relays[each] in [None]:
+                has_read = True
+                has_write = True
+            else:
+                if nym_relays[each] in ["READ"]:
+                    has_read = True
+                if nym_relays[each] in ["WRITE"]:
+                    has_write = True
+
+    if nym_relays == None or has_read is False or has_write is False:
+        relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+        added_relays = True
+        if nym_relays == None:
+            nym_relays = {relay: None for relay in relays_list}
+        else:
+            for relay in relays_list:
+                if relay not in nym_relays.keys():
+                    nym_relays[relay] = None
+    else:
+        added_relays = False
 
     # Return profile information
-    return nym_profile, nym_relays
+    return nym_profile, nym_relays, added_relays
 
 
 async def edit_profile_info(nym_profile: dict, nym_relays: dict, nsec: str):

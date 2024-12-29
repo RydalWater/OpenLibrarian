@@ -3,7 +3,11 @@ from almanac.tests.test_settings import SettingsUnitTestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
+import io, sys
 
+TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+TC_NSEC = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+TC_RELAYS = {"wss://relay.damus.io": None, "wss://nostr.mom": "READ"}
 
 class ProfileFunctionalTestCase(TestCase):
     """
@@ -16,7 +20,7 @@ class ProfileFunctionalTestCase(TestCase):
         self.url = "/almanac/profile/"
         self.driver = webdriver.Firefox()
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
-        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
         self.driver.find_element(by=By.ID, value="submit").click()
         sleep(1)
 
@@ -50,8 +54,8 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         Test get request for None notification
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
@@ -63,15 +67,15 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         Test post request for refresh
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session.save()
         response = self.client.post(self.url, {"refresh": "Refresh"})
         self.assertEqual(response.status_code, 200)
         self.assertIn("session",response.context.keys())
 
         # Test refresh with relays in session
-        session["relays"] = {"wss://relay.damus.io": None, "wss://nostr.mom": "READ"}
+        session["relays"] = TC_RELAYS
         session.save()
         response = self.client.post(self.url, {"refresh": "Refresh"})
         self.assertEqual(response.status_code, 200)
@@ -81,8 +85,8 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         Test post request for save
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session["profile"] = {
             "nym" : "test_nym",
             "displayname" : "test_display_name",
@@ -95,16 +99,23 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
             "lud16" : None,
         }
         session.save()
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, {"save": "Save"})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+        
         self.assertEqual(response.status_code, 200)
+        event_str = output.split("\n")[3]
+        self.assertEqual(event_str, 'TESTMODE: {}')
 
     def test_post_save_nym(self):
         """
         Test post request for save (edit nym)
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session["profile"] = {
             "nym" : "test_nym",
             "displayname" : "test_display_name",
@@ -118,17 +129,24 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         }
         session.save()
         # Update nym and retry
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, {"save": "Save", "edit_nym": "new_nym"})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["nym"], "new_nym")
+        event_str = output.split("\n")[3]
+        self.assertEqual(event_str, 'TESTMODE: {"name":"new_nym"}')
 
     def test_post_save_displayname(self):
         """
         Test post request for save (edit display name)
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session["profile"] = {
             "nym" : "test_nym",
             "displayname" : "test_display_name",
@@ -142,17 +160,24 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         }
         session.save()
         # Update display name and retry
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, {"save": "Save", "edit_displayname": "new_display_name"})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+        
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["displayname"], "new_display_name")
+        event_str = output.split("\n")[3]
+        self.assertEqual(event_str, 'TESTMODE: {"display_name":"new_display_name"}')
 
     def test_post_save_about(self):
         """
         Test post request for save (edit about)
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session["profile"] = {
             "nym" : "test_nym",
             "displayname" : "test_display_name",
@@ -166,17 +191,24 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         }
         session.save()
         # Update about and retry
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, {"save": "Save", "edit_about": "new_about"})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["about"], "new_about")
+        event_str = output.split("\n")[3]
+        self.assertEqual(event_str, 'TESTMODE: {"about":"new_about"}')
     
     def test_post_save_picture(self):
         """
         Test post request for save (edit picture)
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session["profile"] = {
             "nym" : "test_nym",
             "displayname" : "test_display_name",
@@ -190,17 +222,24 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         }
         session.save()
         # Update profile picture and retry
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, {"save": "Save", "edit_picture": "https://pfp.nostr.build/9d45acc985222226824a1e91850bf3d450b8b5964ef14f41fbd4df2c9dcc3241.jpg"})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+        
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["picture"], "https://pfp.nostr.build/9d45acc985222226824a1e91850bf3d450b8b5964ef14f41fbd4df2c9dcc3241.jpg")
-    
+        event_str = output.split("\n")[3]
+        self.assertEqual(event_str, 'TESTMODE: {"picture":"https://pfp.nostr.build/9d45acc985222226824a1e91850bf3d450b8b5964ef14f41fbd4df2c9dcc3241.jpg"}')
+
     def test_post_save_nip05(self):
         """
         Test post request for save (edit NIP05)
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+        session["npub"] = TC_NPUB
+        session["nsec"] = TC_NSEC
         session["profile"] = {
             "nym" : "test_nym",
             "displayname" : "test_display_name",
@@ -214,6 +253,13 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         }
         session.save()
         # Update NIP05 and retry
+        capturedOutput = io.StringIO()
+        sys.stdout = capturedOutput
         response = self.client.post(self.url, {"save": "Save", "edit_nip05": "Rydal@gitlurker.info"})
+        sys.stdout = sys.__stdout__
+        output = capturedOutput.getvalue().strip()
+        
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["nip05"], "Rydal@gitlurker.info")
+        event_str = output.split("\n")[3]
+        self.assertEqual(event_str, 'TESTMODE: {"nip05":"Rydal@gitlurker.info"}')

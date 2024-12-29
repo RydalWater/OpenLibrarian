@@ -29,7 +29,7 @@ async def library_card(request, npub: str=None):
                 progress = session['progress']
                 owner = True
             else:
-                profile, relays = await fetch_profile_info(npub=npub)
+                profile, relays, added_relays = await fetch_profile_info(npub=npub)
                 tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
                 libraries, interest_list = await asyncio.gather(*tasks)
 
@@ -109,11 +109,11 @@ async def library_card(request, npub: str=None):
                 valid_npub = check_npub(npub)
                 if valid_npub:
                     # Fetch Profile Info and set Session Data
-                    profile, relays = await fetch_profile_info(npub=npub)
+                    profile, relays, added_relays = await fetch_profile_info(npub=npub)
                     tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
                     libraries, interests = await asyncio.gather(*tasks)
                     nym = profile.get('nym')
-                    await async_set_session_info(request, npub=npub, nym=nym, relays=relays, profile=profile, interests=interests, libraries=libraries)
+                    await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries)
 
                 return redirect('circulation_desk:index')
             

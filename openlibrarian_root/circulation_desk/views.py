@@ -55,7 +55,7 @@ async def login_npub_view(request):
 
         if valid_npub:
             # Fetch Profile Info and set Session Data
-            profile, relays = await fetch_profile_info(npub=npub)
+            profile, relays, added_relays = await fetch_profile_info(npub=npub)
             tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
             libraries, interests = await asyncio.gather(*tasks)
             nym = profile.get('nym')
@@ -70,7 +70,7 @@ async def login_npub_view(request):
             progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
 
  
-            await async_set_session_info(request, npub=npub, nym=nym, relays=relays, profile=profile, interests=interests, libraries=libraries, progress=progress)
+            await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress)
             return redirect('circulation_desk:index')
         else:
             context = {
@@ -109,7 +109,7 @@ async def login_nsec_view(request):
             npub = keys.public_key().to_bech32()
             nsec = keys.secret_key().to_bech32()
             
-            profile, relays = await fetch_profile_info(npub=npub)
+            profile, relays, added_relays = await fetch_profile_info(npub=npub)
             tasks = [fetch_libraries(npub=npub, nsec=nsec, relays=relays), fetch_interests(npub, relays)]
             libraries, interests = await asyncio.gather(*tasks)
             nym = profile.get('nym')
@@ -123,7 +123,7 @@ async def login_nsec_view(request):
                             isbns.append(book["i"])
             progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
 
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
+            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, def_relays=added_relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
             return redirect('circulation_desk:index')
         else:
             context = {
@@ -165,7 +165,7 @@ async def login_seed_view(request):
             # Fetch Profile Info and set Session Data
             npub = keys.public_key().to_bech32()
             nsec = keys.secret_key().to_bech32()
-            profile, relays = await fetch_profile_info(npub=npub)
+            profile, relays, added_relays = await fetch_profile_info(npub=npub)
             tasks = [fetch_libraries(npub=npub, nsec=nsec, relays=relays), fetch_interests(npub, relays)]
             libraries, interests = await asyncio.gather(*tasks)
             nym = profile.get('nym')
@@ -179,7 +179,7 @@ async def login_seed_view(request):
                             isbns.append(book["i"])
             progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
 
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
+            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, def_relays=added_relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
             return redirect('circulation_desk:index')
         else:
             context = {

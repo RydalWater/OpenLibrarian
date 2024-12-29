@@ -190,9 +190,13 @@ async def library_shelves(request):
                                 progress[book_id] = progress_obj.detailed()
                                 await async_set_session_info(request, progress=progress)
 
-                                # Send notification
-                                await send_notification(book=book_moving, nsec=session["nsec"], nym_relays=session["relays"], note_type="en", score=status)
-                                
+                                # Send notification (if moving from current reading shelve)
+                                if from_shelf == "CR":
+                                    try:
+                                        float(status)
+                                        await send_notification(book=book_moving, nsec=session["nsec"], nym_relays=session["relays"], note_type="en", score=status)
+                                    except:
+                                        pass
                                 # TODO: Add a review
                             
                             # Update library (moving book to current reading shelf)

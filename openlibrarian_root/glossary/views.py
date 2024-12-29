@@ -5,6 +5,7 @@ from utils.OpenLibrary import search_books
 from utils.Book import Book
 from utils.Library import Library
 from utils.Interests import Interests, fetch_interests
+from utils.Progress import Progress
 from utils.Constants import INTERESTS_HASHMAP, INTERESTS
 
 
@@ -51,6 +52,7 @@ async def search(request):
                 
                 # Add book to library if not already in library
                 isbn = request.POST.get('version')
+                default_pages = request.POST.get('default_pages')
                 shelf = request.POST.get('shelf')
                 if request.POST.get('hidden'):
                     hidden = "Y"
@@ -64,13 +66,27 @@ async def search(request):
                 if isbn not in isbns:
                     for library in session['libraries']:
                         if library['s'] == shelf:
+                            # Build Book
                             book = Book(isbn=isbn,hidden=hidden)
                             await book.get_book()
                             library['b'].append(book.detailed())
+                            # Add book to shelf and publish
                             lib = Library(dict=library, npub=session["npub"], nsec=session["nsec"])
                             lib.build_event(npub=session["npub"], nsec=session["nsec"])
+                            print(session["relays"])
                             await lib.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
-                            await async_set_session_info(request, libraries=session['libraries'])
+                            # Add book to progress
+                            if library["s"] in ["CR", "HR"]:
+                                progress = await Progress().new(isbn=isbn, default_pages=default_pages)
+                                if library["s"] == "CR":
+                                    progress.start_book()
+                                else:
+                                    progress.end_book()
+                                progress.build_event()
+                                session["progress"][isbn] = progress.detailed()
+                                await progress.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                            # Update session
+                            await async_set_session_info(request, libraries=session['libraries'], progess=session["progress"])
                             break
                     notification = "Book added to library."
                 else:

@@ -5,6 +5,7 @@ from utils.Profile import edit_profile_info, edit_relay_list, fetch_profile_info
 from utils.Login import check_nsec
 from utils.Connections import fetch_social_list, add_follow
 from nostr_sdk import Keys
+import os, ast, copy
 
 # Users Settings View
 async def user_settings(request):
@@ -60,14 +61,14 @@ async def user_profile(request):
         if request.method == 'POST' and await async_logged_in(request) and request.POST.get('refresh'):
             keys = Keys.parse(session['nsec'])
             if session['relays'] is None:
-                profile, relays = await fetch_profile_info(npub=keys.public_key().to_bech32())
+                profile, relays, added_relays = await fetch_profile_info(npub=keys.public_key().to_bech32())
             else:
-                profile, relays = await fetch_profile_info(npub=keys.public_key().to_bech32(), relays=session['relays'])
+                profile, relays, added_relays = await fetch_profile_info(npub=keys.public_key().to_bech32(), relays=session['relays'])
             npub = keys.public_key().to_bech32()
             nsec = keys.secret_key().to_bech32()
             nym = profile.get('nym')
             
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, profile=profile)
+            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, def_relays=added_relays, profile=profile)
             session = await async_get_session_info(request)
             notification = "Profile Refreshed"
 
@@ -93,60 +94,76 @@ async def user_relays(request):
 
     # Otherwise return the user relays
     else:
-        # get relay data from session and create a modified copy
-        temp_session = await async_get_session_info(request)
-        if temp_session['mod_relays'] is None or request.POST.get('cancel'):
-            mod_relays = temp_session['relays']
-            await async_set_session_info(request, mod_relays=mod_relays)
-              
+        # get default relays from environment variable
+        default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+
+        # Fetch session and make a copy
+        session = await async_get_session_info(request)
+
+        # If cancel is used or mod_relays is None then set mod_relays to relays
+        temp_session = session.copy()
+
+        if temp_session['mod_relays'] in [None, {}] or "mod_relays" not in temp_session.keys() or request.POST.get('cancel'):
+            temp_session["mod_relays"] = session["relays"].copy()
+            session["mod_relays"] = session["relays"].copy()
+            await async_set_session_info(request, mod_relays=session["mod_relays"])
+
         # If GET then return the user relays
         if request.method == 'GET':
-            session = await async_get_session_info(request)
-            return render(request, 'almanac/user_relays.html', session)
+            context = {
+                "session": session,
+                "default_relays": default_relays
+            }
+            return render(request, 'almanac/user_relays.html', context=context)
         
         # If POST then update the user relays
         elif request.method == 'POST':
-            session = await async_get_session_info(request)
-
-            # Add_relay button modfies the content of the mod_real updates session information
+            # Add_relay button modfies the content of the mod_realy updates session information
             if request.POST.get('add_relay') and request.POST.get('add_relay_url') and request.POST.get('relay_option'):
                 if request.POST.get('relay_option') == "R":
-                    session["mod_relays"][request.POST.get('add_relay_url')] = "READ"
+                    temp_session["mod_relays"][request.POST.get('add_relay_url')] = "READ"
                 elif request.POST.get('relay_option') == "W":
-                    session["mod_relays"][request.POST.get('add_relay_url')] = "WRITE"
+                    temp_session["mod_relays"][request.POST.get('add_relay_url')] = "WRITE"
                 elif request.POST.get('relay_option') == "B":
-                    session["mod_relays"][request.POST.get('add_relay_url')] = None
-                await async_set_session_info(request, mod_relays=session["mod_relays"])
+                    temp_session["mod_relays"][request.POST.get('add_relay_url')] = None
+                session["mod_relays"] = temp_session["mod_relays"].copy()
+                await async_set_session_info(request, mod_relays=session["mod_relays"] )
 
             # Remove_relay button modfies the content of the mod_real updates session information
             elif request.POST.get('remove'):
                 # Check if there is at least one read and one write relay before removing
                 read_count = 0
                 write_count = 0
-                for relay in session["mod_relays"]:
-                    if session["mod_relays"][relay] == "READ":
+                for relay in temp_session["mod_relays"]:
+                    if temp_session["mod_relays"][relay] == "READ":
                         read_count += 1
-                    elif session["mod_relays"][relay] == "WRITE":
+                    elif temp_session["mod_relays"][relay] == "WRITE":
                         write_count += 1
                     else:
                         read_count += 1
                         write_count += 1
                 
-                if read_count == 1 and session["mod_relays"][request.POST.get('remove')] in ("READ", None) or \
-                write_count == 1 and session["mod_relays"][request.POST.get('remove')] in ("WRITE", None):
+                if read_count == 1 and temp_session["mod_relays"][request.POST.get('remove')] in ("READ", None) or \
+                write_count == 1 and temp_session["mod_relays"][request.POST.get('remove')] in ("WRITE", None):
                     messages.error(request, "Cannot remove relay. You must have at least one read and one write.")
-                else:            
-                    del session["mod_relays"][request.POST.get('remove')]
+                else:
+                    del temp_session["mod_relays"][request.POST.get('remove')]
+                    session["mod_relays"] = temp_session["mod_relays"].copy()
                     await async_set_session_info(request, mod_relays=session["mod_relays"])
+            
 
             # Save changes submits event to write relays.
             elif request.POST.get('save'):
                 if check_nsec(session['nsec']):
-                    await edit_relay_list(session['relays'], session["mod_relays"], session['nsec'])
-                    await async_set_session_info(request, relays=session["mod_relays"])
+                    await edit_relay_list(session['relays'], temp_session["mod_relays"], session['nsec'])
+                    session["relays"] = temp_session["mod_relays"].copy()
+                    await async_set_session_info(request, relays=session["relays"])
 
-        session = await async_get_session_info(request)
-        return render(request, 'almanac/user_relays.html', session)
+        context = {
+            "session": session,
+            "default_relays": default_relays
+        }
+        return render(request, 'almanac/user_relays.html', context=context)
     
 # User following view
 async def user_friends(request):

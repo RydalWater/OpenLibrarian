@@ -15,7 +15,7 @@ class ProfileUnitTests(TestCase):
         """
         Test the fetch_profile function (empty metadata)
         """
-        profile, relays = await fetch_profile_info(npub=TC_NPUB2, relays=TC_RELAYS)
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB2, relays=TC_RELAYS)
         self.assertEqual(profile["nym"], None)
         self.assertEqual(profile["nip05"], None)
         self.assertEqual(profile["displayname"], None)
@@ -26,12 +26,13 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(profile["lud06"], None)
         self.assertEqual(profile["lud16"], None)        
         self.assertEqual(relays, TC_RELAYS)
+        self.assertEqual(added_relays, False)
     
     async def test_fetch_profile_withmeta(self):
         """
         Test the fetch_profile function (with metadata)
         """
-        profile, relays = await fetch_profile_info(npub=TC_NPUB1, relays=TC_RELAYS)
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB1, relays=TC_RELAYS)
         self.assertEqual(profile["nym"], "Violet")
         self.assertEqual(profile["nip05"], "")
         self.assertEqual(profile["displayname"], "Violet")
@@ -45,12 +46,81 @@ class ProfileUnitTests(TestCase):
         relays = dict(sorted(relays.items()))
         test_relays = {'wss://nos.lol/': 'WRITE', 'wss://nostr.mom/': None, 'wss://relay.damus.io/': None, 'wss://relay.primal.net/': None}
         self.assertEqual(relays, test_relays)
+        self.assertEqual(added_relays, False)
+    
+    async def test_fetch_profile_norelays(self):
+        """
+        Test the fetch_profile function (no relays)
+        """
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB2, relays=None)
+        self.assertEqual(profile["nym"], None)
+        self.assertEqual(profile["nip05"], None)
+        self.assertEqual(profile["displayname"], None)
+        self.assertEqual(profile["about"], None)
+        self.assertEqual(profile["picture"], None)
+        self.assertEqual(profile["website"], None)
+        self.assertEqual(profile["banner"], None)
+        self.assertEqual(profile["lud06"], None)
+        self.assertEqual(profile["lud16"], None)
+        self.assertEqual(relays, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
+        self.assertEqual(added_relays, True)
+    
+    async def test_fetch_profile_nowriterelays(self):
+        """
+        Test the fetch_profile function (with no write relays dict input)
+        """
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB2, relays={'wss://nos.lol': 'READ'})
+        self.assertEqual(profile["nym"], None)
+        self.assertEqual(profile["nip05"], None)
+        self.assertEqual(profile["displayname"], None)
+        self.assertEqual(profile["about"], None)
+        self.assertEqual(profile["picture"], None)
+        self.assertEqual(profile["website"], None)
+        self.assertEqual(profile["banner"], None)
+        self.assertEqual(profile["lud06"], None)
+        self.assertEqual(profile["lud16"], None)        
+        self.assertEqual(relays, {'wss://nos.lol': 'READ', 'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nostr.mom': None})
+        self.assertEqual(added_relays, True)
+    
+    async def test_fetch_profile_listrelays(self):
+        """
+        Test the fetch_profile function (with list relays input)
+        """
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB2, relays=['wss://nos.lol'])
+        self.assertEqual(profile["nym"], None)
+        self.assertEqual(profile["nip05"], None)
+        self.assertEqual(profile["displayname"], None)
+        self.assertEqual(profile["about"], None)
+        self.assertEqual(profile["picture"], None)
+        self.assertEqual(profile["website"], None)
+        self.assertEqual(profile["banner"], None)
+        self.assertEqual(profile["lud06"], None)
+        self.assertEqual(profile["lud16"], None)        
+        self.assertEqual(relays, {'wss://nos.lol': None})
+        self.assertEqual(added_relays, False)
+
+    async def test_fetch_profile_strrelays(self):
+        """
+        Test the fetch_profile function (with string relays input)
+        """
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB2, relays='wss://nos.lol')
+        self.assertEqual(profile["nym"], None)
+        self.assertEqual(profile["nip05"], None)
+        self.assertEqual(profile["displayname"], None)
+        self.assertEqual(profile["about"], None)
+        self.assertEqual(profile["picture"], None)
+        self.assertEqual(profile["website"], None)
+        self.assertEqual(profile["banner"], None)
+        self.assertEqual(profile["lud06"], None)
+        self.assertEqual(profile["lud16"], None)        
+        self.assertEqual(relays, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
+        self.assertEqual(added_relays, True)
         
     async def test_edit_profile(self):
         """
         Test the edit_profile function
         """
-        profile, relays = await fetch_profile_info(npub=TC_NPUB2, relays=TC_RELAYS)
+        profile, relays, added_relays = await fetch_profile_info(npub=TC_NPUB2, relays=TC_RELAYS)
         
         # Update the profile nym
         profile["nym"] = "TestProfile"

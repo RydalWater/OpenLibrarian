@@ -11,6 +11,7 @@ def get_session_info(request: object) -> dict:
         'profile': request.session.get('profile', None),
         'relays': request.session.get('relays', None),
         'mod_relays': request.session.get('mod_relays', None),
+        'def_relays': request.session.get('def_relays', None),
         'libraries': request.session.get('libraries', None),
         'interests': request.session.get('interests', None),
         'progress' : request.session.get('progress', None)
