@@ -256,3 +256,85 @@ class TestBook(IsolatedAsyncioTestCase):
             async with aiohttp.ClientSession() as session:
                 cover = await get_cover(session, "9780141030586", "S")
                 self.assertEqual(cover, "N")
+    
+    async def test_fetch_author_failed(self):
+        """
+        Test fetch_author when the API returns a response other than 200
+        """
+        test_book = Book(isbn="9780141030586")
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/authors/OL7932235A.json', status=500)
+            async with aiohttp.ClientSession() as session:
+                author = await test_book.fetch_author(session, "https://openlibrary.org/authors/OL7932235A.json")
+                self.assertEqual(author, None)
+    
+    async def test_fetch_author_timeout(self):
+        """
+        Test fetch_author when the API times out
+        """
+        test_book = Book(isbn="9780141030586")
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/authors/OL7932235A.json', exception=asyncio.TimeoutError())
+            async with aiohttp.ClientSession() as session:
+                author = await test_book.fetch_author(session, "https://openlibrary.org/authors/OL7932235A.json")
+                self.assertEqual(author, None)
+    
+    async def test_get_book_primary_noauthor(self):
+        """
+        Test get book where the first block returns a 200 response but the response.json does not contain "authors" in the keys
+        """
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=200, payload={"title": "To Kill a Mockingbird"})
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "To Kill a Mockingbird")
+            self.assertEqual(book.author, "Unknown Author")
+            self.assertEqual(book.cover ,"N")
+    
+    async def test_get_book_secondary_noauthor(self):
+        """
+        Test get book where the second block returns a 200 response but the response.json does not contain "authors" in the keys
+        """
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=404)
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={"items": [{"volumeInfo": {"title": "Harry Potter and the Philosopher's Stone"}}]})
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Harry Potter and the Philosopher's Stone")
+            self.assertEqual(book.author, "Cannot find author")
+            self.assertEqual(book.cover ,"N")
+
+    async def test_get_book_secondary_notitle(self):
+        """
+        Test get book where the second block returns a 200 response but the response.json does not contain "title" in the keys
+        """
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=404)
+            mocked.get('https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586', status=200, payload={"items": [{"volumeInfo": {"authors": ["J.K. Rowling"]}}]})
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Cannot find title")
+            self.assertEqual(book.author, "J.K. Rowling")
+            self.assertEqual(book.cover ,"N")
+    
+    async def test_api_invalid_json(self):
+        """
+        Test that the Book class handles invalid JSON responses from the API
+        """
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=200, body='Invalid JSON')
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Cannot find title (API Down)")
+            self.assertEqual(book.author, "Cannot find author (API Down)")
+
+    async def test_api_missing_values(self):
+        """
+        Test that the Book class handles API responses with missing or null values
+        """
+        with aioresponses() as mocked:
+            mocked.get('https://openlibrary.org/isbn/9780141030586.json', status=200, body='{"title": null, "authors": []}')
+            book = Book(isbn='9780141030586')
+            await book.get_book()
+            self.assertEqual(book.title, "Cannot find title (API Down)")
+            self.assertEqual(book.author, "Cannot find author (API Down)")

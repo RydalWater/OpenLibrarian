@@ -78,27 +78,27 @@ class Book:
             alt_url = ""
             async with aiohttp.ClientSession() as session:
                 if self.author is None:
-
                     # Trying the first connection
                     try:
                         async with session.get(self.url, headers=headers) as response:
                             if response.status == 200:
                                 response_json = await response.json()
                                 self.title = response_json["title"]
-            
+                                if self.title is None:
+                                    raise Exception("Cannot find title, trying google books API")
+
                                 if "authors" in response_json:
                                     author_urls = [f"https://openlibrary.org{author['key']}.json" for author in response_json["authors"] if author.get('key')]
                                     author_responses = await asyncio.gather(*[self.fetch_author(session, url) for url in author_urls])
             
                                     authors = [author["name"] for author in author_responses if author]
                                     self.author = ", ".join(authors)
-                                else:
+                                if self.author is None:
                                     self.author = "Unknown Author"
                             else:
                                 alt_api = True
                                 alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
                     except Exception as e:
-                        # print(f"Error (OL API): {e} with ISBN: {self.isbn}")
                         alt_api = True
                         alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
                     
@@ -108,21 +108,26 @@ class Book:
                             async with session.get(alt_url, headers=headers) as response:
                                 if response.status == 200:
                                     response_json = await response.json()
-                                    self.title = response_json["items"][0]["volumeInfo"]["title"]
-                                    authors = [author for author in response_json["items"][0]["volumeInfo"]["authors"]]
-                                    self.author = ", ".join(authors)
-                                    if self.author == None:
-                                        self.author = "Cannot find author"
-                                    if self.title == None:
+                                    # Check for title in response
+                                    if "items" in response_json and "volumeInfo" in response_json["items"][0] and "title" in response_json["items"][0]["volumeInfo"]:
+                                        self.title = response_json["items"][0]["volumeInfo"]["title"]
+
+                                    # Check for authors in response
+                                    if "items" in response_json and "volumeInfo" in response_json["items"][0] and "authors" in response_json["items"][0]["volumeInfo"]:
+                                        authors = [author for author in response_json["items"][0]["volumeInfo"]["authors"]]
+                                        self.author = ", ".join(authors)
+                                    
+                                    if self.title is None:
                                         self.title = "Cannot find title"
+                                    if self.author is None:
+                                        self.author = "Cannot find author"
+                                        
                                 else:
-                                    # print(f"Error: {response.status} with ISBN: {self.isbn}")
                                     self.title = "Cannot find title (API Down)"
                                     self.author = "Cannot find author (API Down)"
                                     return self
                                                    
                     except Exception as e:
-                        # print(f"Error (GOOGLE API): {e} with ISBN: {self.isbn}")
                         self.title = "Cannot find title (API Down)"
                         self.author = "Cannot find author (API Down)"
                         return self
@@ -136,12 +141,14 @@ class Book:
 
     async def fetch_author(self, session: aiohttp.ClientSession, url: str):
         """Fetch author information from Open Library API"""
-        async with session.get(url, headers=headers) as response:
-            if response.status != 200:
-                return None
-    
-            response_json = await response.json()
-            return response_json
+        try:
+            async with session.get(url, headers=headers) as response:
+                if response.status != 200:
+                    return None
+                response_json = await response.json()
+                return response_json
+        except Exception as e:
+            return None
 
 
     def __dict__(self):
