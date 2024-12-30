@@ -32,6 +32,7 @@ class TransfersFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="submit").click()
         sleep(1)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        sleep(1)
         self.driver.find_element(by=By.ID, value="social").click()
         self.assertIn("/social-clone/", self.driver.current_url)
         
@@ -44,6 +45,7 @@ class TransfersFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="submit").click()
         sleep(1)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        sleep(1)
         self.driver.find_element(by=By.ID, value="back").click()
         self.assertIn("/almanac/", self.driver.current_url)
 

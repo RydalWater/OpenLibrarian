@@ -25,7 +25,7 @@ class Progress:
         self.default_pages = None
         self.progress = None
     
-    async def new(self, isbn: str=None):
+    async def new(self, isbn: str=None, default_pages: int=None):
         """
         Set new progress object with isbn
         input: isbn (str)
@@ -38,7 +38,10 @@ class Progress:
         self.started = "NA"
         self.ended = "NA"
         self.bevent = None
-        await self.get_default_pages()
+        if default_pages is not None and int(default_pages) > 0 :
+            self.default_pages = str(default_pages)
+        else:
+            await self.get_default_pages()
         self.max = str(self.default_pages)
         self.progress = "0"
         return self

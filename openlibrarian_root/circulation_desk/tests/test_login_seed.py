@@ -94,7 +94,7 @@ class LoginSeedUnitTestCase(BaseUnitTests):
         # Check the session variables are correct
         self.assertEqual(client.session['npub'], 'npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n')
         self.assertEqual(client.session['nsec'], 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm')
-        self.assertEqual(client.session['relays'], None)
+        self.assertEqual(client.session['relays'], {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
         self.assertIn('nym', client.session)
         self.assertIn('profile', client.session)
         self.assertIn('libraries', client.session)

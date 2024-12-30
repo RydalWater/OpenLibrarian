@@ -36,13 +36,38 @@
                 <h4>{{ username }}</h3>
             {% endif %}
         </div>
-        <p class="text-center">{{ about }}</p>
+        {% if about != None %}
+            <p class="text-center">{{ about }}</p>
+        {% else %}
+            <p class="text-center">We do not have the words to describe this character.</p>
+        {% endif %}
         <hr>
         <div class="mb-3">
             <h5>Reading</h5>
             <ul class="list-group">
-                {% for book in current_books %}
-                    <li class="list-group-item"> {{ book }}</li>
+                {% for key, book in current_books.items %}
+                    {% if key == "0" %}
+                        <li class="list-group-item">
+                            <p class="fw-lighter fw-semibold lh-sm"><i class="fw-lighter fst-italic">{{ book.t}}</i></p>
+                        </li>
+                    {% else %}
+                        <li class="list-group-item">
+                            <p class="fw-lighter fw-semibold lh-sm">{{ book.t }}<i class="fw-lighter fst-italic"> by {{ book.a }}</i></p>
+                            {% if book.i == "hidden" %}
+                                <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
+                                    <div class="progress-bar progress-bar-striped bg-secondary" style="width: 50%"></div>
+                                </div>
+                            {% else %}
+                                {% for isbn, progress_obj in progress.items %}
+                                    {% if isbn == book.i %}
+                                        <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
+                                            <div class="progress-bar progress-bar-striped" style="width: {{ progress_obj.progress }}%"></div>
+                                        </div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                        </li>
+                    {% endif %}
                 {% endfor %}
             </ul>
         </div>
