@@ -575,8 +575,16 @@ class ProgressUnitTests(TestCase):
         progress = Progress()
         progress.isbn = ISBN
         progress.ended = "2021-06-01"
+        progress.current = "100"
+        progress.progress = "100"
+        progress.max = "100"
         self.assertEqual(progress.started, None)
-        self.assertRaises(ValueError, progress.start_book)
+        progress.start_book()
+        self.assertEqual(progress.started, datetime.datetime.now().strftime("%Y-%m-%d"))
+        self.assertEqual(progress.ended, "NA")
+        self.assertEqual(progress.current, "0")
+        self.assertEqual(progress.progress, "0")
+        self.assertEqual(progress.max, "100")
 
         progress = Progress()
         progress.isbn = ISBN

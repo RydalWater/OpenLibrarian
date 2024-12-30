@@ -1,7 +1,7 @@
 from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, Keys, SingleLetterTag, Alphabet, Filter, PublicKey, Client, NostrSigner
-from utils.Login import check_npub, check_nsec, check_npub_of_nsec
+from utils.Login import check_npub, check_nsec
 from utils.Network import nostr_get, nostr_post
-import aiohttp, datetime, hashlib, os, asyncio
+import aiohttp, datetime, hashlib, os, asyncio, tenacity
 
 email_address = os.getenv("EMAIL_ADDY")
 
@@ -53,7 +53,10 @@ class Progress:
         output: self (Progress object)
         """
         if self.ended not in (None, "NA"):
-            raise ValueError("Book already ended")
+            self.ended = "NA"
+        if self.current not in (None, "0"):
+            self.current = "0"
+            self.progress = "0"
         if started is not None:
             self.started = started
         else:
@@ -243,6 +246,7 @@ class Progress:
             return self
     
     # Get default pages for progress
+    @tenacity.retry(wait=tenacity.wait_fixed(3), stop=tenacity.stop_after_attempt(3), reraise=True)
     async def get_default_pages(self):
         """
         Get default pages for progress
@@ -250,24 +254,30 @@ class Progress:
         """
         if self.isbn is None:
             raise ValueError("ISBN not set")
+    
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.get(f"https://openlibrary.org/isbn/{self.isbn}.json", headers=headers, timeout=10) as response:
+                async with session.get(f"https://openlibrary.org/isbn/{self.isbn}.json", headers=headers, timeout=8) as response:
                     if response.status == 200:
                         data = await response.json()
                         if "number_of_pages" in data:
                             self.default_pages = str(data["number_of_pages"])
                             return self
-                    
-                    async with session.get(f"{alt_api_url}",params={"q": "isbn:" + self.isbn}, timeout=10) as response:
-                        if response.status == 200:
-                            data = await response.json()
-                            if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
-                                self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
-                                return self
-            finally:
-                await session.close()
-            
+    
+            except Exception as e:
+                pass
+    
+            try:
+                async with session.get(f"{alt_api_url}", params={"q": "isbn:" + self.isbn}, timeout=8) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
+                            self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+                            return self
+    
+            except Exception as e:
+                pass
+    
         self.default_pages = "NOT AVAILABLE"
         return self
     
