@@ -37,22 +37,22 @@
         </div>
         {% for key, value in session.mod_relays.items %}
             <ul class="list-group text-start bg-secondary-container mt-1">
-                {% if session.nsec %}
-                    <li class="list-group-item container d-inline-flex justify-content-between text-secondary">
-                        <div class="col-1 d-inline-flex align-items-center">
-                            {% if value == "READ" or value == None %} 
-                            <i class="fa-solid fa-eye"></i>
-                            {% endif %}
-                            {% if value == None %}
-                                /
-                            {% endif %}
-                            {% if value == "WRITE" or value == None %} 
-                                <i class="fa-solid fa-pen"></i>
-                            {% endif %}
-                        </div>
-                        <div class="col-8 d-inline-flex align-items-center">
-                            <span class="book-text fs-6">{{ key }}</span>
-                        </div>
+                <li class="list-group-item container d-inline-flex justify-content-between text-secondary">
+                    <div class="col-1 d-inline-flex align-items-center">
+                        {% if value == "READ" or value == None %} 
+                        <i class="fa-solid fa-eye"></i>
+                        {% endif %}
+                        {% if value == None %}
+                            /
+                        {% endif %}
+                        {% if value == "WRITE" or value == None %} 
+                            <i class="fa-solid fa-pen"></i>
+                        {% endif %}
+                    </div>
+                    <div class="col-8 d-inline-flex align-items-center">
+                        <span class="book-text fs-6">{{ key }}</span>
+                    </div>
+                    {% if session.nsec %}
                         <div class="col-1 d-inline-flex align-items-center">
                             <button id="removeButton" class="btn btn-sm btn-outline-danger" type="submit", name="remove", value="{{ key }}"><i class="fa-solid fa-trash"></i></button>
                             {% if session.def_relays == True %}
@@ -60,11 +60,9 @@
                                     <i class="ms-1 fa-solid fa-globe text-secondary"></i>
                                 {% endif %}
                             {% endif %}
-                        </div>  
-                    </li>
-                {% elif npub %}
-                    <li class="list-group-item">{{ key }}</li>
-                {% endif %}
+                       </div>
+                    {% endif %}
+                </li>
             </ul>
         {% endfor %}
         {% if messages %}

@@ -33,7 +33,7 @@ async def library_card(request, npub: str=None):
                 tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
                 libraries, interest_list = await asyncio.gather(*tasks)
 
-                    # Get list of ISBNs and then create progress object
+                # Get list of ISBNs and then create progress object
                 isbns = []
                 for library in libraries:
                     if library["s"] == "CR":
@@ -113,7 +113,17 @@ async def library_card(request, npub: str=None):
                     tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
                     libraries, interests = await asyncio.gather(*tasks)
                     nym = profile.get('nym')
-                    await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries)
+
+                    # Get list of ISBNs and then create progress object
+                    isbns = []
+                    for library in libraries:
+                        if library["s"] == "CR":
+                            for book in library["b"]:
+                                if "Hidden" not in book["i"]:
+                                    isbns.append(book["i"])
+                    progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+
+                    await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress)
 
                 return redirect('circulation_desk:index')
             
