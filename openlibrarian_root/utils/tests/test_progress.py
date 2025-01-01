@@ -1,5 +1,5 @@
 from django.test import TestCase
-from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Event
+from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, Alphabet
 from utils.Progress import Progress, fetch_progress
 import datetime, hashlib, sys, io
 from aioresponses import aioresponses
