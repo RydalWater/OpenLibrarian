@@ -29,6 +29,7 @@ class Progress:
         """
         Set new progress object with isbn
         input: isbn (str)
+        output: self (Progress object)
         """
         self.isbn = isbn
         self.identifier = hashlib.sha256(isbn.encode()).hexdigest()
