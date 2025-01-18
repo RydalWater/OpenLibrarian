@@ -18,4 +18,8 @@ urlpatterns = [
     # Registration Pages
     path('create-account/', views.create_account_view, name='create-account'),
     path('create-account-confirm/', views.create_account_confirm_view, name='create-account-confirm'),
+
+    # Json Response
+     path('event_publisher/', views.event_publisher, name='event_publisher'),
+    
 ]

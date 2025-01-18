@@ -1,20 +1,26 @@
 from django.shortcuts import render, redirect
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
 from django.core.cache import cache
-from nostr_sdk import Keys
+from nostr_sdk import Keys, Event
 from mnemonic import Mnemonic
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, async_get_temp_keys, async_remove_session_info
 from utils.Login import check_npub, check_nsec, check_mnemonic
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries
 from utils.Interests import fetch_interests
-from utils.Progress import fetch_progress, Progress
+from utils.Progress import fetch_progress
+from utils.Network import nostr_push
 from circulation_desk.forms import SeedForm, NpubForm, NsecForm
-import asyncio, os, ast
+import asyncio, os, ast, json
 
 # Basic view for home page
 async def index(request):
     """View for the Circulation Desk (homepage) of the website."""
-    context = await async_get_session_info(request)
+    session = await async_get_session_info(request)
+    context = {
+        'session': session,
+    }
     # TODO: Update index page content
     # TODO: Add basic social feed
     return render(request, 'circulation_desk/index.html', context)
@@ -301,3 +307,51 @@ async def create_account_confirm_view(request):
         'word_list' : word_list
     }
     return render(request, 'circulation_desk/create_account_confirm.html', context)
+
+# Add a new view that is a simple json response
+@csrf_exempt
+async def event_publisher(request):
+    if not request.method == 'POST':
+        return redirect('circulation_desk:index')
+    
+    # Get Session Info
+    session = await async_get_session_info(request)
+
+    if session['nsec'] != None:
+        # Get the Event from the request
+        data = json.loads(request.body)
+        events_json = data.get('events_json', '')
+        # Convert events back from a json string
+        events = json.loads(events_json)
+        
+        # Parse event and check it is valid
+        post = []
+        for se in events:
+            try:
+                event = Event.from_json(se)
+            except Exception as e:
+                event = None
+                message = "Unable to parse event."
+
+            if event:
+                if not event.verify():
+                    message = "Invalid event."
+                else:
+                    post.append(event)
+
+        # Push events to relays
+        if post:
+            # Push events to relays
+            try:
+                await nostr_push(events=post)
+                message = "Success: Events pushed to relays."
+            except Exception as e:
+                message = "Unable to push event to relays."
+        else:
+            message = "No events to push."
+
+        # Response
+        response = {'event_message': f'{message}'}
+        return JsonResponse(response)
+    else:
+        return JsonResponse({'event_message': None})

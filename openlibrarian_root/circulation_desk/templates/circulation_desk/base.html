@@ -68,11 +68,17 @@
 
                 <div style="overflow-y: auto; height: 70vh">
                     {% block content %}
-
+                        
                     {% endblock content %}
                 </div>
 
+                <!-- Footer text -->
                 <p class="text-secondary fst-italic fw-lighter fs-6 lh-sm mt-2">Knowledge is power, decentralized knowledge EMPOWERS!</p>
+
+                <!-- Event Objects -->
+                <input type="hidden" id="events" value="{{ events }}"></input>
+                <input type="hidden" id="event-notification" value="{{ notification }}">
+                <div id="event-toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
             </div>
         </div>
         <!-- Nav -->
@@ -87,6 +93,6 @@
                     <a id="library" class="navbar-brand text-on-secondary" href="{% url 'library:library' %}"><i class="fa-solid fa-book"></i></a>
                 </div>
             </nav>
-        {% endif %} 
+        {% endif %}
     </body>
 </html>

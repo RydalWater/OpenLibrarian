@@ -1,4 +1,5 @@
 {% extends 'circulation_desk/base.html' %}
+{% load static %}
 
 {% block content %}
     <div class="container mt-2">
@@ -18,11 +19,11 @@
             The heart of this app is built on the brilliant work of the
             <i><a href="https://openlibrary.org" target="_blank">Open Library</a></i> team. Check out their work and contribute to it.
         </p>
-        {% if nsec %}
-            {% if profile.displayname %}
-                <p class="fw-bold book-text text-center">Welcome back, {{ profile.displayname }}!</p>
-            {% elif nym %}
-                <p class="fw-bold book-text text-center">Welcome back, {{ nym }}!</p>
+        {% if session.nsec %}
+            {% if session.profile.displayname %}
+                <p class="fw-bold book-text text-center">Welcome back, {{ session.profile.displayname }}!</p>
+            {% elif session.nym %}
+                <p class="fw-bold book-text text-center">Welcome back, {{ session.nym }}!</p>
             {% else %}
                 <p class="fw-bold book-text text-center">Welcome back!</p>
                 <p class="book-text text-center">Head over to the Almanac to update your profile.</p>
@@ -33,7 +34,7 @@
     <!-- Share my profile button via npub and card section -->
     <div class="container mt-2">
         <a id="share" href="{% url 'library_card:library_card' npub=npub %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-share-nodes"></i> 
-            {% if nsec %}
+            {% if session.nsec %}
                 My Shareable Profile
             {% else %}
                 Shareable Profile
@@ -53,4 +54,5 @@
     </div>
 {% endif %}
 
+<script src="{% static 'js/bundle.js' %}"></script>
 {% endblock content %}
