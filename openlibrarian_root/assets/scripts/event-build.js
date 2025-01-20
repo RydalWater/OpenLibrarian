@@ -4,9 +4,9 @@ async function buildSignEvent(event = null, encrypt = null) {
 
     await loadWasmAsync();
 
-    // const nsec = localStorage.getItem("nsec")
-    // const keys = Keys.parse(nsec);
-    const keys = Keys.generate();
+    const nsec = localStorage.getItem("nsec")
+    const keys = Keys.parse(nsec);
+    // const keys = Keys.generate();
 
     if (event != null  && event instanceof Event) {
         // Extract element of event
@@ -15,7 +15,7 @@ async function buildSignEvent(event = null, encrypt = null) {
         let content = ""
 
         // Look for :X: in the content
-        const regex = /:\d+:/;
+        const regex = /:(\d+):/;
         let match = event.content.match(regex);
 
         let contentPrefix, contentData;

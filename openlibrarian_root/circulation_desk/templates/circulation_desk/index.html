@@ -30,10 +30,10 @@
             {% endif %}
         {% endif %}
     </div>
-{% if npub %}
+{% if session.npub %}
     <!-- Share my profile button via npub and card section -->
     <div class="container mt-2">
-        <a id="share" href="{% url 'library_card:library_card' npub=npub %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-share-nodes"></i> 
+        <a id="share" href="{% url 'library_card:library_card' npub=session.npub %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-share-nodes"></i> 
             {% if session.nsec %}
                 My Shareable Profile
             {% else %}

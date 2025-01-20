@@ -7,7 +7,7 @@ from mnemonic import Mnemonic
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, async_get_temp_keys, async_remove_session_info
 from utils.Login import check_npub, check_nsec, check_mnemonic
 from utils.Profile import fetch_profile_info, edit_relay_list
-from utils.Library import fetch_libraries
+from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Progress import fetch_progress
 from utils.Network import nostr_push
@@ -62,8 +62,9 @@ async def login_npub_view(request):
         if valid_npub:
             # Fetch Profile Info and set Session Data
             profile, relays, added_relays = await fetch_profile_info(npub=npub)
-            tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
-            libraries, interests = await asyncio.gather(*tasks)
+            tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
+            raw_libraries, interests = await asyncio.gather(*tasks)
+            libraries = await prepare_libraries(libEvents=raw_libraries, npub=npub, read_only=True)
             nym = profile.get('nym')
 
             # Get list of ISBNs and then create progress object
@@ -84,42 +85,35 @@ async def login_npub_view(request):
                 'error_message': "Invalid NPUB"
             }
             return render(request, 'circulation_desk/login_npub.html', context)
-        
-async def login_nsec_view(request):
-    """View for the login (nsec) page of the website."""
+
+async def login_rw_view(request, form_class, template_name, redirect_url_on_error):
+    """View for the login page of the website."""
     # If already logged in then redirect to the home page
     if await async_logged_in(request):
         return redirect('circulation_desk:index')
     
     if request.method == 'GET':
-        form = NsecForm()
+        form = form_class()
         context = {
             'form': form
         }
-        return render(request, 'circulation_desk/login_nsec.html', context)
+        if form_class == SeedForm:
+            word_list = Mnemonic("english").wordlist
+            context['word_list'] = word_list
+        return render(request, template_name, context)
 
     if request.method == 'POST':
-        form = NsecForm(request.POST)
-        if not form.is_valid():
-            context = {
-                'form': form
-            }
-            return render(request, 'circulation_desk/login_nsec.html', context)
+        # Get the frontend data including npub and decrypted events
+        data = json.loads(request.body)
+        npub = data.get('npubValue', '')
+        hasNsec = data.get('hasNsec', '')
+        decryptedEvents = data.get('decryptedEvents', '')
 
-        nsec = request.POST.get('nsec')
-        valid_nsec = check_nsec(nsec)
+        # Get session data for access to the relays
+        session = await async_get_session_info(request)
 
-        if valid_nsec:
-            keys = Keys.parse(request.POST.get('nsec'))
-            # Fetch Profile Info and set Session Data
-            npub = keys.public_key().to_bech32()
-            nsec = keys.secret_key().to_bech32()
-            
-            profile, relays, added_relays = await fetch_profile_info(npub=npub)
-            tasks = [fetch_libraries(npub=npub, nsec=nsec, relays=relays), fetch_interests(npub, relays)]
-            libraries, interests = await asyncio.gather(*tasks)
-            nym = profile.get('nym')
-
+        if hasNsec == "Y":
+            libraries = await prepare_libraries(libEvents=decryptedEvents, npub=npub)
             # Get list of ISBNs and then create progress object
             isbns = []
             for library in libraries:
@@ -127,73 +121,18 @@ async def login_nsec_view(request):
                     for book in library["b"]:
                         if "Hidden" not in book["i"]:
                             isbns.append(book["i"])
-            progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
-
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, def_relays=added_relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
-            return redirect('circulation_desk:index')
+            progress = await fetch_progress(npub=npub, isbns=isbns, relays=session['relays'])
+            await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress)
+            return JsonResponse({'redirect': '/'})
         else:
-            context = {
-                'form': form,
-                'error_message': "Invalid NSEC"
-            }
-            return render(request, 'circulation_desk/login_nsec.html', context)
+            return JsonResponse({'redirect': redirect_url_on_error, 'error_message': "Invalid Credentials"})
+
+async def login_nsec_view(request):
+    return await login_rw_view(request, NsecForm, 'circulation_desk/login_nsec.html', '/login/nsec')
 
 async def login_seed_view(request):
-    """View for the login (seed) page of the website."""
-    # If already logged in then redirect to the home page
-    if await async_logged_in(request):
-        return redirect('circulation_desk:index')
-    
-    word_list = Mnemonic("english").wordlist
+    return await login_rw_view(request, SeedForm, 'circulation_desk/login_seed.html', '/login/seed')
 
-    if request.method == 'GET':
-        form = SeedForm()
-        context = {
-            'form': form,
-            'word_list': word_list
-        }
-        return render(request, 'circulation_desk/login_seed.html', context)
-
-    if request.method == 'POST':
-        form = SeedForm(request.POST)
-        if not form.is_valid():
-            context = {
-                'form': form,
-                'word_list': word_list
-            }
-            return render(request, 'circulation_desk/login_seed.html', context)
-
-        mnemonic = ' '.join([form.cleaned_data[f'word{i}'] for i in range(1, 13)])
-        valid_seed = check_mnemonic(mnemonic)
-
-        if valid_seed:
-            keys = Keys.from_mnemonic(mnemonic, "")
-            # Fetch Profile Info and set Session Data
-            npub = keys.public_key().to_bech32()
-            nsec = keys.secret_key().to_bech32()
-            profile, relays, added_relays = await fetch_profile_info(npub=npub)
-            tasks = [fetch_libraries(npub=npub, nsec=nsec, relays=relays), fetch_interests(npub, relays)]
-            libraries, interests = await asyncio.gather(*tasks)
-            nym = profile.get('nym')
-
-            # Get list of ISBNs and then create progress object
-            isbns = []
-            for library in libraries:
-                if library["s"] in ("CR", "HR"):
-                    for book in library["b"]:
-                        if "Hidden" not in book["i"]:
-                            isbns.append(book["i"])
-            progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
-
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, def_relays=added_relays, profile=profile, libraries=libraries, interests=interests, progress=progress)
-            return redirect('circulation_desk:index')
-        else:
-            context = {
-                'form': form,
-                'error_message': "Invalid Seed",
-                'word_list': word_list
-            }
-            return render(request, 'circulation_desk/login_seed.html', context)
 
 def logout_view(request):
     """View for the logout page of the website."""
@@ -308,7 +247,6 @@ async def create_account_confirm_view(request):
     }
     return render(request, 'circulation_desk/create_account_confirm.html', context)
 
-# Add a new view that is a simple json response
 @csrf_exempt
 async def event_publisher(request):
     if not request.method == 'POST':
@@ -355,3 +293,26 @@ async def event_publisher(request):
         return JsonResponse(response)
     else:
         return JsonResponse({'event_message': None})
+
+
+# Login json response
+@csrf_exempt
+async def fetch_events(request):
+    if not request.method == 'POST':
+        return redirect('circulation_desk:index')
+    
+    data = json.loads(request.body)
+    npub = data.get('npubValue', '')
+    nsec = data.get('hasNsec', '')
+    
+    profile, relays, added_relays = await fetch_profile_info(npub=npub)
+    tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
+    raw_libraries, interests = await asyncio.gather(*tasks)
+    nym = profile.get('nym', None)
+
+    raw_libraries = json.dumps(raw_libraries)
+    response = {'raw_events': [raw_libraries]}
+
+    await async_set_session_info(request, nsec=nsec, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests)
+
+    return JsonResponse(response)
