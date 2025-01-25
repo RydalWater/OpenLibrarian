@@ -7,6 +7,7 @@ from utils.Library import Library
 from utils.Interests import Interests, fetch_interests
 from utils.Progress import Progress
 from utils.Constants import INTERESTS_HASHMAP, INTERESTS
+from utils.Network import nostr_prepare
 
 
 async def glossary(request):
@@ -35,11 +36,13 @@ async def search(request):
         key = await cache_key("results", session)
         # Form
         form = SearchForm(request.POST or None)
+        # Events
+        events = None
         # Context
         context = {
                 'session': session,
                 'form': form,
-                'notification': None
+                'noted': None,
             }
         
         # Handle Get request
@@ -66,15 +69,16 @@ async def search(request):
                 if isbn not in isbns:
                     for library in session['libraries']:
                         if library['s'] == shelf:
+                            event_list = []
                             # Build Book
                             book = Book(isbn=isbn,hidden=hidden)
                             await book.get_book()
                             library['b'].append(book.detailed())
                             # Add book to shelf and publish
-                            lib = Library(dict=library, npub=session["npub"], nsec=session["nsec"])
-                            lib.build_event(npub=session["npub"], nsec=session["nsec"])
-                            print(session["relays"])
-                            await lib.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                            lib = Library(dict=library, npub=session["npub"])
+                            lib.build_event(npub=session["npub"])
+                            event_list.append(lib.bevent)
+                            
                             # Add book to progress
                             if library["s"] in ["CR", "HR"]:
                                 progress = await Progress().new(isbn=isbn, default_pages=default_pages)
@@ -84,13 +88,18 @@ async def search(request):
                                     progress.end_book()
                                 progress.build_event()
                                 session["progress"][isbn] = progress.detailed()
-                                await progress.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                                event_list.append(progress.bevent)
+
+                            # Prepare rough signed events
+                            events = nostr_prepare(event_list)
+
                             # Update session
                             await async_set_session_info(request, libraries=session['libraries'], progess=session["progress"])
                             break
-                    notification = "Book added to library."
+                    noted = None
                 else:
-                    notification = "Book already in library."
+                    noted = "false:Book already in library."
+                    events = None
 
                 # Fetch cached results
                 cached_results = await cache_get(key)
@@ -98,7 +107,8 @@ async def search(request):
                 context['pages'] = cached_results['pages']
                 context['num_results'] = cached_results['num_results']
                 context['results'] = cached_results['results']
-                context['notification'] = notification
+                context['noted'] = noted
+                context['events'] = events
 
             elif (form.is_valid() and request.POST.get('search')) or request.POST.get('next') or request.POST.get('prev') or request.POST.get('go'):
                 # Form fields
@@ -168,6 +178,8 @@ async def interests(request):
             session = await async_get_session_info(request)
         if session["interests"] == None:
             session["interests"] = []
+        
+        events = None
             
         # Handle Post request
         if request.method == 'POST':
@@ -177,18 +189,14 @@ async def interests(request):
                 interests = []
                 for interest in checklist:
                     interests.append(INTERESTS_HASHMAP[interest])
-
                 if sorted(interests) != sorted(session["interests"]):
-                    print("Updating interests")
-                    print(interests)
                     await async_set_session_info(request, interests=interests)
-                    session = await async_get_session_info(request)
                     interests_obj = Interests(list=interests)
-                    interests_obj.build_event(npub=session["npub"], nsec=session["nsec"])
-                    await interests_obj.publish_event(nym_relays=session["relays"], nsec=session["nsec"])
-
+                    interests_obj.build_event(npub=session["npub"])
+                    events = nostr_prepare([interests_obj.bevent])
 
         # Find if interests are in hashmap values and return key
+        session = await async_get_session_info(request)
         selected = []
         for key, value in INTERESTS_HASHMAP.items():
             for interest in session["interests"]:
@@ -200,6 +208,7 @@ async def interests(request):
                 'interests': INTERESTS,
                 'selected': selected,
                 'session': session,
+                'events' : events
             }
 
         return render(request, 'glossary/interests.html', context)

@@ -11,4 +11,4 @@ async function parseEvent(event = null) {
     }
 }
 
-module.exports = { parseEvent };
+export { parseEvent };

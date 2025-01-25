@@ -1,8 +1,11 @@
-function showEventToast(options){
+function showEventToast(options, note){
+  // Use provided value of note if available 
   const notificationInput = document.getElementById('event-notification');
-  const notification = notificationInput.value;
+  let notification = notificationInput.value;
+  if (note) {
+    notification = note;
+  }
   const positive = options.positive !== undefined ? options.positive : true;
-
 
   if (notification && notification !== "None") {
     const toastContainer = document.getElementById('event-toastContainer');

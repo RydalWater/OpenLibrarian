@@ -387,7 +387,7 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     """
     # Check if npub and nsec are valid
     if isbns == []:
-        return []
+        return {}
     elif isbns == None:
         raise Exception("No ISBNs provided.")
     elif npub in [None, ""] or check_npub(npub) is False:

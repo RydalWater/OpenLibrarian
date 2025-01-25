@@ -11,4 +11,5 @@ import "./event-build.js"
 // Import general scripts
 import "./get-cookie.js"
 import "./toast.js"
+import "./add-toast.js"
 import "./spinner.js"

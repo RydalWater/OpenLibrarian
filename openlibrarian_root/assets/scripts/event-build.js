@@ -24,6 +24,8 @@ async function buildSignEvent(event = null, encrypt = null) {
             let index = match.index + match[0].length;
             contentPrefix = event.content.substring(0, index);
             contentData = event.content.substring(index);
+            // Set encrypt to true if X > 0
+            encrypt = true;
         } else {
             contentPrefix = event.content;
             contentData = "";
@@ -52,4 +54,4 @@ async function buildSignEvent(event = null, encrypt = null) {
     }
 }
 
-module.exports = { buildSignEvent };
+export { buildSignEvent };
