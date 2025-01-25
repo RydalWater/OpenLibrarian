@@ -1,27 +1,19 @@
-from nostr_sdk import EventBuilder, Keys, NostrSigner, Client, Tag
-from utils.Login import check_nsec
-from utils.Network import nostr_post
+from nostr_sdk import EventBuilder, Tag
 import os, ast
 
 
 # Notification function
-async def send_notification(book: dict, nsec: str, nym_relays: dict, note_type: str, text: str=None, tags: list=None, score: int=None):
+async def build_notification(book: dict, nym_relays: dict, note_type: str, text: str=None, tags: list=None, score: int=None):
     """Send notification to relays"""
-    if nsec in [None, ""] or check_nsec(nsec) is False:
-        raise Exception("No nsec provided or invalid nsec.")
-    elif note_type.lower() not in ["st", "en", "rv"]:
+    if note_type.lower() not in ["st", "en", "rv"]:
         raise Exception("Invalid note type.")
     else:
         note_type = note_type.lower()
 
-        # Instantiate client and set signer
-        signer = NostrSigner.keys(Keys.parse(nsec))
-        client = Client(signer)
-
         # Get book information
         if book["h"] == "Y":
-            title = "Mysterious Book"
-            author = "Unknown Author"
+            title = "A Mysterious Book"
+            author = "an Unknown Author"
         else:
             title = book["t"]
             author = book["a"]
@@ -51,7 +43,7 @@ async def send_notification(book: dict, nsec: str, nym_relays: dict, note_type: 
                     h_tags.append(Tag.hashtag(tag))
 
         # Build event
-        event = EventBuilder.text_note(content=text, tags=h_tags)
+        build = EventBuilder.text_note(content=text, tags=h_tags)
 
         # Send event
-        await nostr_post(client=client, eventbuilder=event, relays_dict=nym_relays)
+        return build

@@ -1,7 +1,6 @@
 {% extends 'circulation_desk/base.html' %}
 
 {% load static %}
-{% block scripts %} <script src="{% static 'js/spinner-data.js' %}"></script> {% endblock %}
 
 {% block content %}
 
@@ -305,15 +304,12 @@
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
         <a id="back" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
-            <button id="submit-search" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="shelves"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
         {% endif %}
     </div>
 </form>
 
-<input type="hidden" id="notification" value="{{ notification }}">
-<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
-
-<script src="{% static 'js/add-toast.js' %}"></script>
+<input type="hidden" id="add-note" value="{{ noted }}">
 
 <script>
     // Get all radio buttons with the name "unitRadio"

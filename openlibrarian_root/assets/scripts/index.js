@@ -7,6 +7,7 @@ import "./logout.js"
 import "./event-coordinator.js"
 import "./event-parse.js"
 import "./event-build.js"
+import "./refresher.js"
 
 // Import general scripts
 import "./get-cookie.js"

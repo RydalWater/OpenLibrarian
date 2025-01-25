@@ -5,7 +5,7 @@ from django.core.cache import cache
 from nostr_sdk import Keys, Event
 from mnemonic import Mnemonic
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, async_get_temp_keys, async_remove_session_info
-from utils.Login import check_npub, check_nsec, check_mnemonic
+from utils.Login import check_npub, check_mnemonic
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
@@ -301,18 +301,29 @@ async def fetch_events(request):
     if not request.method == 'POST':
         return redirect('circulation_desk:index')
     
+    # Get frontend data
     data = json.loads(request.body)
     npub = data.get('npubValue', '')
     nsec = data.get('hasNsec', '')
-    
-    profile, relays, added_relays = await fetch_profile_info(npub=npub)
-    tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
-    raw_libraries, interests = await asyncio.gather(*tasks)
-    nym = profile.get('nym', None)
+    refresh = data.get('refresh', '')
 
-    raw_libraries = json.dumps(raw_libraries)
-    response = {'raw_events': [raw_libraries]}
+    if refresh == "":    
+        profile, relays, added_relays = await fetch_profile_info(npub=npub)
+        tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
+        raw_libraries, interests = await asyncio.gather(*tasks)
+        nym = profile.get('nym', None)
 
-    await async_set_session_info(request, nsec=nsec, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests)
+        raw_libraries = json.dumps(raw_libraries)
+        response = {'raw_events': [raw_libraries]}
+
+        await async_set_session_info(request, nsec=nsec, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests)
+
+    else:
+        if refresh == "shelves":
+            libraries = await fetch_libraries(npub=npub)
+            libraries = json.dumps(libraries)
+            response = {'raw_events': [libraries]}
+        else:
+            response = {'raw_events': []}
 
     return JsonResponse(response)

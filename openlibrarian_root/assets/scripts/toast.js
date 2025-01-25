@@ -19,7 +19,7 @@ function showEventToast(options, note){
     toast.setAttribute('aria-live', 'assertive');
     toast.setAttribute('aria-atomic', 'true');
     toast.innerHTML = `
-      <div class="toast-body">
+      <div class="toast-body m-1">
         ${notification}
       </div>
     `;
@@ -30,6 +30,13 @@ function showEventToast(options, note){
 
     setTimeout(function() {
       toastElement.hide();
+      // Check if dataBox and spinnerBox exist and if so trigger show, hide respectively
+      if (document.getElementById('dataBox')) {
+        document.getElementById('dataBox').classList.remove("not-visible");
+      }
+      if (document.getElementById('spinnerBox')) {
+        document.getElementById('spinnerBox').classList.add("not-visible");
+      }
     }, 2000);
   }
 }

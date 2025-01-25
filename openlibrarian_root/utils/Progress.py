@@ -1,6 +1,6 @@
 from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, Keys, SingleLetterTag, Alphabet, Filter, PublicKey, Client, NostrSigner
-from utils.Login import check_npub, check_nsec
-from utils.Network import nostr_get, nostr_post
+from utils.Login import check_npub
+from utils.Network import nostr_get
 import aiohttp, datetime, hashlib, os, asyncio, tenacity
 
 email_address = os.getenv("EMAIL_ADDY")
@@ -326,33 +326,6 @@ class Progress:
         self.bevent = builder
 
         return self
-
-    async def publish_event(self, nym_relays: dict = None, nsec: str = None):
-        """
-        Publish event from library object
-        input: nym_relays (dict), nsec (str)
-        output: str
-        """
-
-        # Return error if missing required information and is valid
-        if nsec in [None, ""] or check_nsec(nsec) is False:
-            raise Exception("No nsec provided or invalid nsec.")
-        elif self.bevent is None or nym_relays is None or nsec is None:
-            raise Exception("Missing required information.")
-        elif type(self.bevent) != EventBuilder:
-            raise Exception("Not a valid builder object.")
-        else:
-            # Instantiate client and set signer
-            signer = NostrSigner.keys(Keys.parse(nsec))
-            client = Client(signer)
-
-            # Post event
-            try:
-                await nostr_post(client=client, eventbuilder=self.bevent, relays_dict=nym_relays)
-                return "Published event."
-
-            except Exception as e:
-                return f"Unable to published event: {e}"
     
     def __dict__(self):
         """
