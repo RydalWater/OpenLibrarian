@@ -26,10 +26,13 @@ async def library_shelves(request):
     else:
         session = await async_get_session_info(request)
         noted = None
+
+        # Get data for post request when refreshing
         if request.method == 'POST':
-            data = json.loads(request.body)
-        else:
-            data = {}
+            try:
+                data = json.loads(request.body)
+            except:
+                data = {}
 
         if "libraries" not in session.keys() or session["libraries"] is None or (request.method == 'POST' and data.get('refresh', None) is not None):
             data = json.loads(request.body)
@@ -46,7 +49,6 @@ async def library_shelves(request):
                             isbns.append(book["i"])
             progress = await fetch_progress(npub=npub, isbns=isbns, relays=session['relays'])
             await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress)
-
         else:
             libraries = session["libraries"]
             progress = session["progress"]
@@ -56,6 +58,7 @@ async def library_shelves(request):
         libraries.sort(key=lambda x: sorted_keys.index(x["s"]), reverse=False)
 
         if request.method == 'GET' or (request.method == 'POST' and data.get('refresh', None) is not None):
+
             # TODO: Add additional book information (page, available on OL, progress, start/end date, rating etc.) 
             context = {
                 "libraries": libraries,

@@ -23,6 +23,7 @@ class SearchForm(forms.Form):
         required=True,
         widget=forms.Select(attrs={
             'class': 'form-select form-select-sm',
+            'id': 'search_type'
             })
     )
 

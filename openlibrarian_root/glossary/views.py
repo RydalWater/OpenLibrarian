@@ -171,11 +171,13 @@ async def interests(request):
     # Otherwise return the user profile
     else:
         session = await async_get_session_info(request)
+        noted = None
         # Check for interests and set/pull from session
         if "interests" not in session.keys() or (request.POST and "refresh" in request.POST):
             interests = await fetch_interests(session["npub"], session["relays"])
             await async_set_session_info(request, interests=interests)
             session = await async_get_session_info(request)
+            noted = "true:Refreshed."
         if session["interests"] == None:
             session["interests"] = []
         
@@ -208,6 +210,7 @@ async def interests(request):
                 'interests': INTERESTS,
                 'selected': selected,
                 'session': session,
+                'noted': noted,
                 'events' : events
             }
 

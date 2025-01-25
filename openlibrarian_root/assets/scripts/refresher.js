@@ -103,6 +103,11 @@ if (refresh != null) {
                 if (document.getElementById('spinnerBox')) {
                     document.getElementById('spinnerBox').classList.add("not-visible");
                 }
+
+                // Then pop some toasts
+                if (data.message != "") {
+                    showEventToast({positive: true}, "Refreshed");
+                }
             })
             .catch(error => {
               console.error('Error:', error);

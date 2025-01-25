@@ -207,15 +207,14 @@
     </div>
 </div>
 
-<input type="hidden" id="add-note" value="{{ noted }}">
-
 <script defer>
-    // Get the select element and the image element
+    // Get the select element and the image element and search type value
     const versionSelect = document.getElementById('version');
     const bookCoverImage = document.getElementById('book_cover');
+    const searchType = document.getElementById('search_type').value;
+
     // Check versionSelect is not null
-    
-    if (versionSelect != null) {
+    if (versionSelect != null && searchType != "isbn") {
         // Get the list of ISBN values
         const isbnValues = Array.from(versionSelect.options).map((option) => option.value);
 
