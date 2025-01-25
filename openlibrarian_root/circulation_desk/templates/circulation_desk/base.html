@@ -13,7 +13,7 @@
         <script src="https://code.jquery.com/jquery-3.6.3.min.js"></script>
     </head>
     <body class="bg-primary-container text-on-primary-container text-center">
-        <!-- Scripts -->
+        <!-- pre-Scripts -->
         {% block scripts %}{% endblock %}
         <!-- Content -->
         <div class="wrapper">
@@ -94,5 +94,7 @@
                 </div>
             </nav>
         {% endif %}
+        <!-- post-Scripts -->
+        <script src="{% static 'js/bundle.js' %}"></script>
     </body>
 </html>

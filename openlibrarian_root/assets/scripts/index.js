@@ -1,6 +1,7 @@
-// Import login scripts
+// Import login/logout scripts
 import "./login-utils.js"
 import "./login-rw.js"
+import "./logout.js"
 
 // Import event scripts
 import "./event-coordinator.js"
