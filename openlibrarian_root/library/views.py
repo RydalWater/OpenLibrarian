@@ -35,9 +35,13 @@ async def library_shelves(request):
                 data = {}
 
         if "libraries" not in session.keys() or session["libraries"] is None or (request.method == 'POST' and data.get('refresh', None) is not None):
-            data = json.loads(request.body)
-            npub = data.get('npubValue', '')
-            decryptedEvents = data.get('decryptedEvents', '')
+            if request.method == 'POST' and data.get('refresh', None) is not None:
+                data = json.loads(request.body)
+                npub = data.get('npubValue', '')
+                decryptedEvents = data.get('decryptedEvents', '')
+            else:
+                npub = session["npub"]
+                decryptedEvents = ''
 
             libraries = await prepare_libraries(libEvents=decryptedEvents, npub=npub)
             # Get list of ISBNs and then create progress object
@@ -58,7 +62,6 @@ async def library_shelves(request):
         libraries.sort(key=lambda x: sorted_keys.index(x["s"]), reverse=False)
 
         if request.method == 'GET' or (request.method == 'POST' and data.get('refresh', None) is not None):
-
             # TODO: Add additional book information (page, available on OL, progress, start/end date, rating etc.) 
             context = {
                 "libraries": libraries,

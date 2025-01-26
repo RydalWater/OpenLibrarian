@@ -17,7 +17,9 @@ if (document.getElementById('refresh')) {
 
 if (refresh != null) {
     refresh.addEventListener('click', async function(event) {    
-        event.preventDefault();        
+        event.preventDefault();
+        // Deactivate the refresh button
+        refresh.disabled = true;
         let result = false;
         let keys = null;
         let nsecValue = localStorage.getItem('nsec');
@@ -85,7 +87,7 @@ if (refresh != null) {
                     decryptedEvents.push(signedEvent.asJson());
                 }
             }
-            // Execute the login-nsec view with events
+            // Execute the library/shelves view with events
             payload.decryptedEvents = decryptedEvents;
             let csrf = getCsrfToken();
             await fetch('/library/shelves/', {
@@ -104,11 +106,17 @@ if (refresh != null) {
                 if (document.getElementById('spinnerBox')) {
                     document.getElementById('spinnerBox').classList.add("not-visible");
                 }
-
                 // Then pop some toasts
                 if (data.message != "") {
                     showEventToast({positive: true}, "Refreshed");
                 }
+                // Reactivate the refresh button
+                refresh.disabled = false;
+
+                // Delay the page reload for 0.75 second
+                setTimeout(() => {
+                    window.location.href = window.location.href;
+                }, 750);
             })
             .catch(error => {
               console.error('Error:', error);
