@@ -1,7 +1,6 @@
 {% extends 'circulation_desk/base.html' %}
 
 {% load static %}
-{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
 
 {% block content %}
 
@@ -28,12 +27,6 @@
         <p><i class="fa-solid fa-eye-slash"></i> Unavailable in Read-Only Mode</p>
     {% endif %}
     <div class="container">
-        {% if error_message %}
-            <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ error_message }}</p>
-        {% endif %}
-        {% if success_message %}
-            <p class="text-success"><i class="fa-solid fa-circle-check"></i> {{ success_message }}</p>
-        {% endif %}
         <!-- Back/Login Buttons -->
         <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
             <a href="{% url 'transfers:transfers' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>

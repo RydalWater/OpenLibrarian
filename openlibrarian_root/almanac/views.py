@@ -1,9 +1,8 @@
 from django.shortcuts import render, redirect
-from django.contrib import messages
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, cache_get, cache_set, cache_key, cache_delete
 from utils.Profile import edit_profile_info, edit_relay_list, fetch_profile_info
-from utils.Login import check_nsec
-from utils.Connections import fetch_social_list, add_follow
+from utils.Connections import fetch_social_list, add_follow, remove_follow
+from utils.Network import nostr_prepare
 from nostr_sdk import Keys
 import os, ast, copy
 
@@ -29,12 +28,11 @@ async def user_profile(request):
     # Otherwise return the user profile
     else:
         session = await async_get_session_info(request)
-
-        if request.method == 'GET':
-            notification = None
-
+        events = None
+        noted = None
+            
         # If POST then update the user profile
-        elif request.method == 'POST' and await async_logged_in(request) and request.POST.get('save'):
+        if request.method == 'POST' and await async_logged_in(request) and request.POST.get('save'):
             # Get Values from Screen
             nym_field = request.POST.get('edit_nym', None)
             nip05_field = request.POST.get('edit_nip05', None)
@@ -49,32 +47,30 @@ async def user_profile(request):
             session["profile"]["about"] = about_field
             session["profile"]["picture"] = picture_field
 
-            if check_nsec(session['nsec']):
-                await edit_profile_info(session["profile"], session['relays'], session['nsec'])
+            builder = await edit_profile_info(session["profile"])
+            events = nostr_prepare([builder])
 
             # Update Session data and re-extract
             await async_set_session_info(request, profile=session["profile"], nym=nym_field)
             session = await async_get_session_info(request)
-            notification = "Profile Updated"
         
         # Perform refresh of the user profile content
-        if request.method == 'POST' and await async_logged_in(request) and request.POST.get('refresh'):
-            keys = Keys.parse(session['nsec'])
+        if request.method == 'POST' and await async_logged_in(request) and "refresh" in request.POST:
+            npub = session['npub']
             if session['relays'] is None:
-                profile, relays, added_relays = await fetch_profile_info(npub=keys.public_key().to_bech32())
+                profile, relays, added_relays = await fetch_profile_info(npub=npub)
             else:
-                profile, relays, added_relays = await fetch_profile_info(npub=keys.public_key().to_bech32(), relays=session['relays'])
-            npub = keys.public_key().to_bech32()
-            nsec = keys.secret_key().to_bech32()
+                profile, relays, added_relays = await fetch_profile_info(npub=npub, relays=session['relays'])
             nym = profile.get('nym')
             
-            await async_set_session_info(request,npub=npub,nsec=nsec,nym=nym,relays=relays, def_relays=added_relays, profile=profile)
+            await async_set_session_info(request,npub=npub,nym=nym,relays=relays, def_relays=added_relays, profile=profile)
             session = await async_get_session_info(request)
-            notification = "Profile Refreshed"
+            noted = "true:Refreshed"
 
         context  = {
             "session": session,
-            "notification": notification
+            "noted": noted,
+            "events": events
         }
         
         return render(request, 'almanac/user_profile.html', context=context)
@@ -85,15 +81,15 @@ async def user_profile(request):
 # User relays view
 async def user_relays(request):
     """Returns the user relays view."""
-    # Clear any any error messages
-    messages.success(request, '')
-
     # Return to index if the user profile is not logged in
     if await async_logged_in(request) == False:
         return redirect('circulation_desk:index')
 
     # Otherwise return the user relays
     else:
+        noted = None
+        events = None
+
         # get default relays from environment variable
         default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
 
@@ -108,16 +104,8 @@ async def user_relays(request):
             session["mod_relays"] = session["relays"].copy()
             await async_set_session_info(request, mod_relays=session["mod_relays"])
 
-        # If GET then return the user relays
-        if request.method == 'GET':
-            context = {
-                "session": session,
-                "default_relays": default_relays
-            }
-            return render(request, 'almanac/user_relays.html', context=context)
-        
         # If POST then update the user relays
-        elif request.method == 'POST':
+        if request.method == 'POST':
             # Add_relay button modfies the content of the mod_realy updates session information
             if request.POST.get('add_relay') and request.POST.get('add_relay_url') and request.POST.get('relay_option'):
                 if request.POST.get('relay_option') == "R":
@@ -145,7 +133,7 @@ async def user_relays(request):
                 
                 if read_count == 1 and temp_session["mod_relays"][request.POST.get('remove')] in ("READ", None) or \
                 write_count == 1 and temp_session["mod_relays"][request.POST.get('remove')] in ("WRITE", None):
-                    messages.error(request, "Cannot remove relay. You must have at least one read and one write.")
+                    noted = "false:Cannot remove relay. You must have at least one read and one write."
                 else:
                     del temp_session["mod_relays"][request.POST.get('remove')]
                     session["mod_relays"] = temp_session["mod_relays"].copy()
@@ -154,14 +142,19 @@ async def user_relays(request):
 
             # Save changes submits event to write relays.
             elif request.POST.get('save'):
-                if check_nsec(session['nsec']):
-                    await edit_relay_list(session['relays'], temp_session["mod_relays"], session['nsec'])
+                if session['nsec'].upper() == "Y":
+                    update, builder = await edit_relay_list(session['relays'], temp_session["mod_relays"])
+                    if update:
+                        events = nostr_prepare([builder])
                     session["relays"] = temp_session["mod_relays"].copy()
                     await async_set_session_info(request, relays=session["relays"])
 
         context = {
             "session": session,
-            "default_relays": default_relays
+            "default_relays": default_relays,
+            "noted": noted,
+            "events": events
+
         }
         return render(request, 'almanac/user_relays.html', context=context)
     
@@ -174,6 +167,8 @@ async def user_friends(request):
     else:
         session = await async_get_session_info(request)
         key_str = "user_connections"
+        noted = None
+        events = None
 
         if request.method == 'GET':
             # Check if the friends list is cached
@@ -188,21 +183,21 @@ async def user_friends(request):
             else:
                 friends = connctions['friends']
                 muted = connctions['muted']
-
-            notification = None
-            
         # POST requests
         elif request.method == 'POST':
-
             # Attempt to add new follow
             if request.POST.get('follow_user'):
-                notification = await add_follow(session['relays'], npub=session['npub'], nsec=session['nsec'], follow_id=request.POST.get('follow_user'))                    
-            elif request.POST.get('follow'):
-                notification = "Please provide npub or nip05."
-            elif request.POST.get('refresh'):
-                notification = "Refreshed."
-            else:
-                raise Exception("Invalid request.")
+                noted, build = await add_follow(session['relays'], npub=session['npub'], follow_id=request.POST.get('follow_user'))
+                if build is not None:
+                    events = nostr_prepare([build])                    
+            elif "follow" in request.POST:
+                noted = "false:Please provide npub or nip05."
+            elif "refresh" in request.POST:
+                noted = "true:Refreshed."
+            elif "remove" in request.POST:
+                noted, build = await remove_follow(session['relays'], npub=session['npub'], follow_id=request.POST.get('remove'))
+                if build is not None:
+                    events = nostr_prepare([build])
 
             # Fetch lists again
             friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")
@@ -212,4 +207,12 @@ async def user_friends(request):
             await cache_delete(await cache_key(key_str,session))
             await cache_set(await cache_key(key_str,session), {'friends': friends, 'muted': muted}, 1800)
 
-        return render(request, 'almanac/user_friends.html', {'session': session, 'friends': friends, 'muted': muted, 'notification': notification})
+        context = {
+            "session": session,
+            "friends": friends,
+            "muted": muted,
+            "events": events,
+            "noted": noted
+        }
+
+        return render(request, 'almanac/user_friends.html', context=context)

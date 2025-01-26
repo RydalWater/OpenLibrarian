@@ -26,7 +26,7 @@ if (!document.getElementById('spinnerBox') || !document.querySelector('form')) {
 
   // Listen for specifc button click
   document.addEventListener('click', function(event) {
-    if (event.target.id === 'login' || event.target.id === 'refresh' || event.target.id === 'submit-search') {
+    if (event.target.id === 'login' || event.target.id === 'refresh' || event.target.id === 'submit-search' || event.target.id === 'refresh-simple') {
       // Show spinnerBox and hide dataBox
       spinnerBox.classList.remove("not-visible");
       if (dataBox) {

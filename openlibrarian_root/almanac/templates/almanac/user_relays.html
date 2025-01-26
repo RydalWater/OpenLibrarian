@@ -28,6 +28,9 @@
                             You <b>MUST</b> have at least one relay that is read and write. You can add more if you wish but it is recommended 
                             to only have 3-5. 
                         </p>
+                        <p class="book-text"> 
+                            <i class="ms-1 fa-solid fa-globe text-secondary"></i> = default global relays.
+                        </p>
                         <p> 
                             <a href="https://legacy.nostr.watch/relays/find" target="_blank" class="btn btn-sm btn-outline-primary">Find Relays on nostr.watch</a>
                         </p>
@@ -65,12 +68,6 @@
                 </li>
             </ul>
         {% endfor %}
-        {% if messages %}
-            {% for message in messages %}
-                <p class="text text-danger book-text text-center">{{ message }}</p>
-            {% endfor %}
-        {% endif %}
-
     </div>
         <div style="height: 15vh; overflow-y: auto;">
         {% if session.nsec %}
@@ -99,6 +96,9 @@
             <button class="btn btn-sm btn-primary w-50" type="submit", name="cancel", value="Cancel"><i class="fa-solid fa-trash-can-arrow-up"></i> Cancel</button>
             <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
         {% endif %}
+    </div>
+    <div id="spinnerBox" class="col mt-2 not-visible">
+        <div class="spinner-border" role="status"></div>
     </div>
 </form>
 

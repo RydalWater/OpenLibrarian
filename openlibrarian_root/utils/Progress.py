@@ -355,10 +355,10 @@ class Progress:
 async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     """
     Fetch progress objects from relays
-    input: npub (str), relays (dict), nsec (str), isbns (list)
+    input: npub (str), relays (dict), isbns (list)
     output: dict
     """
-    # Check if npub and nsec are valid
+    # Check inputs are valid
     if isbns == []:
         return {}
     elif isbns == None:

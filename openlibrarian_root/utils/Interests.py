@@ -69,7 +69,7 @@ class Interests:
     
 async def fetch_interests(npub: str, nym_relays: dict):
     """Fetch interests from relays"""
-    # Check if npub and nsec are valid
+    # Check if npub is valid
     if npub in [None, ""] or check_npub(npub) is False:
         raise Exception("No npub provided or invalid npub.")
     else:

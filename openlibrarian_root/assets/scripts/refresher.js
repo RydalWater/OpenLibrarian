@@ -6,6 +6,7 @@ const { loadWasmAsync, Keys, EventBuilder, nip04Decrypt } = require("@rust-nostr
 
 // Declare variables outside of if blocks
 let refresh = null;
+let refreshSimple = null;
 let refreshVal = null;
 
 // Check if refresh and submit exist on the page
