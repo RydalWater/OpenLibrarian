@@ -2,12 +2,32 @@ from django.shortcuts import render, redirect
 from django.core.cache import cache
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
 from utils.Profile import fetch_profile_info
-from utils.Library import fetch_libraries
+from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Login import check_npub
 from utils.Progress import fetch_progress
 from utils.Constants import INTERESTS_HASHMAP
 import asyncio
+
+
+
+async def fetch_user_data(npub: str, read_only: bool = False):
+    """Fetch user data from relays"""
+    profile, relays, added_relays = await fetch_profile_info(npub=npub)
+    tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
+    raw_libraries, interest_list = await asyncio.gather(*tasks)
+    libraries = await prepare_libraries(libEvents=raw_libraries, npub=npub, read_only=read_only)
+    
+    # Get list of ISBNs and then create progress object
+    isbns = []
+    for library in libraries:
+        if library["s"] == "CR":
+            for book in library["b"]:
+                if "Hidden" not in book["i"]:
+                    isbns.append(book["i"])
+    progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+
+    return profile, relays, added_relays, libraries, interest_list, progress
 
 async def library_card(request, npub: str=None):
     """Returns Simple view for Library."""
@@ -29,19 +49,7 @@ async def library_card(request, npub: str=None):
                 progress = session['progress']
                 owner = True
             else:
-                profile, relays, added_relays = await fetch_profile_info(npub=npub)
-                tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
-                libraries, interest_list = await asyncio.gather(*tasks)
-
-                # Get list of ISBNs and then create progress object
-                isbns = []
-                for library in libraries:
-                    if library["s"] == "CR":
-                        for book in library["b"]:
-                            if "Hidden" not in book["i"]:
-                                isbns.append(book["i"])
-                progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
-
+                profile, relays, added_relays, libraries, interest_list, progress = await fetch_user_data(npub=npub, read_only=True)
                 nym = profile['nym']
                 owner = False
 
@@ -109,9 +117,7 @@ async def library_card(request, npub: str=None):
                 valid_npub = check_npub(npub)
                 if valid_npub:
                     # Fetch Profile Info and set Session Data
-                    profile, relays, added_relays = await fetch_profile_info(npub=npub)
-                    tasks = [fetch_libraries(npub=npub, nsec=None, relays=relays), fetch_interests(npub, relays)]
-                    libraries, interests = await asyncio.gather(*tasks)
+                    profile, relays, added_relays, libraries, interests, progress = await fetch_user_data(npub=npub, read_only=True)
                     nym = profile.get('nym')
 
                     # Get list of ISBNs and then create progress object

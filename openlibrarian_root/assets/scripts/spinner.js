@@ -1,10 +1,7 @@
 // Check if spinnerBox and form exist
 if (!document.getElementById('spinnerBox') || !document.querySelector('form')) {
   // Do nothing
-  console.log("Spinner not found");
 } else {
-  console.log("Spinner found");
-
   // Get dataBox if it exists
   let dataBox = null;
   if (document.getElementById('dataBox')) {

@@ -111,7 +111,7 @@
                         <button type="submit" id="home" name="home" value="true" class="btn btn-sm btn-secondary w-50">
                             <i class="fa-solid fa-home"></i> Home
                         </button>
-                        <button id="copyButton" id="share" value="{{ request.build_absolute_uri }}" name="share" value="true" class="btn btn-sm btn-primary w-50">
+                        <button id="copyButton" value="{{ request.build_absolute_uri }}" name="copy" class="btn btn-sm btn-primary w-50">
                             <i class="fa-solid fa-share"></i> Share
                         </button>
                     {% else %}
@@ -127,9 +127,5 @@
         </form>
     </div>
 </div>
-
-<div id="copytoastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
-
-<script src="{% static 'js/copy-toast.js' %}"> </script>
 
 {% endblock content %}
