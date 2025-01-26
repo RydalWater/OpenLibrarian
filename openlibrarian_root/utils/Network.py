@@ -1,18 +1,16 @@
 # Various functions to allow for quick maintaince of Nostr Network connections
-from nostr_sdk import Client, Metadata, Event, EventBuilder, EventSource, Keys, init_logger, LogLevel
+from nostr_sdk import Client, Event, EventBuilder, EventSource, Keys, init_logger, LogLevel
 from datetime import timedelta
-import os, ast
+import os, ast, json
 
 os.environ
 async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
     """Get events from relays and return"""
-    init_logger(LogLevel.INFO)
+    # init_logger(LogLevel.INFO)
 
     # Get default relays if needed
     if not relays_dict and not relays_list:
-        print("No relays provided loading default relays.")
         relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
-        print(relays_list)
 
     # Add and Connect to relays
     if relays_dict is not None:
@@ -41,21 +39,18 @@ async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True
     # Return
     return events
 
-async def nostr_post(client: Client, event: Event=None, eventbuilder: EventBuilder=None, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
-    """Post event to relays"""
+async def nostr_push(events: list[Event]=None, relays_dict: dict=None, relays_list: list=None):
+    """Push Signed Events to relays"""
     # Get test_mode flag
     test_mode = os.getenv("TEST_MODE")
-    if test_mode == "Y":
-        print("TESTMODE: Running in test mode, with dummy keys.")
-        keys = Keys.parse(os.getenv("TEST_NSEC"))
 
     # Get default relays if needed
     if not relays_dict and not relays_list:
         print("No relays provided loading default relays.")
         relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
-        print(relays_list)
 
     # Add and Connect to relays
+    client = Client()
     if relays_dict is not None:
         for relay in relays_dict:
             if relays_dict[relay] in [None, "WRITE"]:
@@ -66,65 +61,37 @@ async def nostr_post(client: Client, event: Event=None, eventbuilder: EventBuild
 
     # Post events except when in test mode.
     if test_mode != "Y":
-        init_logger(LogLevel.INFO)
-        # Connect
-        if connect:
-            await client.connect()
+        # init_logger(LogLevel.INFO)
+        await client.connect()
 
-        # Post the event
-        if eventbuilder:
-            await client.send_event_builder(eventbuilder)
-        elif event:
-            await client.send_event(event)
+        for event in events:
+            if event.verify():
+                await client.send_event(event)
+            else:
+                print(f"Unable to verify event: {event.as_json()}")
 
-        # Disconnect
-        if disconnect:
-            await client.disconnect()
+        await client.disconnect()
     else:
         print("TESTMODE: Event not posted.")
-        if eventbuilder:
-            print(f"TESTMODE: {eventbuilder.to_unsigned_event(keys.public_key()).as_json()}")
-        elif event:
+        for event in events:
             print(f"TESTMODE: {event.as_json()}")
         print("")
 
-async def nostr_post_profile(client: Client, profile_meta:Metadata, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
-    """Post profile event to relays"""
+def nostr_prepare(eventbuilders: list[EventBuilder]=None):
+    """Post event to relays"""
     # Get test_mode flag
-    test_mode = os.getenv("TEST_MODE")
-    if test_mode == "Y":
-        print("TESTMODE: Running in test mode, with dummy keys.")
+    events_list = []
+    if eventbuilders:
+        test_mode = os.getenv("TEST_MODE")
+        if test_mode == "Y":
+            print("TESTMODE: Running in test mode, with dummy keys.")
+            keys = Keys.parse(os.getenv("TEST_NSEC"))
+        else:
+            print("Generating random keys.")
+            keys = Keys.generate()
 
-    # Get default relays if needed
-    if not relays_dict and not relays_list:
-        print("No relays provided loading default relays.")
-        relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
-        print(relays_list)
+        events_list = []
+        for builder in eventbuilders:
+            events_list.append(builder.to_event(keys).as_json())
 
-    # Add and Connect to relays
-    if relays_dict is not None:
-        for relay in relays_dict:
-            if relays_dict[relay] in [None, "WRITE"]:
-                    await client.add_relay(relay)
-    else:
-        for relay in relays_list:
-            await client.add_relay(relay)
-
-    # Post events except when in test mode.
-    if test_mode != "Y":
-        init_logger(LogLevel.INFO)
-        # Connect
-        if connect:
-            await client.connect()
-
-        # Post the event
-        await client.set_metadata(profile_meta)
-
-        # Disconnect
-        if disconnect:
-            await client.disconnect()
-    else:
-        print("TESTMODE: Event not posted.")
-        print(f"TESTMODE: {profile_meta.as_json()}")
-        print("")
-    
+    return json.dumps(events_list)
