@@ -93,5 +93,4 @@ def nostr_prepare(eventbuilders: list[EventBuilder]=None):
         events_list = []
         for builder in eventbuilders:
             events_list.append(builder.to_event(keys).as_json())
-
     return json.dumps(events_list)

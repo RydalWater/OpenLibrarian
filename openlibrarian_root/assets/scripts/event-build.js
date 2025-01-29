@@ -1,4 +1,4 @@
-const { Keys, EventBuilder, Event, nip04Encrypt, loadWasmAsync, Tag } = require('@rust-nostr/nostr-sdk');
+const { Keys, EventBuilder, Event, nip04Encrypt, loadWasmAsync } = require('@rust-nostr/nostr-sdk');
 
 async function buildSignEvent(event = null, encrypt = null) {
 

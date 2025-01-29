@@ -6,10 +6,11 @@
         <div class="chapter-header">
             <p>Sign-up</p>
         </div>
-        {% if private_key_confirmed == "Success" %}
+        <div id="success-box" style="display: none;">
             <p class="book-text text-center">Success! Your account has been created.</p>
             <p class="book-text text-center">Lets go to your <a href="{% url 'almanac:settings' %}">Almanac</a> Page and set up your profile.</p>
-        {% else %}
+        </div>
+        <div id="confirm-box" style="display: block;">
             <div class="container mt-2">
                 <p class="book-text">To confirm you've written down your Seed Words please re-enter it below for the following Public Key.</p>
                 <div class="input-group input-group-sm mb-3">
@@ -39,14 +40,11 @@
                         </div>
                     {% endfor %}
                 </div>
-                {% if private_key_confirmed %}
-                    <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ private_key_confirmed }}</p>
-                {% endif %}
                 <div class="container mt-2">
                     <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
-                    <button id="submit" type="submit" class="btn btn-sm btn-primary" name="confirm_seed"><i class="fa-solid fa-check"></i> Check</button>
+                    <button id="conf-seed" type="submit" class="btn btn-sm btn-primary" name="confirm_seed"><i class="fa-solid fa-check"></i> Check</button>
                 </div>
             </div>
-        {% endif %}
+        </div>
     </form>
 {% endblock %}

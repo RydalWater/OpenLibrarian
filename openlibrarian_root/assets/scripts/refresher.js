@@ -2,24 +2,21 @@ import { check_nsec } from "./login-utils.js";
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
+
 const { loadWasmAsync, Keys, EventBuilder, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
 
 // Declare variables outside of if blocks
-let refresh = null;
-let refreshSimple = null;
-let refreshVal = null;
+const refreshButton = document.getElementById('refresh');
+let refreshValue = null;
 
 // Check if refresh and submit exist on the page
-if (document.getElementById('refresh')) {
-    refresh = document.getElementById('refresh');
-    refreshVal = refresh.value;
-}
+if (refreshButton) {
+    refreshValue = refreshButton.value;
 
-if (refresh != null) {
-    refresh.addEventListener('click', async function(event) {    
+    refreshButton.addEventListener('click', async function(event) {    
         event.preventDefault();
         // Deactivate the refresh button
-        refresh.disabled = true;
+        refreshButton.disabled = true;
         let result = false;
         let keys = null;
         let nsecValue = localStorage.getItem('nsec');
@@ -36,7 +33,7 @@ if (refresh != null) {
             let npubValue = keys.publicKey.toBech32();
 
             // Set payload and call backend
-            let payload = {'npubValue': npubValue, 'hasNsec': "Y", 'refresh': refreshVal}
+            let payload = {'npubValue': npubValue, 'hasNsec': "Y", 'refresh': refreshValue}
             // Fetch event publisher
             const response = await fetch('/fetch_events/', {
                 method: 'POST',
@@ -111,7 +108,7 @@ if (refresh != null) {
                     showEventToast({positive: true}, "Refreshed");
                 }
                 // Reactivate the refresh button
-                refresh.disabled = false;
+                refreshButton.disabled = false;
 
                 // Delay the page reload for 0.75 second
                 setTimeout(() => {

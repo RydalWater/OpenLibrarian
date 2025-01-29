@@ -1,3 +1,7 @@
+// Import signup scripts
+import "./signup-gen.js"
+import "./signup-conf.js"
+
 // Import login/logout scripts
 import "./login-utils.js"
 import "./login-rw.js"

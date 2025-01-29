@@ -42,7 +42,6 @@ if ((nsec != null || seed != null) && login != null) {
                 }
             }
             seedValue = seedValue.trim();
-            console.log(seedValue);
             // Check the seed has 12 words
             result = check_seed(seedValue);
         }

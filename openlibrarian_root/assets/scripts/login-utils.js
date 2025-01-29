@@ -25,7 +25,6 @@ function check_seed(seed) {
     }
 }
 
-
 function check_npub_of_nsec(npub, nsec) {
     try {
         let pub = PublicKey.parse(npub);

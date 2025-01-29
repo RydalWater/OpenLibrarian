@@ -2,15 +2,15 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.core.cache import cache
-from nostr_sdk import Keys, Event
+from nostr_sdk import Event
 from mnemonic import Mnemonic
-from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, async_get_temp_keys, async_remove_session_info
-from utils.Login import check_npub, check_mnemonic
+from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
+from utils.Login import check_npub
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Progress import fetch_progress
-from utils.Network import nostr_push
+from utils.Network import nostr_push, nostr_prepare
 from circulation_desk.forms import SeedForm, NpubForm, NsecForm
 import asyncio, os, ast, json
 
@@ -147,105 +147,70 @@ async def create_account_view(request):
     """View for the create account page of the website."""
     
     # If already logged in then redirect to the home page
-    if await async_logged_in(request) and not any(key in request.POST for key in ['confirm_seed', 'generate_seed']):
+    if await async_logged_in(request):
         return redirect('circulation_desk:index')
-
-    # Handle generating new keys/mnemonic 
-    if request.method == 'POST' and 'generate_seed' in request.POST:
-        mnemonic = Mnemonic("english")
-        seed = mnemonic.generate(strength=128)
-        words = seed.split(" ")
-        keys = Keys.from_mnemonic(seed,"")
-        tnsec = keys.secret_key().to_bech32()
-        tnpub = keys.public_key().to_bech32()
-
-        # Set Session Data
-        await async_set_session_info(request,tnpub=tnpub,tnsec=tnsec)
-
-        context = {
-            'words': words,
-            'tnsec': tnsec,
-            'tnpub': tnpub
-        }
-        return render(request, 'circulation_desk/create_account.html', context)
-    
-    # Handle confirming the new account
-    if request.method == 'POST' and 'confirm_seed' in request.POST:
-        return redirect('circulation_desk:create-account-confirm')
         
     if request.method == 'GET':
-        return render(request, 'circulation_desk/create_account.html', context={})
+        context={"num_words":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+        return render(request, 'circulation_desk/create_account.html', context=context)
 
 async def create_account_confirm_view(request):
     """View for the create account confirm page of the website."""
-    
-    # Get temp keys from session
-    temp_keys = await async_get_temp_keys(request)
-
-    # If not already logged in then redirect to the home page
-    if await async_logged_in(request) == True or temp_keys['tnpub'] is None:
+     # If not already logged in then redirect to the home page
+    if await async_logged_in(request) == True:
         return redirect('circulation_desk:index')
     
-    # Get full list of possible words
-    word_list = Mnemonic("english").wordlist
-    
-    # If POST and all of the word fields have been completed attempt to 
-    if request.method == 'POST':
-        form = SeedForm(request.POST)
-        if form.is_valid():
-            mnemonic = ' '.join([form.cleaned_data[f'word{i}'] for i in range(1, 13)])
-            if check_mnemonic(mnemonic):
-                keys = Keys.from_mnemonic(mnemonic,"")
-                if keys.public_key().to_bech32() == temp_keys['tnpub']:
-                    private_key_confirmed = "Success"
-
-                    # Set Session Data
-                    nsec = keys.secret_key().to_bech32()
-                    # Build default set of relays for user
-                    session_relays = {}
-                    
-                    # Set default session relays
-                    default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
-                    mod_relays = {}
-                    for relay in default_relays:
-                        mod_relays[relay] = None
-   
-                    await edit_relay_list(session_relays, mod_relays, nsec)
-
-                    # Get default libraries and interests
-                    libraries = await fetch_libraries(npub=temp_keys['tnpub'], nsec=nsec, relays=mod_relays)
-                    # Get default interests
-                    interests = await fetch_interests(temp_keys['tnpub'], mod_relays)
-                    # Set Default Progress
-                    progress = []
-
-                    # Set Session Data
-                    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=temp_keys['tnpub'], nsec=nsec, progress=progress)
-
-                    # Remove temp keys from session
-                    await async_remove_session_info(request, tnpub=temp_keys['tnpub'], tnsec=temp_keys['tnsec'])
-                else:
-                    private_key_confirmed = "Mnemonic does not match NPUB"
-            else:
-                private_key_confirmed = "Invalid mnemonic"
-
-            context = {
-                'form': form,
-                'tnpub': temp_keys['tnpub'],
-                'private_key_confirmed': private_key_confirmed,
-                'word_list' : word_list
-
-            }
-            return render(request, 'circulation_desk/create_account_confirm.html', context)
-
     form = SeedForm()
+    word_list = Mnemonic("english").wordlist
     context = {
         'form': form,
-        'tnpub': temp_keys['tnpub'],
-        'private_key_confirmed' : None,
         'word_list' : word_list
     }
     return render(request, 'circulation_desk/create_account_confirm.html', context)
+
+@csrf_exempt
+async def create_account_empty(request):
+    """View for the create account empty account."""
+    if not request.method == 'POST':
+        return redirect('circulation_desk:index')
+    
+    # Get frontend data
+    try:
+        data = json.loads(request.body)
+        npub = data.get('npubValue', '')
+        nsec = data.get('hasNsec', '')
+    except Exception as e:
+        return JsonResponse({'result': 'Failed to create account'})
+    
+    
+    # Build default set of relays for user
+    session_relays = {}
+
+    # Set default session relays
+    default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+    mod_relays = {}
+    for relay in default_relays:
+        mod_relays[relay] = None
+
+
+    update, builder = await edit_relay_list(session_relays, mod_relays)
+
+    # Publish event
+    events = nostr_prepare([builder])
+
+    # Get default libraries and interests
+    libraries = await prepare_libraries(libEvents=[], npub=npub)
+
+    # Get default interests
+    interests = await fetch_interests(npub, mod_relays)
+    # Set Default Progress
+    progress = []
+
+    # Set Session Data
+    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=npub, nsec=nsec, progress=progress)
+
+    return JsonResponse({'raw_events': events})
+
 
 @csrf_exempt
 async def event_publisher(request):
@@ -281,8 +246,9 @@ async def event_publisher(request):
         if post:
             # Push events to relays
             try:
+                print("GOT HERE!!")
                 await nostr_push(events=post)
-                message = "Success: Events pushed to relays."
+                message = "Success: Updated."
             except Exception as e:
                 message = "Unable to push event to relays."
         else:
@@ -302,10 +268,13 @@ async def fetch_events(request):
         return redirect('circulation_desk:index')
     
     # Get frontend data
-    data = json.loads(request.body)
-    npub = data.get('npubValue', '')
-    nsec = data.get('hasNsec', '')
-    refresh = data.get('refresh', '')
+    try:
+        data = json.loads(request.body)
+        npub = data.get('npubValue', '')
+        nsec = data.get('hasNsec', '')
+        refresh = data.get('refresh', '')
+    except Exception as e:
+        return JsonResponse({'raw_events': []})
 
     if refresh == "":    
         profile, relays, added_relays = await fetch_profile_info(npub=npub)

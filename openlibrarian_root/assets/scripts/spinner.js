@@ -1,44 +1,27 @@
-// Check if spinnerBox and form exist
-if (!document.getElementById('spinnerBox') || !document.querySelector('form')) {
-  // Do nothing
-} else {
-  // Get dataBox if it exists
-  let dataBox = null;
-  if (document.getElementById('dataBox')) {
-    dataBox = document.getElementById('dataBox');
-  }
+// Check if required elements exist
+if (document.getElementById('spinnerBox') && document.querySelector('form')) {
+    const spinnerBox = document.getElementById('spinnerBox');
+    const form = document.querySelector('form');
+    const dataBox = document.getElementById('dataBox');
 
-  // Get the elements
-  var spinnerBox = document.getElementById('spinnerBox');
-  var form = document.querySelector('form');
+    // Show spinnerBox and hide dataBox on form submit or specific button clicks
+    const showSpinner = () => {
+        spinnerBox.classList.remove("not-visible");
+        if (dataBox) dataBox.classList.add("not-visible");
+    };
 
-  // Add event listener to submit of a form
-  form.addEventListener('submit', function(){
-    // Show spinnerBox and hide dataBox
-    spinnerBox.classList.remove("not-visible");
-    if (dataBox) {
-      dataBox.classList.add("not-visible");
-    }
-  });
+    form.addEventListener('submit', showSpinner);
+    document.addEventListener('click', (event) => {
+        if (['login', 'refresh', 'submit-search', 'refresh-simple'].includes(event.target.id)) {
+            showSpinner();
+        }
+    });
 
-  // Listen for specifc button click
-  document.addEventListener('click', function(event) {
-    if (event.target.id === 'login' || event.target.id === 'refresh' || event.target.id === 'submit-search' || event.target.id === 'refresh-simple') {
-      // Show spinnerBox and hide dataBox
-      spinnerBox.classList.remove("not-visible");
-      if (dataBox) {
-        dataBox.classList.add("not-visible");
-      }
-    }
-  });
-
-  // Listen for AJAX response
-  document.addEventListener('ajax:complete', function(event){
-    // Check if the request was a POST request (i.e. search form submission)
-    if (event.detail.method === 'POST') {
-      // Hide spinnerBox and show dataBox
-      spinnerBox.classList.add("not-visible");
-      dataBox.classList.remove("not-visible");
-    }
-  });
+    // Hide spinnerBox and show dataBox on AJAX response
+    document.addEventListener('ajax:complete', (event) => {
+        if (event.detail.method === 'POST') {
+            spinnerBox.classList.add("not-visible");
+            if (dataBox) dataBox.classList.remove("not-visible");
+        }
+    });
 }

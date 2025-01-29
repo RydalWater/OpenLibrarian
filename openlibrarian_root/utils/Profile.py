@@ -1,10 +1,17 @@
 from nostr_sdk import Client, Filter, Kind, Metadata, PublicKey, RelayMetadata, EventBuilder
 from utils.Network import nostr_get
+from utils.Login import check_npub
 import os, ast
 
 
 async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     """Fetches the profile information from Nostr Default Relay."""
+    # Check if npub is valid
+    if npub in [None, ""]:
+        raise Exception("Missing npub")
+    if not check_npub(npub):
+        raise Exception("Invalid npub")
+
     # Check if relays is a dict
     drelays = None
     if relays:
