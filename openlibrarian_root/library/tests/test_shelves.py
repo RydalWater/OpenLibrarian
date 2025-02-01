@@ -1,6 +1,9 @@
 from django.test import TestCase, Client
 import datetime, io, sys
+from selenium import webdriver
+from selenium.webdriver.common.by import By
 from hashlib import sha256
+from time import sleep
 
 TC_LIBRARIES = [
     {'s': 'TRS', 'i': 'aea571dbde5eb6ebec93c91b95486539b9491962', 't': 'To Read (S)', 'd': 'Books on the shelf ready to read', 'c': 'Books & Literature (OpenLibrarian)', 'b': [{'t': 'The Olive Farm', 'a': 'Carol Drinkwater', 'i': '0349114749', 'c': 'https://covers.openlibrary.org/b/isbn/0349114749-M.jpg', 'h': 'N'}, {'t': 'Beauty', 'a': 'Sheri S. Tepper', 'i': '1857987225', 'c': 'https://covers.openlibrary.org/b/isbn/1857987225-M.jpg', 'h': 'N'}, {'t': 'Angry Aztecs', 'a': 'Terry Deary', 'i': '9781407104256', 'c': 'https://covers.openlibrary.org/b/isbn/9781407104256-M.jpg', 'h': 'N'}, {'t': 'March', 'a': 'Geraldine Brooks', 'i': '0007165870', 'c': 'https://covers.openlibrary.org/b/isbn/0007165870-M.jpg', 'h': 'N'}]},
@@ -56,36 +59,36 @@ TC_NSEC = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
 TC_RELAYS = {"wss://relay.damus.io": None}
 
 
-# class ShelvesFunctionalTestCase(TestCase):
-#     """
-#     Functional Tests for the relays page
-#     """
-#     def setUp(self):
-#         """
-#         Set Up and instantiate driver
-#         """
-#         self.url = "/library/shelves/"
-#         self.driver = webdriver.Firefox()
-#         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
-#         self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
-#         self.driver.find_element(by=By.ID, value="submit").click()
-#         sleep(1)
+class ShelvesFunctionalTestCase(TestCase):
+    """
+    Functional Tests for the relays page
+    """
+    def setUp(self):
+        """
+        Set Up and instantiate driver
+        """
+        self.url = "/library/shelves/"
+        self.driver = webdriver.Firefox()
+        self.driver.get(f"http://127.0.0.1:8000/login-npub/")
+        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="submit").click()
+        sleep(1)
 
-#     def test_shelves_back(self):
-#         """
-#         Test Relays Back Button
-#         """
-#         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-#         self.driver.find_element(by=By.ID, value="back").click()
-#         self.assertIn("/library/", self.driver.current_url)
+    def test_shelves_back(self):
+        """
+        Test Relays Back Button
+        """
+        self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        self.driver.find_element(by=By.ID, value="back").click()
+        self.assertIn("/library/", self.driver.current_url)
     
-#     # TODO: Add a few more functional tests to check that the shelves pages work as expected (inc modals)
+    # TODO: Add a few more functional tests to check that the shelves pages work as expected (inc modals)
 
-#     def tearDown(self):
-#         """
-#         Tear Down function to close driver
-#         """
-#         self.driver.close()
+    def tearDown(self):
+        """
+        Tear Down function to close driver
+        """
+        self.driver.close()
 
 class ShelvesUnitTestCase(TestCase):
     """
