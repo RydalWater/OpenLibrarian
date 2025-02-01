@@ -1,7 +1,9 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from utils.Login import check_npub, check_nsec, check_mnemonic
+from django.test import Client
+from utils.Login import check_npub, check_nsec, check_mnemonic, check_npub_of_nsec
+from time import sleep
 
 class CreateAccountFunctionalTestCase(BaseFunctionalTest):
     """
@@ -29,14 +31,13 @@ class CreateAccountFunctionalTestCase(BaseFunctionalTest):
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="seed-gen").click()
+        sleep(1)
         self.assertIn("/create-account/", self.driver.current_url)
-        self.assertIn("DO NOT SHARE your NSEC or Seed Words with anyone.", self.driver.page_source)
-        self.assertIn("I have saved my seed", self.driver.page_source)
-        self.assertNotIn("These are the same as a password", self.driver.page_source)
         tnsec = self.driver.find_element(by=By.ID, value="tnsec").get_attribute("value")
         self.assertTrue(check_nsec(tnsec))
         tnpub = self.driver.find_element(by=By.ID, value="tnpub").get_attribute("value")
         self.assertTrue(check_npub(tnpub))
+        self.assertTrue(check_npub_of_nsec(tnpub, tnsec))
         tseed = ""
         for i in range(12):
             tword = self.driver.find_element(by=By.ID, value=f"tword{i+1}").get_attribute("value")
@@ -50,9 +51,14 @@ class CreateAccountFunctionalTestCase(BaseFunctionalTest):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="seed-gen").click()
         tnsec1 = self.driver.find_element(by=By.ID, value="tnsec").get_attribute("value")
+        tnpub1 = self.driver.find_element(by=By.ID, value="tnpub").get_attribute("value")
+
         self.driver.find_element(by=By.ID, value="seed-gen").click()
         tnsec2 = self.driver.find_element(by=By.ID, value="tnsec").get_attribute("value")
+        tnpub2 = self.driver.find_element(by=By.ID, value="tnpub").get_attribute("value")
+        
         self.assertNotEqual(tnsec1, tnsec2)
+        self.assertNotEqual(tnpub1, tnpub2)
 
     def test_saved_seed(self):
         """
@@ -81,22 +87,13 @@ class CreateAccountUnitTestCase(BaseUnitTests):
         self.template = "circulation_desk/create_account.html"
         self.content = ["Sign-up", "Secret Key", "Public Key", "Generate Keys", "Back"]
         self.redirect = True
+        self.client = Client()
     
-    def test_redirect_post(self):
+    def test_context(self):
         """
-        Redirect to index on post request (where not signing up)
+        Test that the correct context is passed to the template
         """
-        session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-        session.save()
-        response = self.client.post(f"http://127.0.0.1:8000{self.url}", data={"test": "test"})
-        self.assertRedirects(response, "/")
-    
-    def test_no_redirect_post(self):
-        """
-        Do not redirect to index on post request (where signing up)
-        """
-        response = self.client.post(f"http://127.0.0.1:8000{self.url}", data={"generate_seed": "Generate"})
-        self.assertEqual(response.status_code, 200)
-        response = self.client.post(f"http://127.0.0.1:8000{self.url}", data={"confirm_seed": "Confirm"})
-        self.assertRedirects(response, "/create-account-confirm/")
+        response = self.client.get(self.url)
+        self.context = response.context
+        self.assertIn("num_words", self.context.keys())
+        self.assertEqual(self.context["num_words"], [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12])

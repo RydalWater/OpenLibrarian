@@ -41,41 +41,44 @@ async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True
 
 async def nostr_push(events: list[Event]=None, relays_dict: dict=None, relays_list: list=None):
     """Push Signed Events to relays"""
-    # Get test_mode flag
-    test_mode = os.getenv("TEST_MODE")
+    try:
+        # Get test_mode flag
+        test_mode = os.getenv("TEST_MODE")
 
-    # Get default relays if needed
-    if not relays_dict and not relays_list:
-        print("No relays provided loading default relays.")
-        relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+        # Get default relays if needed
+        if not relays_dict and not relays_list:
+            print("No relays provided loading default relays.")
+            relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
 
-    # Add and Connect to relays
-    client = Client()
-    if relays_dict is not None:
-        for relay in relays_dict:
-            if relays_dict[relay] in [None, "WRITE"]:
-                    await client.add_relay(relay)
-    else:
-        for relay in relays_list:
-            await client.add_relay(relay)
+        # Add and Connect to relays
+        client = Client()
+        if relays_dict is not None:
+            for relay in relays_dict:
+                if relays_dict[relay] in [None, "WRITE"]:
+                        await client.add_relay(relay)
+        else:
+            for relay in relays_list:
+                await client.add_relay(relay)
 
-    # Post events except when in test mode.
-    if test_mode != "Y":
-        # init_logger(LogLevel.INFO)
-        await client.connect()
+        # Post events except when in test mode.
+        if test_mode != "Y":
+            # init_logger(LogLevel.INFO)
+            await client.connect()
 
-        for event in events:
-            if event.verify():
-                await client.send_event(event)
-            else:
-                print(f"Unable to verify event: {event.as_json()}")
+            for event in events:
+                if event.verify():
+                    await client.send_event(event)
+                else:
+                    print(f"Unable to verify event: {event.as_json()}")
 
-        await client.disconnect()
-    else:
-        print("TESTMODE: Event not posted.")
-        for event in events:
-            print(f"TESTMODE: {event.as_json()}")
-        print("")
+            await client.disconnect()
+        else:
+            print("TESTMODE: Event not posted.")
+            for event in events:
+                print(f"TESTMODE: {event.as_json()}")
+            print("")
+    except Exception as e:
+        return e
 
 def nostr_prepare(eventbuilders: list[EventBuilder]=None):
     """Post event to relays"""

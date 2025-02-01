@@ -73,13 +73,15 @@ class LoginNpubUnitTestCase(BaseUnitTests):
         Test invalid form (empty)
         """
         # Check form returns false
-        data = {'npub': ''}
+        data = {'npub': 'npub1234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890'}
         form = NpubForm(data)
         self.assertFalse(form.is_valid())
 
+    def test_post_invalid_npub(self):
         # Test post request with invalid data
         client = Client()
+        data = {'npub': 'npub1234'}
         response = client.post('/login-npub/', data)
         self.assertEqual(response.status_code, 200)
         self.assertIn('form', response.context)
-
+        self.assertEqual(response.context['noted'], 'false:Invalid NPUB.')

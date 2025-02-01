@@ -82,7 +82,7 @@ async def login_npub_view(request):
         else:
             context = {
                 'form': form,
-                'error_message': "Invalid NPUB"
+                'noted': "false:Invalid NPUB."
             }
             return render(request, 'circulation_desk/login_npub.html', context)
 
@@ -150,9 +150,8 @@ async def create_account_view(request):
     if await async_logged_in(request):
         return redirect('circulation_desk:index')
         
-    if request.method == 'GET':
-        context={"num_words":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
-        return render(request, 'circulation_desk/create_account.html', context=context)
+    context={"num_words":[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]}
+    return render(request, 'circulation_desk/create_account.html', context=context)
 
 async def create_account_confirm_view(request):
     """View for the create account confirm page of the website."""
@@ -219,13 +218,17 @@ async def event_publisher(request):
     
     # Get Session Info
     session = await async_get_session_info(request)
+    message = None
 
     if session['nsec'] != None:
         # Get the Event from the request
-        data = json.loads(request.body)
-        events_json = data.get('events_json', '')
-        # Convert events back from a json string
-        events = json.loads(events_json)
+        try:
+            data = json.loads(request.body)
+            events_json = data.get('events_json', '')
+            # Convert events back from a json string
+            events = json.loads(events_json)
+        except Exception as e:
+            return JsonResponse({'event_message': 'Unable to parse event.'})
         
         # Parse event and check it is valid
         post = []
@@ -246,12 +249,11 @@ async def event_publisher(request):
         if post:
             # Push events to relays
             try:
-                print("GOT HERE!!")
                 await nostr_push(events=post)
                 message = "Success: Updated."
             except Exception as e:
                 message = "Unable to push event to relays."
-        else:
+        elif not message:
             message = "No events to push."
 
         # Response
