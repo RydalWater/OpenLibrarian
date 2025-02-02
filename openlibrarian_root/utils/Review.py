@@ -1,7 +1,7 @@
-from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, Keys, SingleLetterTag, Alphabet, Filter, PublicKey, Client, NostrSigner
-from utils.Login import check_npub, check_nsec
-from utils.Network import nostr_get, nostr_post
-import aiohttp, datetime, hashlib, os, asyncio, tenacity
+from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Filter, PublicKey, Client
+from utils.Login import check_npub
+from utils.Network import nostr_get
+import hashlib, asyncio
 
 class Review:
     def __init__(self):
@@ -15,7 +15,7 @@ class Review:
         self.tags = None
         self.bevent = None
 
-    def new(self, isbn: str = None):
+    async def new(self, isbn: str = None):
         """
         Set new review object
         input: isbn (str)
@@ -30,13 +30,15 @@ class Review:
         self.content = "NA"
         self.tags = []
         self.bevent = None
+
+        return self
     
-    def review(self, isbn: str = None, rating: int = None, content: str = None, tags: list = None, max=5):
+    async def review(self, isbn: str = None, rating: float = None, content: str = None, tags: list = None, max=5):
         if self.isbn is None:
-            self.new(isbn)
+            await self.new(isbn)
         
         # Check for valid rating
-        if rating is None or type(rating) != int:
+        if rating is None or type(rating) != float:
             return self
         else:
             self.rating = rating
@@ -95,10 +97,6 @@ class Review:
                 self.rating_normal = "NA"
             if self.rating_raw is None:
                 self.rating_raw = "NA"
-            if self.content is None:
-                self.content = "NA"
-            if self.tags is None:
-                self.tags = []
 
             # Set bevent
             self.bevent = None
@@ -108,7 +106,7 @@ class Review:
     def build_event(self):
         """
         Build event from library object
-        output: self (Progress object)
+        output: self (review object)
         """
         if self.isbn is None:
             raise ValueError("ISBN not set")
@@ -132,7 +130,7 @@ class Review:
         if self.tags not in ([], None):
             for tag in self.tags:
                 tags.append(Tag.hashtag(f"#{tag}"))
-        if self.content is not None:
+        if self.content not in(None, ""):
             content = f"{self.content.strip()}"
         else:
             content = ""
@@ -147,4 +145,81 @@ class Review:
 
         return self
     
-    
+    def __dict__(self):
+        """
+        Return review object as dictionary
+        output: dict
+        """
+        return {
+            "id": self.identifier,
+            "exid": self.external_id,
+            "rating": self.rating,
+            "content": self.content,
+            "tags": self.tags,
+            "rating_normal": self.rating_normal,
+            "rating_raw": self.rating_raw,
+            "rating": self.rating,
+        }
+
+    def detailed(self):
+        """
+        Return detailed review object as dictionary
+        output: dict
+        """
+        return self.__dict__()
+
+
+# Fetch review objects
+async def fetch_reviews(npub: str, relays: dict, isbns: list = None):
+    """
+    Fetch reviews objects from relays
+    input: npub (str), relays (dict), isbns (list)
+    output: dict
+    """
+    # Check inputs are valid
+    if isbns == []:
+        return {}
+    elif isbns == None:
+        raise Exception("No ISBNs provided.")
+    elif npub in [None, ""] or check_npub(npub) is False:
+        raise Exception("No npub provided or invalid npub.")
+    else:
+        id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
+        ids = id_isbn_map.keys()
+
+        # Instantiate client and set signer
+        filter = Filter().author(PublicKey.from_bech32(npub)).kinds([Kind(31025)]).identifiers(ids).limit(2100)
+        client = Client(None)
+
+        # get events
+        events = await nostr_get(client=client, wait=10, filters=[filter], relays_dict=relays)
+        if events in [None, []]:
+            # Create new review objects
+            for isbn in isbns:
+                new_tasks = [Review().new(isbn=isbn) for isbn in isbns]
+                review_events = await asyncio.gather(*new_tasks)
+
+            return {review_event.isbn: review_event.detailed() for review_event in review_events}
+
+        # Parse events
+        review_events = []
+        for event in events:
+            if event.identifier() in ids:
+                isbn = id_isbn_map[event.identifier()]
+                review_events.append(Review().parse_event(event,isbn=isbn))
+
+        # Get new review objects for all isbns where events are not availabe
+        new_isbns = []
+        for isbn in isbns:
+            if isbn not in [review_event.isbn for review_event in review_events]:
+                new_isbns.append(isbn)
+
+        # Set up new review objects as tasks
+        new_tasks = [Review().new(isbn=new) for new in new_isbns]
+        
+        # Async gather all tasks
+        review_all = await asyncio.gather(*new_tasks)
+        review_all.extend(review_events)
+        
+        # Convert to dictionaries and return
+        return {review.isbn: review.detailed() for review in review_all}
