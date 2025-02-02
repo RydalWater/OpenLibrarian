@@ -140,14 +140,16 @@ async def login_nip07_view(request):
     
     return render(request, 'circulation_desk/login_nip07.html')
 
-
+@csrf_exempt
 def logout_view(request):
     """View for the logout page of the website."""
     # Delete session data
     request.session.flush()
-
     # Clear cache
     cache.clear()
+
+    if request.method == 'POST':
+        return redirect('circulation_desk:index')
     return render(request, 'circulation_desk/logout.html') 
 
 async def create_account_view(request):

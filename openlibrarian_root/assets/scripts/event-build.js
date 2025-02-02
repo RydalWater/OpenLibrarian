@@ -1,8 +1,11 @@
 const { Keys, PublicKey, EventBuilder, Event, nip04Encrypt, loadWasmAsync, Nip07Signer, NostrSigner } = require('@rust-nostr/nostr-sdk');
+import { checkLocalStorage } from "./login-utils.js";
 
 async function buildSignEvent(event = null, encrypt = null) {
 
-    await loadWasmAsync();
+    await checkLocalStorage();
+
+    loadWasmAsync();
 
     const nsec = localStorage.getItem("nsec");
     let keys = null;
@@ -14,7 +17,7 @@ async function buildSignEvent(event = null, encrypt = null) {
     } else {
         keys = Keys.parse(nsec);
     }
-
+    
     if (event != null  && event instanceof Event) {
         // Extract element of event
         let tags = event.tags.asVec();

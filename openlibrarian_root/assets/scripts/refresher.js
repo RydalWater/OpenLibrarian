@@ -1,4 +1,4 @@
-import { check_nsec } from "./login-utils.js";
+import { check_nsec, checkLocalStorage } from "./login-utils.js";
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
@@ -13,7 +13,9 @@ let refreshValue = null;
 if (refreshButton) {
     refreshValue = refreshButton.value;
 
-    refreshButton.addEventListener('click', async function(event) {    
+    refreshButton.addEventListener('click', async function(event) {   
+        await checkLocalStorage();
+         
         event.preventDefault();
         // Deactivate the refresh button
         refreshButton.disabled = true;

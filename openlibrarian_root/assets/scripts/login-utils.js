@@ -39,4 +39,20 @@ function check_npub_of_nsec(npub, nsec) {
     }
 }
 
-export { check_nsec, check_seed, check_npub_of_nsec };
+// Function to check if localStorage are empty and if so redirect to login page
+function checkLocalStorage() {
+    if (localStorage.getItem("nsec") == null || localStorage.getItem("npub") == null) {
+        if (localStorage.getItem("nsec")) {
+            localStorage.removeItem("nsec");
+        } else if (localStorage.getItem("npub")) {
+            localStorage.removeItem("npub");
+        }
+        // Clear backend session data using logout view
+        return fetch('/logout/', {
+            method: 'POST'
+        });
+    }
+    return Promise.resolve();
+}
+
+export { check_nsec, check_seed, check_npub_of_nsec, checkLocalStorage };
