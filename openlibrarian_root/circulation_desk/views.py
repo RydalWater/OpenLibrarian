@@ -133,6 +133,13 @@ async def login_nsec_view(request):
 async def login_seed_view(request):
     return await login_rw_view(request, SeedForm, 'circulation_desk/login_seed.html', '/login/seed')
 
+async def login_nip07_view(request):
+    # If already logged in then redirect to the home page
+    if await async_logged_in(request):
+        return redirect('circulation_desk:index')
+    
+    return render(request, 'circulation_desk/login_nip07.html')
+
 
 def logout_view(request):
     """View for the logout page of the website."""

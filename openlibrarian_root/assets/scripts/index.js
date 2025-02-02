@@ -6,6 +6,7 @@ import "./signup-conf.js"
 import "./login-utils.js"
 import "./login-rw.js"
 import "./logout.js"
+import "./login-nip07.js"
 
 // Import event scripts
 import "./event-coordinator.js"

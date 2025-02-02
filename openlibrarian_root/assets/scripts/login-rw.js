@@ -2,39 +2,49 @@ import { check_nsec, check_seed } from "./login-utils.js";
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
-const { loadWasmAsync, Keys, EventBuilder, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
+const { loadWasmSync, loadWasmAsync, Keys, EventBuilder, nip04Decrypt, Nip07Signer, NostrSigner } = require("@rust-nostr/nostr-sdk");
+
 
 // Declare variables outside of if blocks
 let nsec = null;
 let seed = null;
+let nip07 = null;
 let login = null;
 
-// Check if nsec/words and submit exist on the page
+// Check if nsec/words/nip07 and login exist on the page
 if (document.getElementById('nsec')) {
     nsec = document.getElementById('nsec');
-}
-
-if (document.getElementById('login')) {
-    login = document.getElementById('login');
 }
 
 if (document.getElementById('word1')) {
     seed = document.getElementById('word1');
 }
 
-if ((nsec != null || seed != null) && login != null) {
+if (window.location.href.indexOf("login-nip07") > -1) {
+    nip07 = true;
+}
+
+if (document.getElementById('login')) {
+    login = document.getElementById('login');
+}
+
+if ((nsec != null || seed != null || nip07) && login != null) {
     login.addEventListener('click', async function(event) {    
         event.preventDefault();        
         let result = false;
         let keys = null;
+        let pubKey = null;
         let seedValue = "";
         let nsecValue = "";
+        let npubValue = "";
+        let signer = null;
 
-        // Check valid nsec/seed
         if (nsec != null) {
+            // Check valid nsec
             nsecValue = nsec.value;
             result = check_nsec(nsecValue);
-        } else {
+        } else if (seed != null) {
+            // Check valid seed 
             for (let i = 1; i <= 12; i++) {
                 const element = document.getElementById(`word${i}`);
                 if (element) {
@@ -42,8 +52,16 @@ if ((nsec != null || seed != null) && login != null) {
                 }
             }
             seedValue = seedValue.trim();
-            // Check the seed has 12 words
             result = check_seed(seedValue);
+        } else if (nip07) {
+            // Check valid nip07
+            try {
+                loadWasmSync();
+                signer = new Nip07Signer(window.nostr);
+                result = true;
+            } catch (e) {
+                console.log("Issue with NIP-07");
+            }            
         }
         // Execute Login Actions 
         if (result) {
@@ -51,16 +69,28 @@ if ((nsec != null || seed != null) && login != null) {
             loadWasmAsync();
             if (nsec != null) {
                 keys = Keys.parse(nsecValue);
-            } else {
+            } else if (seed != null) {
                 keys = Keys.fromMnemonic(seedValue);
+            } else if (nip07) {
+                pubKey = await signer.getPublicKey();
             }
-            let npubValue = keys.publicKey.toBech32();
-            // Set session Nsec
-            localStorage.setItem('nsec', nsecValue);
+
+            if (keys) {
+                npubValue = keys.publicKey.toBech32();
+                // Set session Nsec
+                localStorage.setItem('nsec', keys.secretKey.toBech32());
+            } else {
+                npubValue = pubKey.toBech32();
+                // Set session Nsec
+                localStorage.setItem('nsec', 'signer');
+            }
+            
             // Set session Npub
             localStorage.setItem('npub', npubValue);
+
             // Set payload and call backend
             let payload = {'npubValue': npubValue, 'hasNsec': "Y"}
+
             // Fetch event publisher
             const response = await fetch('/fetch_events/', {
                 method: 'POST',
@@ -93,7 +123,11 @@ if ((nsec != null || seed != null) && login != null) {
                         contentData = event.content.substring(index);
                         let decryptedContent = "";
                         if (contentData != "") {
-                            decryptedContent = nip04Decrypt(keys.secretKey, keys.publicKey, contentData);
+                            if (signer) {
+                                decryptedContent = await signer.nip04Decrypt(pubKey, contentData);
+                            } else {
+                                decryptedContent = nip04Decrypt(keys.secretKey, keys.publicKey, contentData);
+                            }
                         }
                         content = contentPrefix + decryptedContent;
                     } else {
@@ -105,8 +139,12 @@ if ((nsec != null || seed != null) && login != null) {
                     let builder = new EventBuilder(kind, content).tags(tags);
             
                     // Sign the event
-                    let signedEvent = builder.signWithKeys(keys);
-
+                    let signedEvent = null;
+                    if (signer) {
+                        signedEvent = await builder.sign(NostrSigner.nip07(signer));
+                    } else {
+                        signedEvent = builder.signWithKeys(keys);
+                    }
                     // Add event to array
                     decryptedEvents.push(signedEvent.asJson());
                 }
@@ -136,9 +174,10 @@ if ((nsec != null || seed != null) && login != null) {
             // Set error message
             if (nsec != null) {
                 document.getElementById('event-notification').value = "Invalid NSEC";
-            } else {
-                // Set error message
+            } else if (seed != null) {
                 document.getElementById('event-notification').value = "Invalid Seed";
+            } else {
+                document.getElementById('event-notification').value = "Invalid NIP07";
             }
             showEventToast({positive:false}); 
         }

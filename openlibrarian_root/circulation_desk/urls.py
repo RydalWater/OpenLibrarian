@@ -11,6 +11,7 @@ urlpatterns = [
     path('login-npub/', views.login_npub_view, name='login-npub'),
     path('login-nsec/', views.login_nsec_view, name='login-nsec'),
     path('login-seed/', views.login_seed_view, name='login-seed'),
+    path('login-nip07/', views.login_nip07_view, name='login-nip07'),
 
     # Logout Page
     path('logout/', views.logout_view, name='logout'),
