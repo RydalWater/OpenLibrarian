@@ -11,6 +11,7 @@ urlpatterns = [
     path('login-npub/', views.login_npub_view, name='login-npub'),
     path('login-nsec/', views.login_nsec_view, name='login-nsec'),
     path('login-seed/', views.login_seed_view, name='login-seed'),
+    path('login-nip07/', views.login_nip07_view, name='login-nip07'),
 
     # Logout Page
     path('logout/', views.logout_view, name='logout'),
@@ -22,6 +23,5 @@ urlpatterns = [
     # Json Responses
     path('event_publisher/', views.event_publisher, name='event_publisher'),
     path('fetch_events/', views.fetch_events, name='fetch_events'),
-    path('create_account_empty/', views.create_account_empty, name='create_account_empty'),
-    
+    path('create_account_empty/', views.create_account_empty, name='create_account_empty'),    
 ]

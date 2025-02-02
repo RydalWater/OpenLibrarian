@@ -37,6 +37,13 @@ class TestUrls(TestCase):
         url = reverse('circulation_desk:login-npub')
         self.assertEqual(url, '/login-npub/')
     
+    def test_login_nip07_url(self):
+        """
+        Test login-nip07 url in Circulation Desk
+        """
+        url = reverse('circulation_desk:login-nip07')
+        self.assertEqual(url, '/login-nip07/')
+    
     def test_logout_url(self):
         """
         Test logout url in Circulation Desk

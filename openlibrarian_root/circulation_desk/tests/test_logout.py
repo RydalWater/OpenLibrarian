@@ -88,3 +88,28 @@ class LogoutUnitTestCase(BaseUnitTests):
         self.assertNotIn('nsec', client.session)
         self.assertNotIn('npub', client.session)
     
+    def test_logout_post_request(self):
+        """
+        Test Logout from Index after Login (NSEC)
+        """
+        # Create a test client
+        client = Client()
+        session = client.session
+        session["npub"] = TC_NPUB
+        session["nsec"] = "Y"
+        session.save()
+        response = client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(session['nsec'], 'Y')
+        self.assertEqual(session['npub'], TC_NPUB)
+    
+        # Logout
+        response = client.get('/')
+        response = client.post(reverse('circulation_desk:logout'),data={})
+    
+        # Check the session data is removed
+        self.assertNotIn('nsec', client.session)
+        self.assertNotIn('npub', client.session)
+
+        # Check URL is index
+        self.assertEqual(response.url, '/')

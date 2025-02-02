@@ -9,22 +9,34 @@
     <p class="book-text text-center">Please select from the below log-in options</p>
 </div>
 <div class="container">
-    <div class="row">
-        <div class="col-1"></div>
-        <div class="col-10">
-            <a id="npub" href="{% url 'circulation_desk:login-npub' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-lock"></i> NPUB (read-only)</a>
+    <div class="book-text text-center fw-semibold">Recommended</div>
+    <div class="border-top border-2 border-secondary">
+        <div class="row mt-2">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <a id="npub" href="{% url 'circulation_desk:login-npub' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-lock"></i> Public Key, NPUB (read-only)</a>
+            </div>
+        </div>
+        <div class="row my-2">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <a id="nip07" href="{% url 'circulation_desk:login-nip07' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Browser Extension (read/write)</a>
+            </div>
         </div>
     </div>
-    <div class="row mt-2">
-        <div class="col-1"></div>
-        <div class="col-10">
-            <a id="nsec" href="{% url 'circulation_desk:login-nsec' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> NSEC (read/write)</a>
+    <div class="book-text text-center fw-semibold">Alternatives, not recommended</div>
+    <div class="border-top border-2 border-secondary">
+        <div class="row mt-2">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <a id="nsec" href="{% url 'circulation_desk:login-nsec' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Private Key, NSEC (read/write)</a>
+            </div>
         </div>
-    </div>
-    <div class="row mt-2">
-        <div class="col-1"></div>
-        <div class="col-10">
-            <a id="seed" href="{% url 'circulation_desk:login-seed' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Seed Words (read/write)</a>
+        <div class="row mt-2">
+            <div class="col-1"></div>
+            <div class="col-10">
+                <a id="seed" href="{% url 'circulation_desk:login-seed' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Seed Words (read/write)</a>
+            </div>
         </div>
     </div>
     <div class="gap-2 mx-auto d-flex justify-content-center mt-2">

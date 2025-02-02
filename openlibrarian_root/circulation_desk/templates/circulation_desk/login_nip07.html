@@ -1,0 +1,79 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <div class="chapter-header">
+        <p>Log-in</p>
+    </div>
+    <p class="book-text text-center"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Browser Extension, NIP-07 (read/write)</p>
+</div>
+<div class="container">
+    <form method="post">
+        {% csrf_token %}
+        <!-- Notes Postive -->
+        <div id="nip07-available" class="not-visible">
+            <p class="book-text text-center mt-2" >
+                <b class="text-success">NIP-07 browser extension detected.</b>
+            </p>
+        
+            <p class="book-text" >
+                Click on <b class="fst-italic">'Log-In'</b> and follow you're extension instructions to continue. You will automatically be redirected once login is complete.
+            </p>
+        </div>
+
+        <!-- Notes Negative -->
+        <div id="nip07-unavailable" class="not-visible">
+            <p class="book-text text-center mt-2">
+                <b class="text-danger">No NIP-07 extension was detected.</b>
+            </p>
+        
+            <p class="book-text mt-2">
+                To use this feature, please install an NIP-07 browser extension (click on <b class="fst-italic">'What is a NIP-07 Browser Extension?'</b> below for more information).
+            </p>
+        </div>
+
+        <!-- Back/Login Buttons -->
+        <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+            <a id="back" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <button id="login" type="submit" class="btn btn-sm btn-primary w-50" name="nip07_login"><i class="fa-solid fa-right-to-bracket"></i> Log-In</button>
+        </div>
+
+        <div id="spinnerBox" class="col mt-2 not-visible">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    </form>
+
+    <!-- NIP-07 Info -->
+    <div class="accordion-flush mt-2" id="nip07-info">
+        <div class="accordion-item">
+            <p class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed d-block text-center book-text" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    <i class="fa-solid fa-circle-info"></i> What is a NIP-07 Browser Extension?
+                </button>
+            </p>
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#nip07-info">
+                <div class="accordion-body pe-2">
+                    <p class="mt-2 book-text">
+                        <span class="dropcap">A</span> NIP-07 browser extension is a small application that runs in your browser and allows 
+                        you to log into OpenLibrarian (and other Nostr powered applications) but without entering your secret key (NSEC) or your seed phrase directly. 
+                    </p>
+                    <p class="book-text">
+                        It is generally best practice to <b>NOT</b> regularly enter your secret key or seed phrase into any application. 
+                        This carries inherent risks as you cannot be sure how the application will store and protect this information.
+                    </p>
+                    <p class="book-text"> 
+                        One of the most commonly used NIP-07 capable browser extensions is Alby, but there are a range of other options out there.
+                    </p>
+                    <p> 
+                        <a href="https://nostr.net/" target="_blank" class="btn btn-sm btn-outline-primary">Find NIP-07 extensions on nostr.net</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock content %}
