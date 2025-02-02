@@ -1,12 +1,19 @@
-const { Keys, EventBuilder, Event, nip04Encrypt, loadWasmAsync } = require('@rust-nostr/nostr-sdk');
+const { Keys, PublicKey, EventBuilder, Event, nip04Encrypt, loadWasmAsync, Nip07Signer, NostrSigner } = require('@rust-nostr/nostr-sdk');
 
 async function buildSignEvent(event = null, encrypt = null) {
 
     await loadWasmAsync();
 
-    const nsec = localStorage.getItem("nsec")
-    const keys = Keys.parse(nsec);
-    // const keys = Keys.generate();
+    const nsec = localStorage.getItem("nsec");
+    let keys = null;
+    let pubKey = null;
+    let signer = null;
+    if (nsec == "signer")  {
+        signer = new Nip07Signer(window.nostr);
+        pubKey = PublicKey.parse(localStorage.getItem("npub"));
+    } else {
+        keys = Keys.parse(nsec);
+    }
 
     if (event != null  && event instanceof Event) {
         // Extract element of event
@@ -34,7 +41,12 @@ async function buildSignEvent(event = null, encrypt = null) {
 
         // Encrypt the content if applicable
         if (encrypt) {
-            let encrypted = nip04Encrypt(keys.secretKey, keys.publicKey, contentData);
+            let encrypted = "";
+            if (signer) { 
+                encrypted = await signer.nip04Encrypt(pubKey, contentData);
+            } else {
+                encrypted = nip04Encrypt(keys.secretKey, keys.publicKey, contentData);
+            }
             content = contentPrefix + encrypted;
         } else {
             content = contentPrefix + contentData;
@@ -44,7 +56,12 @@ async function buildSignEvent(event = null, encrypt = null) {
         let builder = new EventBuilder(kind, content).tags(tags);
 
         // Sign the event
-        let signedEvent = builder.signWithKeys(keys);
+        let signedEvent = null;
+        if (signer) {
+            signedEvent = await builder.sign(NostrSigner.nip07(signer));
+        } else {
+            signedEvent = builder.signWithKeys(keys);
+        }
 
         // Return the signed event
         return signedEvent.asJson();

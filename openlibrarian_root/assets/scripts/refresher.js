@@ -3,7 +3,7 @@ import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
 
-const { loadWasmAsync, Keys, EventBuilder, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
+const { loadWasmSync, loadWasmAsync, Keys, PublicKey, EventBuilder, Nip07Signer, NostrSigner, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
 
 // Declare variables outside of if blocks
 const refreshButton = document.getElementById('refresh');
@@ -17,20 +17,30 @@ if (refreshButton) {
         event.preventDefault();
         // Deactivate the refresh button
         refreshButton.disabled = true;
+        const nsecValue = localStorage.getItem('nsec');
+        const npubValue = localStorage.getItem('npub');
         let result = false;
         let keys = null;
-        let nsecValue = localStorage.getItem('nsec');
+        let pubKey = null;
+        let signer = null;
 
-        // Check valid nsec/seed
-        result = check_nsec(nsecValue);
+        // Check valid nsec
+        if (nsecValue == "signer") {
+            loadWasmSync();
+            signer = new Nip07Signer(window.nostr);
+            pubKey = PublicKey.parse(npubValue);
+            result = true;
+        } else {
+            result = check_nsec(nsecValue);
+        }
 
         // Execute Login Actions 
         if (result) {
             // Load WASM
             loadWasmAsync();
-            keys = Keys.parse(nsecValue);
-
-            let npubValue = keys.publicKey.toBech32();
+            if (signer == null) {
+                keys = Keys.parse(nsecValue);
+            }
 
             // Set payload and call backend
             let payload = {'npubValue': npubValue, 'hasNsec': "Y", 'refresh': refreshValue}
@@ -66,7 +76,11 @@ if (refreshButton) {
                         contentData = event.content.substring(index);
                         let decryptedContent = "";
                         if (contentData != "") {
-                            decryptedContent = nip04Decrypt(keys.secretKey, keys.publicKey, contentData);
+                            if (signer) {
+                                decryptedContent = await signer.nip04Decrypt(pubKey, contentData);
+                            } else {
+                                decryptedContent = nip04Decrypt(keys.secretKey, keys.publicKey, contentData);
+                            }
                         }
                         content = contentPrefix + decryptedContent;
                     } else {
@@ -78,7 +92,12 @@ if (refreshButton) {
                     let builder = new EventBuilder(kind, content).tags(tags);
             
                     // Sign the event
-                    let signedEvent = builder.signWithKeys(keys);
+                    let signedEvent = null;
+                    if (signer) {
+                        signedEvent = await builder.sign(NostrSigner.nip07(signer));
+                    } else {
+                        signedEvent = builder.signWithKeys(keys);
+                    }
 
                     // Add event to array
                     decryptedEvents.push(signedEvent.asJson());
