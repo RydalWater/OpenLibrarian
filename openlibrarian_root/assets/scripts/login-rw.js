@@ -30,7 +30,8 @@ if (document.getElementById('login')) {
 
 if ((nsec != null || seed != null || nip07) && login != null) {
     login.addEventListener('click', async function(event) {    
-        event.preventDefault();        
+        event.preventDefault();
+        login.disabled = true;        
         let result = false;
         let keys = null;
         let pubKey = null;

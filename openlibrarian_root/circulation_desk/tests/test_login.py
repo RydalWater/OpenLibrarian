@@ -21,6 +21,14 @@ class LoginFunctionalTestCase(BaseFunctionalTest):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="npub").click()
         self.assertIn("/login-npub/", self.driver.current_url)
+    
+    def test_login_nip07(self):
+        """
+        Login with NPUB Button
+        """
+        self.driver.get(f"http://127.0.0.1:8000{self.url}")
+        self.driver.find_element(by=By.ID, value="nip07").click()
+        self.assertIn("/login-nip07/", self.driver.current_url)
 
     def test_login_nsec(self):
         """
@@ -59,5 +67,5 @@ class LoginUnitTestCase(BaseUnitTests):
     def setUp(self):
         self.url = "/login/"
         self.template = "circulation_desk/login.html"
-        self.content = ["Log-in", "NPUB (read-only)", "NSEC (read/write)", "Seed Words (read/write)", "Back"]
+        self.content = ["Log-in", "Public Key, NPUB (read-only)", "Browser Extension (read/write)", "rivate Key, NSEC (read/write)", "Seed Words (read/write)", "Back"]
         self.redirect = True
