@@ -1,7 +1,7 @@
-from nostr_sdk import Tag, EventBuilder, Kind, TagKind, SingleLetterTag, Alphabet, Keys, Client, NostrSigner, nip04_encrypt, nip04_decrypt, Filter, PublicKey, Event
+from nostr_sdk import Tag, Event, EventBuilder, Kind, TagKind, SingleLetterTag, Alphabet, Client, Filter, PublicKey, Event
 from utils.Book import Book
-from utils.Login import check_npub, check_nsec, check_npub_of_nsec
-from utils.Network import nostr_get, nostr_post
+from utils.Login import check_npub
+from utils.Network import nostr_get
 import hashlib, ast, asyncio
 
 section_title_map = {
@@ -20,7 +20,7 @@ section_description_map = {
 
 class Library:
     """Library Class. Allows for easy creation and access of library objects."""
-    def __init__(self, npub: str = None, nsec: str = None, **kwargs):
+    def __init__(self, npub: str = None, read_only: bool = False, **kwargs):
         """Initialize library object"""
         if npub in [None, ""] or check_npub(npub) is False:
             raise Exception("Invalid or missing npub")
@@ -60,15 +60,8 @@ class Library:
                 raise Exception("Not a library event")
             elif npub in [None, ""] or check_npub(npub) is False:
                 raise Exception("No npub provided or value not valid.")
-            elif nsec == "" or (nsec is not None and check_nsec(nsec) is False):
-                raise Exception("No nsec provided or value not valid.")
-            elif nsec and check_npub_of_nsec(npub, nsec) is False:
-                raise Exception("npub and nsec do not match.")
             else:
-                if nsec:
-                    keys = Keys.parse(nsec)
                 event = kwargs["event"]
-
                 # Convert the tags to dictonaries
                 tags = event.tags()
                 tags_dict = {}
@@ -81,12 +74,13 @@ class Library:
                         extIDs.append(Book(isbn=i).concise())
                 
                 # Handle hidden books
-                content = event.content().split(":")
-                if int(content[1]) >= 1 and nsec:
-                    decrypted_tags = ast.literal_eval(nip04_decrypt(keys.secret_key(), keys.public_key(), content[2]))
+                content_raw = event.content().replace("isbn:","")
+                content = content_raw.split(":")
+                if int(content[1]) >= 1 and read_only is False:
+                    decrypted_tags = ast.literal_eval(content[2])
                     for dtag in decrypted_tags:
                         if dtag[0] == "i":
-                            extIDs.append(Book(isbn=dtag[1].replace("isbn:",""), hidden="Y").concise())
+                            extIDs.append(Book(isbn=dtag[1], hidden="Y").concise())
                 elif int(content[1]) >= 1:
                     for i in range(1, int(content[1])+1):
                         extIDs.append(Book(isbn=f"Hidden{i}", hidden="Y").concise())
@@ -172,13 +166,10 @@ class Library:
             raise Exception("Invalid book or url provided")
 
     # Build event
-    def build_event(self, npub: str = None, nsec: str = None):
+    def build_event(self, npub: str = None):
         """Build event from library object"""
         if npub in [None, ""] or check_npub(npub) is False:
             raise Exception("No npub provided or invalid npub.")
-
-        elif nsec in [None, ""] or check_nsec(nsec) is False:
-            raise Exception("No nsec provided or invalid nsec.")
         
         # Events Kind and Main tags
         kind = Kind(30003)
@@ -193,7 +184,7 @@ class Library:
         for book in self.books:
             book_obj = Book(dict=book).concise()
             clean_isbn = book_obj["i"].replace("-","")
-            tag = Tag.custom(TagKind.SINGLE_LETTER(single_letter=SingleLetterTag.lowercase(Alphabet.I)),[f"isbn:{clean_isbn}"])
+            tag = Tag.custom(TagKind.SINGLE_LETTER(single_letter=SingleLetterTag.lowercase(Alphabet.I)),[f'isbn:{clean_isbn}'])
             if book_obj["h"] == "Y":
                 hidden_items.append(tag.as_vec())
             else:
@@ -201,9 +192,7 @@ class Library:
 
         # Build content (include hidden items)
         if hidden_items:
-            keys = Keys.parse(nsec)
-            encrypted = nip04_encrypt(keys.secret_key(), keys.public_key(), f"{hidden_items}")
-            content = f"{self.content}:{len(hidden_items)}:{encrypted}"
+            content = f"{self.content}:{len(hidden_items)}:{hidden_items}"
         else:
             content = f"{self.content}:0"
         
@@ -217,30 +206,6 @@ class Library:
         self.bevent = builder
 
         return self
-    
-    async def publish_event(self, nym_relays: dict = None, nsec: str = None):
-        """Publish event from library object"""
-
-        # Return error if missing required information and is valid
-        if nsec in [None, ""] or check_nsec(nsec) is False:
-            raise Exception("No nsec provided or invalid nsec.")
-        elif self.bevent is None or nym_relays is None or nsec is None:
-            raise Exception("Missing required information.")
-        elif type(self.bevent) != EventBuilder:
-            raise Exception("Missing required information.")
-        else:
-            # Instantiate client and set signer
-            signer = NostrSigner.keys(Keys.parse(nsec))
-            client = Client(signer)
-
-            # Post event
-            try:
-                await nostr_post(client=client, eventbuilder=self.bevent, relays_dict=nym_relays)
-                return "Published event."
-
-            except Exception as e:
-                return f"Unable to published event: {e}"
-    
 
     def __dict__(self):
         """Return library object as dictionary"""
@@ -252,17 +217,12 @@ class Library:
             "c":self.content,
             "b":self.books
         }
-    
-# Function to fetch Library objects from relays
-async def fetch_libraries(npub: str, relays: dict, nsec: str = None):
+
+async def fetch_libraries(npub: str = None, relays: dict = None):
     """Fetch libraries from relays"""
-    # Check if npub and nsec are valid
+    # Check if npub is valid
     if npub in [None, ""] or check_npub(npub) is False:
         raise Exception("No npub provided or invalid npub.")
-    elif nsec == "" or (nsec not in [None, ""] and check_nsec(nsec) is False):
-        raise Exception("No nsec provided or invalid nsec.")
-    elif nsec is not None and check_npub_of_nsec(npub, nsec) is False:
-        raise Exception("Npub and nsec do not match.")
     else:
         # Get identifiers for events
         ids = []
@@ -275,7 +235,7 @@ async def fetch_libraries(npub: str, relays: dict, nsec: str = None):
             ids.append(id)
             library_id[id] = section
 
-        # Instantiate client and set signer
+        # Instantiate client and set filter
         filter = Filter().author(PublicKey.from_bech32(npub)).kinds([Kind(30003)]).identifiers(ids).limit(50)
         client = Client(None)
 
@@ -285,10 +245,40 @@ async def fetch_libraries(npub: str, relays: dict, nsec: str = None):
         # Sort to the latest of each event by ID
         events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
 
+        # Keep just first of each event by ID
+        raw_libraries = [x.as_json() for n, x in enumerate(events) if x.identifier() not in events[n + 1:]]
+        
+        return raw_libraries
+
+# Function to prepare fetched Library objects from relays
+async def prepare_libraries(libEvents: list=None, npub: str=None, read_only: bool=False):
+    """Build libraries from events"""
+    # Check list of events have been provided
+    if libEvents == None:
+        raise Exception("No events provided.")
+    elif npub in [None, ""] or check_npub(npub) is False:
+        raise Exception("No npub provided or invalid npub.")
+    else:
+        # Get identifiers for events
+        ids = []
+        library_id = {}
+        for section in section_title_map.keys():
+            identifier_str = npub+section
+            sha1 = hashlib.sha1()
+            sha1.update(identifier_str.encode("utf-8"))
+            id = sha1.hexdigest()
+            ids.append(id)
+            library_id[id] = section
+
+        events = []
+        if len(libEvents) > 0:
+            for each in libEvents:
+                events.append(Event.from_json(each))
+
         # Build list of parsed libraries
         libraries = []
         async def parse_libraries(event):
-            library = Library(event=event, npub=npub, nsec=nsec)
+            library = Library(event=event, npub=npub, read_only=read_only)
             await library.get_book_details()
             ids.remove(library.identifier)
             return library.__dict__()
@@ -302,7 +292,7 @@ async def fetch_libraries(npub: str, relays: dict, nsec: str = None):
         # Add in missing libraries
         if len(ids) > 0:
             for id in ids:
-                library = Library(section=library_id[id],npub=npub,nsec=nsec)
+                library = Library(section=library_id[id],npub=npub)
                 libraries.append(library.__dict__())
 
         return libraries

@@ -59,7 +59,7 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["notification"], None)
+        self.assertEqual(response.context["noted"], None)
         self.assertIn("session",response.context.keys())
     
     def test_post_refresh(self):
@@ -106,8 +106,6 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         output = capturedOutput.getvalue().strip()
         
         self.assertEqual(response.status_code, 200)
-        event_str = output.split("\n")[3]
-        self.assertEqual(event_str, 'TESTMODE: {}')
 
     def test_post_save_nym(self):
         """
@@ -137,8 +135,6 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["nym"], "new_nym")
-        event_str = output.split("\n")[3]
-        self.assertEqual(event_str, 'TESTMODE: {"name":"new_nym"}')
 
     def test_post_save_displayname(self):
         """
@@ -168,8 +164,7 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["displayname"], "new_display_name")
-        event_str = output.split("\n")[3]
-        self.assertEqual(event_str, 'TESTMODE: {"display_name":"new_display_name"}')
+
 
     def test_post_save_about(self):
         """
@@ -199,8 +194,6 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["about"], "new_about")
-        event_str = output.split("\n")[3]
-        self.assertEqual(event_str, 'TESTMODE: {"about":"new_about"}')
     
     def test_post_save_picture(self):
         """
@@ -230,8 +223,6 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["picture"], "https://pfp.nostr.build/9d45acc985222226824a1e91850bf3d450b8b5964ef14f41fbd4df2c9dcc3241.jpg")
-        event_str = output.split("\n")[3]
-        self.assertEqual(event_str, 'TESTMODE: {"picture":"https://pfp.nostr.build/9d45acc985222226824a1e91850bf3d450b8b5964ef14f41fbd4df2c9dcc3241.jpg"}')
 
     def test_post_save_nip05(self):
         """
@@ -261,5 +252,3 @@ class ProfileUnitTestCase(SettingsUnitTestCase):
         
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["session"]["profile"]["nip05"], "Rydal@gitlurker.info")
-        event_str = output.split("\n")[3]
-        self.assertEqual(event_str, 'TESTMODE: {"nip05":"Rydal@gitlurker.info"}')

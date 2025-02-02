@@ -1,8 +1,5 @@
 {% extends 'circulation_desk/base.html' %}
 
-{% load static %}
-{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
-
 {% block content %}
 
 <!-- private_key_login_app/templates/login.html -->
@@ -22,13 +19,10 @@
             </div>
         </div>
         <div class="container">
-            {% if error_message %}
-                <p class="text-danger"><i class="fa-solid fa-circle-exclamation"></i> {{ error_message }}</p>
-            {% endif %}
             <!-- Back/Login Buttons -->
             <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
                 <a id="back" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
-                <button id="submit" type="submit" class="btn btn-sm btn-primary w-50" name="confirm_seed"><i class="fa-solid fa-right-to-bracket"></i> Log-In</button>
+                <button id="login" type="submit" class="btn btn-sm btn-primary w-50" name="confirm_seed"><i class="fa-solid fa-right-to-bracket"></i> Log-In</button>
             </div>
 
             <div id="spinnerBox" class="col mt-2 not-visible">
@@ -36,5 +30,4 @@
             </div>
         </div>
 </form>
-
 {% endblock content %}

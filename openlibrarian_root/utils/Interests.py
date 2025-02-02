@@ -1,6 +1,6 @@
-from nostr_sdk import Event, Tag, TagKind, EventBuilder, Keys, Kind, NostrSigner, Client, Filter, PublicKey
-from utils.Login import check_npub, check_nsec
-from utils.Network import nostr_get, nostr_post
+from nostr_sdk import Event, Tag, TagKind, EventBuilder, Kind, Client, Filter, PublicKey
+from utils.Login import check_npub
+from utils.Network import nostr_get
 import hashlib
 
 
@@ -36,11 +36,8 @@ class Interests:
             return False
 
 
-    def build_event(self, npub: str = None, nsec: str = None):
+    def build_event(self, npub: str = None):
         """Build event from library object"""
-        if not self._validate_npub_and_nsec(npub, nsec):
-            raise Exception("Invalid npub or nsec.")
-
         # Events Kind and tags
         kind = Kind(30015)
         sha1 = hashlib.sha1()
@@ -66,40 +63,13 @@ class Interests:
         self.bevent = builder
 
         return self
-    
-    async def publish_event(self, nym_relays: dict[str, str] = None, nsec: str = None):
-        """Publish event from Interests object"""
-        if not self._validate_npub_and_nsec(None, nsec):
-            raise Exception("Invalid nsec.")
-        if self.bevent is None:
-            raise Exception("Missing required information.")
-
-        # Instantiate client and set signer
-        signer = NostrSigner.keys(Keys.parse(nsec))
-        client = Client(signer)
-
-        # Post event
-        try:
-            await nostr_post(client=client, eventbuilder=self.bevent, relays_dict=nym_relays)
-            return "Published event."
-
-        except Exception as e:
-            raise Exception(f"Unable to publish event: {e}")
-
-
-    def _validate_npub_and_nsec(self, npub: str, nsec: str) -> bool:
-        if npub is not None and (npub in [None, ""] or check_npub(npub) is False):
-            return False
-        if nsec is not None and (nsec in [None, ""] or check_nsec(nsec) is False):
-            return False
-        return True
 
     def __dict__(self):
         return self.interests
     
 async def fetch_interests(npub: str, nym_relays: dict):
     """Fetch interests from relays"""
-    # Check if npub and nsec are valid
+    # Check if npub is valid
     if npub in [None, ""] or check_npub(npub) is False:
         raise Exception("No npub provided or invalid npub.")
     else:

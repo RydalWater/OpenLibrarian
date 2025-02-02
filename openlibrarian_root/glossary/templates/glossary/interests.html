@@ -40,9 +40,13 @@
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
         <a href="{% url 'glossary:glossary' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
-            <button id="submit" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button id="refresh-simple" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="interests"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
             <button class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
         {% endif %}
+    </div>
+
+    <div id="spinnerBox" class="col mt-2 not-visible">
+        <div class="spinner-border" role="status"></div>
     </div>
 </form>
 

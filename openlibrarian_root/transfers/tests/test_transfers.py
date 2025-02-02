@@ -4,6 +4,8 @@ from selenium.webdriver.common.by import By
 from django.test import Client, TestCase
 from time import sleep
 
+TNPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+
 class TransfersFunctionalTestCase(BaseFunctionalTest):
     """
     Functional Tests for the Transfers page
@@ -28,7 +30,7 @@ class TransfersFunctionalTestCase(BaseFunctionalTest):
         Transfer social list Button
         """
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
-        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TNPUB)
         self.driver.find_element(by=By.ID, value="submit").click()
         sleep(1)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
@@ -41,7 +43,7 @@ class TransfersFunctionalTestCase(BaseFunctionalTest):
         Test Back Button
         """
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
-        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TNPUB)
         self.driver.find_element(by=By.ID, value="submit").click()
         sleep(1)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
@@ -70,7 +72,8 @@ class TransfersUnitTestCase(TestCase):
         """
         client = Client()
         response = client.get('/login-nsec/')
-        response = client.post('/login-nsec/', {'nsec': 'nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm'})
+        data = {'hasNsec': 'Y', 'npubValue': TNPUB}
+        response = client.post('/login-nsec/', data, content_type='application/json')
         response = client.get(self.url)
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, self.template)

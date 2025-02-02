@@ -1,7 +1,6 @@
 {% extends 'circulation_desk/base.html' %}
 
 {% load static %}
-{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
 
 {% block content %}
 
@@ -16,7 +15,7 @@
     <div style="height: 55vh; overflow-y: auto;">
         {% if session.nsec %}
             <div class="input-group input-group-sm">
-                <input class="form-control" type="text", name="follow_user", placeholder="Enter a Users Public Key or NIP05 Address" aria-describedby="upload"></input>
+                <input class="form-control" type="text", name="follow_user", placeholder="Enter a Users Public Key or NIP05 Address"></input>
                 <button class="btn btn-outline-secondary" type="submit" id="follow" name="follow" value="Follow"><i class="fa-solid fa-plus"></i></button>
             </div>
         {% endif %}
@@ -33,6 +32,10 @@
                             {% for key, values in friends.items %}
                             <ul class="list-group bg-secondary-container text-start">
                                 <li class="list-group-item container d-flex flex-row justify-content-md-between align-items-center">
+                                    <div class="col-md-2">
+                                        <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
+                                        <a class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
+                                    </div>
                                     <div class="col-md-1">
                                         {% if values.image %}
                                             <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
@@ -40,14 +43,14 @@
                                             <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
                                         {% endif %}
                                     </div>
-                                    <div class="col-md-7 ps-1 flex-grow-1">
+                                    <div class="col-md-8 ps-1 flex-grow-1">
                                         <p class="mb-0">{{ values.name }}</p>
                                     </div>
-                                    <div class="col-md-4">
-                                        <!-- <button id="removeButton" class="btn btn-sm btn-danger" name="remove", value="{{ values.npub }}"><i class="fa-solid fa-trash"></i></button> -->
-                                        <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
-                                        <a class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
-                                    </div>
+                                    {% if session.nsec %}
+                                        <div class="col-1">
+                                            <button id="removeButton" class="btn btn-sm btn-outline-danger" type="submit", name="remove", value="{{ values.npub }}"><i class="fa-solid fa-trash"></i></button>
+                                        </div>
+                                    {% endif %}
                                 </li>
                             </ul>
                             {% endfor %}
@@ -69,6 +72,9 @@
                             {% for key, values in muted.items %}
                             <ul class="list-group bg-secondary-container text-start">
                                 <li class="list-group-item container d-flex justify-content-between align-items-center">
+                                    <div class="col-md-1">
+                                        <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
+                                    </div>
                                     <div class="col-1">
                                         {% if values.image %}
                                             <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
@@ -76,11 +82,8 @@
                                             <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
                                         {% endif %}
                                     </div>
-                                    <div class="col-8">
-                                        <p>{{ values.name }}</p>
-                                    </div>
-                                    <div class="col-1">
-                                        <button id="copyButton" class="btn btn-sm btn-outline-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
+                                    <div class="col-md-9 ps-1 flex-grow-1">
+                                        <p class="mb-0">{{ values.name }}</p>
                                     </div>
                                 </li>
                             </ul>
@@ -98,7 +101,7 @@
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
         <a id="back" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
-            <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button id="refresh-simple" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="friends"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
         {% endif %}
     </div>
 
@@ -106,14 +109,5 @@
         <div class="spinner-border" role="status"></div>
     </div>
 </form>
-
-
-<input type="hidden" id="notification" value="{{ notification }}">
-<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
-<div id="copytoastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
-
-<script src="{% static 'js/add-toast.js' %}"> </script>
-<script src="{% static 'js/copy-toast.js' %}"> </script>
-
 
 {% endblock content %}

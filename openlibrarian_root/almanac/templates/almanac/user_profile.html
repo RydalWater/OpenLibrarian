@@ -1,7 +1,6 @@
 {% extends 'circulation_desk/base.html' %}
 
 {% load static %}
-{% block scripts %} <script src="{% static 'js/spinner.js' %}"></script> {% endblock %}
 
 {% block content %}
 
@@ -16,6 +15,13 @@
     <!-- User Profile Info -->
     {% if session.nsec %}
         <div style="height: 55vh; overflow-y: auto;">
+            <div class="input-group-sm text-start">
+                <label for="edit_nym" class="form-label book-text">Your NPUB</label>
+                <div class="input-group input-group-sm">
+                    <input class="form-control" type="text", name="my_npub", value="{{ session.npub }}" readonly></input>
+                    <button class="btn btn-outline-secondary" type="submit" id="copyButton" name="copy" value="{{ session.npub }}"><i class="fa-solid fa-copy"></i></button>
+                </div>
+            </div>
             <div class="input-group-sm text-start">
                 <label for="edit_nym" class="form-label book-text">Account Nym</label>
                 {% if session.nym %}
@@ -73,7 +79,10 @@
                     </div>
                     <label for="edit_nip05" class="form-label mt-1 book-text">NIP05</label>
                     {% if session.profile.nip05 %}
-                        <input class="form-control" type="text", name="edit_nip05", value="{{ session.profile.nip05 }}"></input>
+                        <div class="input-group input-group-sm">
+                            <input class="form-control" type="text", name="edit_nip05", value="{{ session.profile.nip05 }}"></input>
+                            <button class="btn btn-outline-secondary" type="submit" id="copyButton" name="copy" value="{{ session.profile.nip05 }}"><i class="fa-solid fa-copy"></i></button>
+                        </div>
                     {% else %}
                         <input class="form-control" type="text", name="edit_nip05", placeholder="Enter your NIP05"></input>
                     {% endif %}
@@ -102,7 +111,7 @@
     <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
         <a id="back" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
         {% if session.nsec %}
-            <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            <button id="refresh-simple" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="profile"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
             <button id="save" class="btn btn-sm btn-primary w-50" type="submit", name="save", value="Save"><i class="fa-solid fa-save"></i> Save</button>
         {% endif %}
     </div>
@@ -110,10 +119,5 @@
         <div class="spinner-border" role="status"></div>
     </div>
 </form>
-
-<input type="hidden" id="notification" value="{{ notification }}">
-<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>
-
-<script src="{% static 'js/add-toast.js' %}"></script>
 
 {% endblock content %}

@@ -1,9 +1,6 @@
 {% extends 'circulation_desk/base.html' %}
 
 {% load static %}
-{% block scripts %} 
-<script src="{% static 'js/spinner-data.js' %}"></script>
-{% endblock %}
 
 {% block content %}
 
@@ -210,49 +207,48 @@
     </div>
 </div>
 
-<input type="hidden" id="notification" value="{{ notification }}">
-<div id="toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3"></div>
-
-<script src="{% static 'js/add-toast.js' %}"></script>
-
 <script defer>
-        // Get the select element and the image element
+    // Get the select element and the image element and search type value
     const versionSelect = document.getElementById('version');
     const bookCoverImage = document.getElementById('book_cover');
+    const searchType = document.getElementById('search_type').value;
 
-    // Get the list of ISBN values
-    const isbnValues = Array.from(versionSelect.options).map((option) => option.value);
+    // Check versionSelect is not null
+    if (versionSelect != null && searchType != "isbn") {
+        // Get the list of ISBN values
+        const isbnValues = Array.from(versionSelect.options).map((option) => option.value);
 
-    // Precache the images
-    isbnValues.forEach((isbn) => {
-    const apiUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
-    fetch(apiUrl, { method: 'HEAD' });
-    });
-
-    // Add an event listener to the select element
-    versionSelect.addEventListener('change', (e) => {
-    // Get the selected ISBN value
-    const selectedIsbn = e.target.value;
-
-    // Construct the API URL
-    const apiUrl = `https://covers.openlibrary.org/b/isbn/${selectedIsbn}-M.jpg`;
-
-    // Make a HEAD request to the API
-    fetch(apiUrl, { method: 'HEAD' })
-        .then((response) => {
-        // Check if the response headers contain 'content-type'
-        if (response.headers.has('content-type')) {
-            // Update the image src with the API URL
-            bookCoverImage.src = apiUrl;
-        } else {
-            // Update the image src with the default image
-            bookCoverImage.src = "{% static 'images/book.jpg' %}";
-        }
-        })
-        .catch((error) => {
-        console.error(error);
+        // Precache the images
+        isbnValues.forEach((isbn) => {
+        const apiUrl = `https://covers.openlibrary.org/b/isbn/${isbn}-M.jpg`;
+        fetch(apiUrl, { method: 'HEAD' });
         });
-    });
+
+        // Add an event listener to the select element
+        versionSelect.addEventListener('change', (e) => {
+        // Get the selected ISBN value
+        const selectedIsbn = e.target.value;
+
+        // Construct the API URL
+        const apiUrl = `https://covers.openlibrary.org/b/isbn/${selectedIsbn}-M.jpg`;
+
+        // Make a HEAD request to the API
+        fetch(apiUrl, { method: 'HEAD' })
+            .then((response) => {
+            // Check if the response headers contain 'content-type'
+            if (response.headers.has('content-type')) {
+                // Update the image src with the API URL
+                bookCoverImage.src = apiUrl;
+            } else {
+                // Update the image src with the default image
+                bookCoverImage.src = "{% static 'images/book.jpg' %}";
+            }
+            })
+            .catch((error) => {
+            console.error(error);
+            });
+        });
+    }   
 </script>
 
 {% endblock content %}

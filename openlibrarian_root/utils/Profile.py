@@ -1,10 +1,17 @@
-from nostr_sdk import Client, Filter, Kind, Metadata, PublicKey, Keys, NostrSigner, RelayMetadata, EventBuilder
-from utils.Network import nostr_get, nostr_post, nostr_post_profile
+from nostr_sdk import Client, Filter, Kind, Metadata, PublicKey, RelayMetadata, EventBuilder
+from utils.Network import nostr_get
+from utils.Login import check_npub
 import os, ast
 
 
 async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     """Fetches the profile information from Nostr Default Relay."""
+    # Check if npub is valid
+    if npub in [None, ""]:
+        raise Exception("Missing npub")
+    if not check_npub(npub):
+        raise Exception("Invalid npub")
+
     # Check if relays is a dict
     drelays = None
     if relays:
@@ -105,7 +112,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     return nym_profile, nym_relays, added_relays
 
 
-async def edit_profile_info(nym_profile: dict, nym_relays: dict, nsec: str):
+async def edit_profile_info(nym_profile: dict):
     """Updates the profile information using Relay List."""
 
     # Create profile event
@@ -128,18 +135,16 @@ async def edit_profile_info(nym_profile: dict, nym_relays: dict, nsec: str):
         profile_meta = profile_meta.set_lud06(nym_profile["lud06"])
     if nym_profile["lud16"] != None:
         profile_meta = profile_meta.set_lud16(nym_profile["lud16"])
-        
-    # Instantiate client and set signer
-    signer = NostrSigner.keys(Keys.parse(nsec))
-    client = Client(signer)
 
-    # Post the event
-    await nostr_post_profile(client=client, profile_meta=profile_meta, relays_dict=nym_relays)
+    build = EventBuilder.metadata(profile_meta)
+
+    return build
 
 
-async def edit_relay_list(session_relays: dict, mod_relays: dict, nsec: str):
+async def edit_relay_list(session_relays: dict, mod_relays: dict):
     """Updates the Relay List information."""
     update = False
+    builder = None
 
     # Handle None
     if session_relays == None:
@@ -168,16 +173,8 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict, nsec: str):
                 new_relays[relay] = None
             else:
                 new_relays[relay] = RelayMetadata.READ if mod_relays[relay] == "READ" else RelayMetadata.WRITE
-        
-        # Instantiate client and set signer
-        signer = NostrSigner.keys(Keys.parse(nsec))
-        client = Client(signer)
 
         # Builder
-        eventbuilder = EventBuilder.relay_list(new_relays)
+        builder = EventBuilder.relay_list(new_relays)
 
-        # Post event
-        await nostr_post(client=client, eventbuilder=eventbuilder, relays_dict=new_relays)
-
-
-    return update
+    return update, builder

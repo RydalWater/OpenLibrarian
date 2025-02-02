@@ -1,9 +1,11 @@
 from django.shortcuts import render, redirect
+from django.http import JsonResponse
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
-from utils.Library import fetch_libraries, Library
+from utils.Library import prepare_libraries, Library
 from utils.Progress import fetch_progress, Progress
-from utils.Notifications import send_notification
-import datetime
+from utils.Notifications import build_notification
+from utils.Network import nostr_prepare
+import datetime, json
 
 async def library(request):
     """Returns Simple view for Library."""
@@ -23,9 +25,25 @@ async def library_shelves(request):
     # Otherwise return the libary shelves
     else:
         session = await async_get_session_info(request)
-        notification = None
-        if "libraries" not in session.keys() or session["libraries"] is None or (request.POST and "refresh" in request.POST):
-            libraries = await fetch_libraries(npub=session["npub"], nsec=session["nsec"], relays=session["relays"])
+        noted = None
+
+        # Get data for post request when refreshing
+        if request.method == 'POST':
+            try:
+                data = json.loads(request.body)
+            except:
+                data = {}
+
+        if "libraries" not in session.keys() or session["libraries"] is None or (request.method == 'POST' and data.get('refresh', None) is not None):
+            if request.method == 'POST' and data.get('refresh', None) is not None:
+                data = json.loads(request.body)
+                npub = data.get('npubValue', '')
+                decryptedEvents = data.get('decryptedEvents', '')
+            else:
+                npub = session["npub"]
+                decryptedEvents = ''
+
+            libraries = await prepare_libraries(libEvents=decryptedEvents, npub=npub)
             # Get list of ISBNs and then create progress object
             isbns = []
             for library in libraries:
@@ -33,10 +51,8 @@ async def library_shelves(request):
                     for book in library["b"]:
                         if "Hidden" not in book["i"]:
                             isbns.append(book["i"])
-                            
-            progress = await fetch_progress(npub=session["npub"], isbns=isbns, relays=session["relays"])
-            
-            await async_set_session_info(request, libraries=libraries, progress=progress)
+            progress = await fetch_progress(npub=npub, isbns=isbns, relays=session['relays'])
+            await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress)
         else:
             libraries = session["libraries"]
             progress = session["progress"]
@@ -45,13 +61,13 @@ async def library_shelves(request):
         sorted_keys = ["CR", "TRS", "TRW", "HR"]
         libraries.sort(key=lambda x: sorted_keys.index(x["s"]), reverse=False)
 
-        if request.method == 'GET' or (request.method == 'POST' and "refresh" in request.POST):
+        if request.method == 'GET' or (request.method == 'POST' and data.get('refresh', None) is not None):
             # TODO: Add additional book information (page, available on OL, progress, start/end date, rating etc.) 
             context = {
                 "libraries": libraries,
                 "session": session,
                 "progress": progress,
-                "notification": notification
+                "noted": noted
             }
             return render(request, 'library/library_shelves.html', context)
         
@@ -80,24 +96,25 @@ async def library_shelves(request):
 
             if stDt not in (None, "", "NA") and enDt not in (None, "", "NA"):
                 if datetime.datetime.strptime(enDt, "%Y-%m-%d") < datetime.datetime.strptime(stDt, "%Y-%m-%d"):
-                    notification = "End date is before start date."
+                    noted = "false:End date is before start date."
             if enDt not in (None, "", "NA") and stDt in (None, "", "NA"):
-                notification = "Start date is required when adding end date."
+                noted = "false:Start date is required when adding end date."
             if max not in (None, "") and cur not in (None, ""):
                 if int(max) < int(cur):
-                    notification = "Current progress is greater than max."
+                    noted = "false:Current progress is greater than max."
             
-            if notification is None:
+            event_list = []
+            if noted is None:
                 # Remove book from library
                 if request.POST.get('remove_book'):
                     for library in libraries:
                         if library["i"] == shelf_id:
                             for book in library["b"]:
                                 if book["i"] == book_id:
-                                    lib = Library(dict=library, npub=session["npub"], nsec=session["nsec"])
+                                    lib = Library(dict=library, npub=session["npub"])
                                     await lib.remove_book(isbn=book_id)
-                                    lib.build_event(npub=session["npub"], nsec=session["nsec"])
-                                    await lib.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                                    lib.build_event(npub=session["npub"])
+                                    event_list.append(lib.bevent)
                                     await async_set_session_info(request, libraries=libraries)
                                     break
 
@@ -110,9 +127,9 @@ async def library_shelves(request):
                                     # Handle changes to hidden
                                     if  book["h"] != hidden:
                                         book["h"] = hidden
-                                        lib = Library(dict=library, npub=session["npub"], nsec=session["nsec"])
-                                        lib.build_event(npub=session["npub"], nsec=session["nsec"])
-                                        await lib.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                                        lib = Library(dict=library, npub=session["npub"])
+                                        lib.build_event(npub=session["npub"])
+                                        event_list.append(lib.bevent)
                                         await async_set_session_info(request, libraries=libraries)
                                     
                                     # Currently reading
@@ -145,7 +162,7 @@ async def library_shelves(request):
                                         # Check if any changes and publish
                                         if progress_obj.detailed() != progress_orig:
                                             progress_obj.build_event()
-                                            await progress_obj.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                                            event_list.append(progress_obj.bevent)
 
                                         # Update Session
                                         progress[book_id] = progress_obj.detailed()
@@ -161,7 +178,7 @@ async def library_shelves(request):
                             for book in library["b"]:
                                 if book["i"] == book_id:
                                     book_moving = book
-                                    outlib = Library(dict=library, npub=session["npub"], nsec=session["nsec"])
+                                    outlib = Library(dict=library, npub=session["npub"])
                                     await outlib.remove_book(isbn=book_id)
                                     libraries[libraries.index(library)] = outlib.__dict__()
                                     from_shelf = outlib.section
@@ -169,7 +186,7 @@ async def library_shelves(request):
 
                     for library in libraries:
                         if library["s"] == status or (library["s"] == "HR" and status != "" and float(status)>=0):
-                            inlib = Library(dict=library, npub=session["npub"], nsec=session["nsec"])
+                            inlib = Library(dict=library, npub=session["npub"])
                             await inlib.add_book(dict=book_moving, hidden=hidden)
                             libraries[libraries.index(library)] = inlib.__dict__()
 
@@ -186,7 +203,7 @@ async def library_shelves(request):
                                     progress_obj.start_book()
                                 progress_obj.end_book()
                                 progress_obj.build_event()
-                                await progress_obj.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                                event_list.append(progress_obj.bevent)
                                 progress[book_id] = progress_obj.detailed()
                                 await async_set_session_info(request, progress=progress)
 
@@ -194,7 +211,8 @@ async def library_shelves(request):
                                 if from_shelf == "CR":
                                     try:
                                         float(status)
-                                        await send_notification(book=book_moving, nsec=session["nsec"], nym_relays=session["relays"], note_type="en", score=status)
+                                        notify = await build_notification(book=book_moving, nym_relays=session["relays"], note_type="en", score=status)
+                                        event_list.append(notify)
                                     except:
                                         pass
                                 # TODO: Add a review
@@ -211,30 +229,38 @@ async def library_shelves(request):
                                     progress_obj.start_book()
                                 
                                 progress_obj.build_event()
-                                await progress_obj.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                                event_list.append(progress_obj.bevent)
                                 progress[book_id] = progress_obj.detailed()
                                 await async_set_session_info(request, progress=progress)                           
 
                                 # Send notification
-                                await send_notification(book=book_moving, nsec=session["nsec"], nym_relays=session["relays"], note_type="st")
+                                notify = await build_notification(book=book_moving, nym_relays=session["relays"], note_type="st")
+                                event_list.append(notify)
                             break
                     
                     if inlib and outlib:
                         # Update session data
                         await async_set_session_info(request, libraries=libraries)
                         # TODO: Publish Events in a more efficient way
-                        inlib.build_event(npub=session["npub"], nsec=session["nsec"])
-                        await inlib.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
-                        outlib.build_event(npub=session["npub"], nsec=session["nsec"])
-                        await outlib.publish_event(nsec=session["nsec"], nym_relays=session["relays"])
+                        inlib.build_event(npub=session["npub"])
+                        event_list.append(inlib.bevent)
+                        outlib.build_event(npub=session["npub"])
+                        event_list.append(outlib.bevent)
                     else:
                         # TODO: Add error message
                         print("Something went wrong")
+            
+            # Prepare events for passing to signer
+            if event_list != []:
+                events = nostr_prepare(event_list)
+            else:
+                events = None
 
             context = {
                 "libraries": libraries,
                 "session": session,
                 "progress": progress,
-                "notification": notification
+                "noted": noted,
+                "events": events
             }
             return render(request, 'library/library_shelves.html', context)

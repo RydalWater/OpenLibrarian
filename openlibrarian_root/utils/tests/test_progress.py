@@ -721,71 +721,6 @@ class ProgressUnitTests(TestCase):
         self.assertEqual(progress.default_pages, "423")
         self.assertEqual(progress.max, "423")
 
-    async def test_progress_publish(self):
-        """
-        Test publishing progress
-        """ 
-        progress = Progress()
-        progress.isbn = ISBN
-        progress.identifier = hashlib.sha256(ISBN.encode()).hexdigest()
-        progress.external_id = "isbn"
-        progress.unit = "pct"
-        progress.started = "2021-06-01"
-        progress.ended = "2021-06-02"
-        progress.progress = "50"
-        progress.current = "50"
-        progress.max = "100"
-        progress.bevent = "Test"
-
-        nsec = KEYS.secret_key().to_bech32()
-        nsec_wrong = "nsec123456"
-        with self.assertRaises(Exception) as e:
-            await progress.publish_event(nsec=None, nym_relays={"wss://relay.damus.io": None})
-        self.assertEqual(str(e.exception), "No nsec provided or invalid nsec.")
-        with self.assertRaises(Exception) as e:
-            await progress.publish_event(nsec=nsec_wrong, nym_relays={"wss://relay.damus.io": None})
-        self.assertEqual(str(e.exception), "No nsec provided or invalid nsec.")
-        with self.assertRaises(Exception) as e:
-            await progress.publish_event(nsec="", nym_relays={"wss://relay.damus.io": None})
-        self.assertEqual(str(e.exception), "No nsec provided or invalid nsec.")
-
-        progress = Progress()
-        progress.isbn = ISBN
-        progress.identifier = hashlib.sha256(ISBN.encode()).hexdigest()
-        progress.external_id = "isbn"
-        progress.unit = "pct"
-        progress.started = "2021-06-01"
-        progress.ended = "2021-06-02"
-        progress.progress = "50"
-        progress.current = "50"
-        progress.max = "100"
-        progress.bevent = None
-        
-        with self.assertRaises(Exception) as e:
-            await progress.publish_event(nsec=nsec, nym_relays={"wss://relay.damus.io": None})
-        self.assertEqual(str(e.exception), "Missing required information.")
-        progress.bevent = "Test"
-        with self.assertRaises(Exception) as e:
-            await progress.publish_event(nsec=nsec, nym_relays=None)
-        self.assertEqual(str(e.exception), "Missing required information.")
-        with self.assertRaises(Exception) as e:
-            await progress.publish_event(nsec=nsec, nym_relays={"wss://relay.damus.io": None})
-        self.assertEqual(str(e.exception), "Not a valid builder object.")
-        progress.build_event()
-
-        # Publish and capture output
-        capturedOutput = io.StringIO()
-        sys.stdout = capturedOutput
-        result = await progress.publish_event(nsec=nsec, nym_relays={"wss://relay.damus.io": None})
-        sys.stdout = sys.__stdout__
-        output = capturedOutput.getvalue().strip()
-        self.assertEqual(result, "Published event.")
-        # Extract event string and look for content
-        event_str = output.split("\n")[2]
-        self.assertIn('"tags":[["d","648370d3279993b70d7f75625d765e08ddcbb4db5262ebd2e9db0d666c0b8412"],["k","isbn"],["unit","pct"],["current","50"],["max","100"],["started","2021-06-01"],["ended","2021-06-02"]]', event_str)
-        self.assertIn('"content":""', event_str)
-        self.assertIn('"kind":30250', event_str)
-
     async def test_progress_fetch(self):
         """
         Test fetching progress
@@ -794,7 +729,7 @@ class ProgressUnitTests(TestCase):
         relays = {"wss://relay.damus.io": None}
         isbns = [ISBN, ISBN2]
         result = await fetch_progress(isbns=[], npub=npub, relays=relays)
-        self.assertEqual(result, [])
+        self.assertEqual(result, {})
         with self.assertRaises(Exception) as e:
             await fetch_progress(isbns=None, npub=npub, relays=relays)
         self.assertEqual(str(e.exception), "No ISBNs provided.")

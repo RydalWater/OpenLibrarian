@@ -7,7 +7,8 @@
         <div class="chapter-header">
             <p>Sign-up</p>
         </div>
-        {% if not words %}
+
+        <div id="info-box" style="display: block;">
             <p class="book-text">
                 <span class="dropcap">I</span>t is extremely important to save your seed words somewhere secure. 
                 These are the same as a password and should not be given out to anyone. 
@@ -21,9 +22,9 @@
             <p class="book-text">
                 Your <b>NPUB is your <i class="text-success">Public Key</i></b>, it is generated from your NSEC and can be used to share your profile with other users.  
             </p>
-        {% endif %}
+        </div>
     </div>
-    {% if words %}
+    <div id="key-box" style="display: none;">
         <div class="container mt-2">
             <div class="input-group input-group-sm mb-3">
                 <span class="input-group-text" id="inputGroup-sizing-sm">NPUB</span>
@@ -40,30 +41,28 @@
         </div>
         <div class="container">
             <div class="row">
-                {% for word in words %}
+                {% for i in num_words %}
                     {% if forloop.counter0|divisibleby:"3" %}
                         </div><div class="row">
                     {% endif %}
                     <div class="col-4">
                         <div class="input-group input-group-sm mb-3">
-                            <span class="input-group-text" id="inputGroup-sizing-sm">{{ forloop.counter }}</span>
-                            <input id="tword{{ forloop.counter }}" type="text" class="form-control" aria-describedby="inputGroup-sizing-sm" value="{{ word }}" readonly>
+                            <span class="input-group-text" id="inputGroup-sizing-sm">{{ i }}</span>
+                            <input id="tword{{ i }}" type="text" class="form-control" aria-describedby="inputGroup-sizing-sm" value="{{ word }}" readonly>
                         </div>
                     </div>
                 {% endfor %}
             </div>
         </div>
-    {% endif %}
+        <div class="container mb-2">
+            <p class="book-text">Please make sure you've backed up your Seed Words before moving to the next step. There will be a test!</p>
+            <button id="save-seed" type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
+        </div>
+    </div>
     <div class="container">
         <a id="back" href="{% url 'circulation_desk:index' %}" class="btn btn-sm btn-secondary"><i class="fa-solid fa-arrow-left"></i> Back</a>
         <button id="seed-gen" class="btn btn-sm btn-primary" name="generate_seed" value="Generate"><i class="fa-solid fa-shuffle"></i> Generate Keys</button>
     </div>
-    {% if words %}
-        <div class="container mt-2">
-            <p class="book-text">Please make sure you've backed up your Seed Words before moving to the next step. There will be a test!</p>
-            <button id="save-seed" type="submit" class="btn btn-sm btn-primary" name="confirm_seed" value="Confirm"><i class="fa-solid fa-check"></i> I have saved my seed</button>
-        </div>
-    {% endif %}
 </form>
 
 {% endblock content %}

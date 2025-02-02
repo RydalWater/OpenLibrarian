@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from utils.Session import async_get_session_info, async_logged_in
-from utils.Login import check_npub, check_npub_of_nsec
+from utils.Login import check_npub
 from utils.Connections import clone_follow
+from utils.Network import nostr_prepare
 from circulation_desk.forms import NpubForm
 
 # Create your views here.
@@ -23,51 +24,36 @@ async def social_clone(request):
         return redirect('circulation_desk:index')
     else:
         session = await async_get_session_info(request)
+        noted = None
+        events = None
         if not session["nsec"]:
             return render(request, 'transfers/social_clone.html', session)
 
     if request.method == 'GET':
         form = NpubForm()
-        context = {
-            'form': form,
-            'session': session
-        }
-        return render(request, 'transfers/social_clone.html', context)
 
-    if request.method == 'POST':
+    elif request.method == 'POST':
         form = NpubForm(request.POST)
-        if not form.is_valid():
-            context = {
-                'form': form,
-                'session': session
-            }
-            return render(request, 'transfers/social_clone.html', context)
+        if form.is_valid():
+            copy_npub = request.POST.get('npub')
+            valid_npub = check_npub(copy_npub)
 
-        npub = request.POST.get('npub')
-
-        valid_npub = check_npub(npub)
-        npub_of_nsec = check_npub_of_nsec(npub=npub, nsec=session["nsec"])
-
-        if valid_npub and not npub_of_nsec:
-            await clone_follow(relays=session["relays"], npub=npub, nsec=session["nsec"])
-            context = {
-                'form': form,
-                'session': session,
-                'success_message': "Imported Friends and Foes!"
-            }
-            return render(request, 'transfers/social_clone.html', context)
-        else:
-            if not valid_npub:
-                err_txt = "Invalid NPUB."
+            if valid_npub and copy_npub != session["npub"]:
+                event_list = await clone_follow(relays=session["relays"], npub=copy_npub)
+                events = nostr_prepare(event_list)
             else:
-                err_txt = "Please provide an NPUB which is different from the one associated with your NSEC."
-            context = {
-                'form': form,
-                'session': session,
-                'error_message': err_txt
-            }
-            return render(request, 'transfers/profile_clone.html', context)
-        
+                if not valid_npub:
+                    noted = "false:Invalid NPUB."
+                else:
+                    noted = "false:Please provide an NPUB which is different from the one already in use."
+    
+    context = {
+        'form': form,
+        'session': session,
+        'events': events,
+        'noted': noted
+    }
+    return render(request, 'transfers/social_clone.html', context)
 
 # Import profile
 async def profile_clone(request):
@@ -97,12 +83,11 @@ async def profile_clone(request):
             }
             return render(request, 'transfers/profile_clone.html', context)
 
-        npub = request.POST.get('npub')
+        copy_npub = request.POST.get('npub')
 
-        valid_npub = check_npub(npub)
-        npub_of_nsec = check_npub_of_nsec(npub=npub, nsec=session["nsec"])
+        valid_npub = check_npub(copy_npub)
 
-        if valid_npub and not npub_of_nsec:
+        if valid_npub and copy_npub != session["npub"]:
             # TODO: Import profile function
             # TODO: Update session data with profile
             print("Importing Profile...")
