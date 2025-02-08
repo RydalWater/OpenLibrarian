@@ -12600,4 +12600,9 @@ textarea.form-control-lg {
   padding: 0;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+
+.star {
+  font-size: 1.5rem;
+  color: #ffd700; /* Gold color for stars */
 }/*# sourceMappingURL=main.css.map */

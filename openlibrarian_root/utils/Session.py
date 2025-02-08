@@ -14,7 +14,8 @@ def get_session_info(request: object) -> dict:
         'def_relays': request.session.get('def_relays', None),
         'libraries': request.session.get('libraries', None),
         'interests': request.session.get('interests', None),
-        'progress' : request.session.get('progress', None)
+        'progress' : request.session.get('progress', None),
+        'reviews' : request.session.get('reviews', None)
     }
 
 def set_session_info(request: object, **kwargs):

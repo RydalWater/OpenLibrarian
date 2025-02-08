@@ -101,10 +101,49 @@
                                         {% else %}
                                             <img src="{% static 'images/book.jpg' %}" class="img-thubmail rounded" alt="cover" style="max-width: 200px; max-height: auto">
                                         {% endif %}
-        
+                                        
+                                        <div class=>
+
+                                        </div>
                                         <p class="mt-2 container text-start">
                                             <b>Author(s):</b> {{ book.a }} <br>
                                             <b>ISBN:</b> {{ book.i }} <br>
+                                            <b>My Review:</b>
+                                            {% if library.s == "HR" %}
+                                                {% for isbn, progress_obj in session.reviews.items %}
+                                                    {% if isbn == book.i %}
+                                                        {% if not progress_obj.rating and progress_obj.rating != 0.0 %}
+                                                            Rate this book in the reviews section.
+                                                        {% else %}
+                                                            <span style="display: inline-block;">
+                                                                {% if progress_obj.rating >= 5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                                                {% elif progress_obj.rating >= 4.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                                                                {% elif progress_obj.rating >= 4 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 3.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 3 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 2.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 2 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 1.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 1 %}
+                                                                    <i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif progress_obj.rating >= 0.5 %}
+                                                                    <i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% else %}
+                                                                    <i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% endif %}
+                                                            </span>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                {% endfor %}
+                                            {% endif %}
                                         </p>
                                     </div>
                                 </div>
@@ -233,42 +272,28 @@
                                                 </form>
                                             </div>
                                             <div class="tab-pane fade" id="move-form-{{ forloop.counter }}{{ library.i }}" role="tabpanel" aria-labelledby="move-form-tab">
+                                                {% if library.s != "CR" %}
                                                 <form method="post" class="d-inline-flex gap-1">
                                                     {% csrf_token %}
                                                     <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
                                                     <div class="form-group mt-2">
-                                                        <select name="status" id="status" class="form-select">
-                                                            {% if library.s == "CR" %}
-                                                                <option value="">--- Rate this book ---</option>
-                                                            {% else %}
-                                                                <option value="">--- Select a shelf ---</option>
-                                                            {% endif %}
-                                                            {% if library.s == "HR" %}
-                                                                <option value="CR">Reading</option>
-                                                                <option value="TRW">To Read (want)</option>
-                                                                <option value="TRS">To Read (on the shelf)</option>
-                                                            {% elif library.s == "CR" %}
-                                                                <option value="0">0 - I want my time back!</option>
-                                                                <option value="0.5">0.5</option>
-                                                                <option value="1">1 - Meh!</option>
-                                                                <option value="1.5">1.5</option>
-                                                                <option value="2">2 - OK</option>
-                                                                <option value="2.5">2.5</option>
-                                                                <option value="3">3 - Good</option>
-                                                                <option value="3.5">3.5</option>
-                                                                <option value="4">4 - May read this again</option>
-                                                                <option value="4.5">4.5</option>
-                                                                <option value="5">5 - Can't wait to read again!</option>
-                                                            {% elif library.s == "TRW" %}
-                                                                <option value="HR">Have read</option>
-                                                                <option value="CR">Reading</option>
-                                                                <option value="TRS">To Read (on the shelf)</option>
-                                                            {% elif library.s == "TRS" %}
-                                                                <option value="HR">Have read</option>
-                                                                <option value="CR">Reading</option>
-                                                                <option value="TRW">To Read (want)</option>
-                                                            {% endif %}
-                                                        </select>
+                                                            <select name="status" id="status" class="form-select">
+                                                                    <option value="">--- Select a shelf ---</option>
+                                                                {% if library.s == "HR" %}
+                                                                    <option value="CR">Reading</option>
+                                                                    <option value="TRW">To Read (want)</option>
+                                                                    <option value="TRS">To Read (on the shelf)</option>
+                                                                    
+                                                                {% elif library.s == "TRW" %}
+                                                                    <option value="HR">Have read</option>
+                                                                    <option value="CR">Reading</option>
+                                                                    <option value="TRS">To Read (on the shelf)</option>
+                                                                {% elif library.s == "TRS" %}
+                                                                    <option value="HR">Have read</option>
+                                                                    <option value="CR">Reading</option>
+                                                                    <option value="TRW">To Read (want)</option>
+                                                                {% endif %}
+                                                            </select>
                                                     </div>
                                                     <button type="submit" name="moved" value="true" class="btn btn-sm btn-primary mt-2">
                                                         {% if library.s == "CR" %}
@@ -278,6 +303,37 @@
                                                         {% endif %}
                                                     </button>
                                                 </form>
+                                                {% else %}
+                                                <form method="post">
+                                                    {% csrf_token %}
+                                                    <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
+                                                    <div class="input-group mt-2">
+                                                        <span class="input-group-text" id="rating-label">Review</span>
+                                                        <span class="form-control" id="rating-description{{ forloop.counter }}{{ library.i }}"  aria-describedby="rating-label">Use slider to add review</span>
+                                                    </div>
+                                                    <div class="d-inline-flex gap-1">
+                                                        <div>
+                                                            <div id="star-container{{ forloop.counter }}{{ library.i }}" class="mt-2">
+                                                            </div>
+                                                            <!-- Slider -->
+                                                            <input 
+                                                            type="range" 
+                                                            class="form-range" 
+                                                            id="rating-slider{{ forloop.counter }}{{ library.i }}"
+                                                            name="rating" 
+                                                            min="0" 
+                                                            max="10" 
+                                                            step="1" 
+                                                            value="0"
+                                                            style="width: 75%;"
+                                                            oninput="updateStars(this.value, '{{ forloop.counter }}', '{{ library.i }}')">
+                                                        </div>
+                                                        <button type="submit" name="finished" value="true" id="finished{{ forloop.counter }}{{ library.i }}" class="btn btn-sm btn-primary mt-2" disabled>
+                                                            Finished
+                                                        </button>
+                                                    </div>
+                                                </form>
+                                                {% endif %}
                                             </div>
                                         </div>
                                     </div>
@@ -341,6 +397,57 @@
             }
         });
     });
+
+    function updateStars(value, counter, library) {
+        const starContainerId = `star-container${counter}${library}`;
+        const ratingDescriptionId = `rating-description${counter}${library}`;
+        const ratingSliderId = `rating-slider${counter}${library}`;
+        const finishedButtonId = `finished${counter}${library}`;
+    
+        const starContainer = document.getElementById(starContainerId);
+        const ratingDescription = document.getElementById(ratingDescriptionId);
+        const ratingSlider = document.getElementById(ratingSliderId);
+        const finishedButton = document.getElementById(finishedButtonId);
+    
+        // Convert the slider value to the corresponding rating value (0, 0.5, 1, ..., 5)
+        const rating = value / 2;
+
+        // Update the description based on the rating
+        const ratingDescriptions = {
+            0: "I want my time back!",
+            0.5: "This book was a big miss.",
+            1: "Not my cup of tea.",
+            1.5: "Meh, barely kept my attention.",
+            2: "It was fine, but nothing special.",
+            2.5: "Kind of enjoyable, but not memorable.",
+            3: "Enjoyable read but probably won't read it again.",
+            3.5: "Happily recommend this to others.",
+            4: "I may read this again.",
+            4.5: "I really enjoyed this.",
+            5: "I can't wait to read it again!"
+        };
+        ratingDescription.textContent = ratingDescriptions[rating] || "No description available";
+    
+        // Clear the existing stars
+        starContainer.innerHTML = '';
+    
+        // Add filled, half-filled, and empty stars based on the rating
+        for (let i = 1; i <= 5; i++) {
+            if (i <= Math.floor(rating)) {
+                // Full star
+                starContainer.innerHTML += '<i class="fas fa-star star"></i>';
+            } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                // Half star
+                starContainer.innerHTML += '<i class="fas fa-star-half-alt star"></i>';
+            } else {
+                // Empty star
+                starContainer.innerHTML += '<i class="far fa-star star"></i>';
+            }
+        }
+
+        // Activate finished button if rating is 5
+        finishedButton.disabled = false;
+    }
 </script>
 
 {% endblock content %}

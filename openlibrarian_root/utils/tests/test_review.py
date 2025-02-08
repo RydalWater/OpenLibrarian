@@ -210,7 +210,7 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.tags, ["tag1", "tag2"])
         self.assertEqual(review.bevent, None)
     
-    def test_review_parse_event_misisng_fields(self):
+    def test_review_parse_event_missing_fields(self):
         """
         Test Review (parse_event_missing_fields)
         """

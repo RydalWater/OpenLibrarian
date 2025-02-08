@@ -10,6 +10,7 @@ from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Progress import fetch_progress
+from utils.Review import fetch_reviews
 from utils.Network import nostr_push, nostr_prepare
 from circulation_desk.forms import SeedForm, NpubForm, NsecForm
 import asyncio, os, ast, json
@@ -74,10 +75,10 @@ async def login_npub_view(request):
                     for book in library["b"]:
                         if "Hidden" not in book["i"]:
                             isbns.append(book["i"])
-            progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
-
+            tasks_prog_review = [fetch_progress(npub=npub, isbns=isbns, relays=relays), fetch_reviews(npub=npub, relays=relays, isbns=isbns)]
+            progress, reviews = await asyncio.gather(*tasks_prog_review)
  
-            await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress)
+            await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress, reviews=reviews)
             return redirect('circulation_desk:index')
         else:
             context = {
@@ -121,8 +122,9 @@ async def login_rw_view(request, form_class, template_name, redirect_url_on_erro
                     for book in library["b"]:
                         if "Hidden" not in book["i"]:
                             isbns.append(book["i"])
-            progress = await fetch_progress(npub=npub, isbns=isbns, relays=session['relays'])
-            await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress)
+            tasks_prog_review = [fetch_progress(npub=npub, isbns=isbns, relays=session['relays']), fetch_reviews(npub=npub, relays=session['relays'], isbns=isbns)]
+            progress, reviews = await asyncio.gather(*tasks_prog_review)
+            await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress, reviews=reviews)
             return JsonResponse({'redirect': '/'})
         else:
             return JsonResponse({'redirect': redirect_url_on_error, 'error_message': "Invalid Credentials"})
@@ -212,10 +214,11 @@ async def create_account_empty(request):
     # Get default interests
     interests = await fetch_interests(npub, mod_relays)
     # Set Default Progress
-    progress = []
+    progress = {}
+    reviews = {}
 
     # Set Session Data
-    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=npub, nsec=nsec, progress=progress)
+    await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=npub, nsec=nsec, progress=progress, reviews=reviews)
 
     return JsonResponse({'raw_events': events})
 

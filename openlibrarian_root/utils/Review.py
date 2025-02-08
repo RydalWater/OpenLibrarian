@@ -158,7 +158,6 @@ class Review:
             "tags": self.tags,
             "rating_normal": self.rating_normal,
             "rating_raw": self.rating_raw,
-            "rating": self.rating,
         }
 
     def detailed(self):
