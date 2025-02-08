@@ -40,7 +40,7 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.rating_normal, "NA")
         self.assertEqual(review.rating_raw, "NA")
         self.assertEqual(review.rating, None)
-        self.assertEqual(review.content, "NA")
+        self.assertEqual(review.content, "")
         self.assertEqual(review.tags, [])
         self.assertEqual(review.bevent, None)
 
@@ -74,7 +74,7 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.rating_normal, "NA")
         self.assertEqual(review.rating_raw, "NA")
         self.assertEqual(review.rating, None)
-        self.assertEqual(review.content, "NA")
+        self.assertEqual(review.content, "")
         self.assertEqual(review.tags, [])
         self.assertEqual(review.bevent, None)
 
@@ -87,7 +87,7 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.rating_normal, "NA")
         self.assertEqual(review.rating_raw, "NA")
         self.assertEqual(review.rating, None)
-        self.assertEqual(review.content, "NA")
+        self.assertEqual(review.content, "")
         self.assertEqual(review.tags, [])
         self.assertEqual(review.bevent, None)
     
@@ -132,9 +132,9 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(tags[3].as_vec()[0], "raw")
         self.assertEqual(tags[3].as_vec()[1], "5/5")
         self.assertEqual(tags[4].as_vec()[0], "t")
-        self.assertEqual(tags[4].as_vec()[1], "#tag1")
+        self.assertEqual(tags[4].as_vec()[1], "tag1")
         self.assertEqual(tags[5].as_vec()[0], "t")
-        self.assertEqual(tags[5].as_vec()[1], "#tag2")
+        self.assertEqual(tags[5].as_vec()[1], "tag2")
 
         # Repeat with no content
         review = Review()
@@ -169,8 +169,8 @@ class ReviewUnitTests(TestCase):
             Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
             Tag.custom(TagKind.UNKNOWN("rating"), ["1.0"]),
             Tag.custom(TagKind.UNKNOWN("raw"),["5/5"]),
-            Tag.hashtag(f"#tag1"),
-            Tag.hashtag(f"#tag2")
+            Tag.hashtag(f"tag1"),
+            Tag.hashtag(f"tag2")
         ]
         content="This is a review"
         event1 = EventBuilder(kind=kind1, content=content, tags=tags).to_event(keys=KEYS)
@@ -206,7 +206,7 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.rating_normal, "1.0")
         self.assertEqual(review.rating_raw, "5/5")
         self.assertEqual(review.rating, 5)
-        self.assertEqual(review.content, "NA")
+        self.assertEqual(review.content, "")
         self.assertEqual(review.tags, ["tag1", "tag2"])
         self.assertEqual(review.bevent, None)
     
@@ -262,7 +262,7 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.detailed()["rating_normal"], "NA")
         self.assertEqual(review.detailed()["rating_raw"], "NA")
         self.assertEqual(review.detailed()["rating"], None)
-        self.assertEqual(review.detailed()["content"], "NA")
+        self.assertEqual(review.detailed()["content"], "")
         self.assertEqual(review.detailed()["tags"], [])
 
     async def test_review_fetch_empty(self):
@@ -307,8 +307,8 @@ class ReviewUnitTests(TestCase):
             Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
             Tag.custom(TagKind.UNKNOWN("rating"), ["1.0"]),
             Tag.custom(TagKind.UNKNOWN("raw"),["5.0/5"]),
-            Tag.hashtag(f"#tag1"),
-            Tag.hashtag(f"#tag2")
+            Tag.hashtag(f"tag1"),
+            Tag.hashtag(f"tag2")
         ]
         
         event1 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
@@ -318,8 +318,8 @@ class ReviewUnitTests(TestCase):
             Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
             Tag.custom(TagKind.UNKNOWN("rating"), ["0.5"]),
             Tag.custom(TagKind.UNKNOWN("raw"),["2.5/5"]),
-            Tag.hashtag(f"#tag4"),
-            Tag.hashtag(f"#tag5")
+            Tag.hashtag(f"tag4"),
+            Tag.hashtag(f"tag5")
         ]
 
         event2 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)

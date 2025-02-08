@@ -3,7 +3,7 @@ Open Librarian is a website for tracking and sharing a love of books. It utilize
 
 ## Goals
 - To broaden the specific application base of the Nostr network and allow/encourage specialisation to take place 
-- Make a fun, easy to use book tracking app which includes:
+- Make a fun, easy to use book tracking app which includes (or will):
   - Library shelves
   - Personal reading challenges
   - Book reviews
@@ -45,62 +45,36 @@ Note that any objects still to be implemented are to be considered a WIP and may
 List IDs include: CR, HR, TRW, TRS
 
 
-### Book Review - Individual (to be implemented)
+### Book Review - Individual Books (Implemented)
 
 ```json
 {
-  ‘kind’ : 3xxxx,
+  ‘kind’ : 31025,
   ‘tags’ : [
-    ‘d’      : <‘isbn:’ + isbn of book OR, ‘h:’ + NIP04 encrypted isbn of book>
+    ‘d’      : <SHA-256 of ISBN value>
     ‘k’      : <NIP 73 external content k tag for books i.e., ‘isbn’>
     ‘rating’ : <normalised value between 0 and 1, optional mark>
     ‘raw’    : <optional raw rating value X/Y (e.g 5/10)>
+    ...
+    't'      : <optional hashtags for more additional categorization>
   ],
-  ‘content’ : ‘’
+  ‘content’ : <optional additonal text for personal notes or more details>
 }
 ```
 
-### Book Review - Set (to be implemented)
+### Book Progress - Individual Books (Implemented)
 
 ```json
 {
-  ‘kind’ : 30020,
+  ‘kind’ : 30250,
   ‘tags’ : [
-    ‘d’ : <SHA-1 of (pubkey + ‘OLR’)>
-    ‘a’ : <coordinates to review events>,
-    …
-  ],
-  ‘content’ : ‘’
-}
-```
-
-### Book Progress - Individual (to be implemented)
-
-```json
-{
-  ‘kind’ : 3xxxx,
-  ‘tags’ : [
-    ‘d’       : <‘isbn:’ + isbn of book OR, ‘h:’ + NIP04 encrypted isbn of book>
+    ‘d’       : <SHA-256 of ISBN value>
     ‘k’       : <NIP 73 external content k tag for books i.e., ‘isbn’>
     ‘current’ : <numerator>
     ‘max’     : <denominator>
-    ’unit’    : <units; “%”, “pages” or “min”>
-    ‘start’   : <unix timestamp of start date OR ‘NA’>,
-    ‘end’     : <unix timestamp of end date OR ‘NA’>
-  ],
-  ‘content’ : ‘’
-}
-```
-
-### Reading Progress  - Set (to be implemented)
-
-```json
-{
-  ‘kind’ : 3xxxx,
-  ‘tags’ : [
-    ‘d’ : <SHA-1 of (pubkey + ‘OLP’)>
-    ‘a’ : <coordinates to progress events>,
-    …
+    ’unit’    : <units; “%” or “pages”>
+    ‘started’ : <unix timestamp of start date OR ‘NA’>,
+    ‘ended’   : <unix timestamp of end date OR ‘NA’>
   ],
   ‘content’ : ‘’
 }

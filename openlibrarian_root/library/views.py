@@ -17,7 +17,7 @@ async def library(request):
         return render(request, 'library/library.html', session)
     
 async def library_shelves(request):
-    """Returns Simple view for Library."""
+    """Returns view for Library Shelves."""
     # Return to index if the user is not logged in
     if await async_logged_in(request) == False:
         return redirect('circulation_desk:index')
@@ -267,14 +267,12 @@ async def library_shelves(request):
                     if inlib and outlib:
                         # Update session data
                         await async_set_session_info(request, libraries=libraries)
-                        # TODO: Publish Events in a more efficient way
                         inlib.build_event(npub=session["npub"])
                         event_list.append(inlib.bevent)
                         outlib.build_event(npub=session["npub"])
                         event_list.append(outlib.bevent)
                     else:
-                        # TODO: Add error message
-                        print("Something went wrong")
+                        noted = "false:Error moving book, please refresh and try again."
             
             # Prepare events for passing to signer
             if event_list != []:
@@ -291,3 +289,38 @@ async def library_shelves(request):
                 "events": events
             }
             return render(request, 'library/library_shelves.html', context)
+
+async def reviews(request):
+    """Returns view for Reviews page."""
+    # Return to index if the user profile is not logged in
+    if await async_logged_in(request) == False:
+        return redirect('circulation_desk:index')
+    else:
+        event_list = []
+        noted = None
+        session = await async_get_session_info(request)
+        if request.method == 'POST':
+            # Get general post data
+            book_info = request.POST.get('book_info').split("-")
+            book_id = book_info[1]
+            comments = request.POST.get('comments')
+            try:
+                rating = int(request.POST.get('rating'))/2
+                review = await Review().review(isbn=book_id, rating=rating, content=comments)
+                event_list.append(review.build_event().bevent)
+                session["reviews"][book_id] = review.detailed()
+                await async_set_session_info(request, reviews=session["reviews"])
+            except:
+                noted = "false:Error rating book, please refresh and try again."
+        
+        if event_list != []:
+            events = nostr_prepare(event_list)
+        else:
+            events = None
+        
+        context = {
+            "session": session,
+            "events": events,
+            "noted": noted
+        }
+        return render(request, 'library/reviews.html', context)

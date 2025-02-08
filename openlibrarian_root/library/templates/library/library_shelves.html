@@ -110,31 +110,31 @@
                                             <b>ISBN:</b> {{ book.i }} <br>
                                             <b>My Review:</b>
                                             {% if library.s == "HR" %}
-                                                {% for isbn, progress_obj in session.reviews.items %}
+                                                {% for isbn, review_obj in session.reviews.items %}
                                                     {% if isbn == book.i %}
-                                                        {% if not progress_obj.rating and progress_obj.rating != 0.0 %}
+                                                        {% if not review_obj.rating and review_obj.rating != 0.0 %}
                                                             Rate this book in the reviews section.
                                                         {% else %}
                                                             <span style="display: inline-block;">
-                                                                {% if progress_obj.rating >= 5 %}
+                                                                {% if review_obj.rating >= 5 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
-                                                                {% elif progress_obj.rating >= 4.5 %}
+                                                                {% elif review_obj.rating >= 4.5 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
-                                                                {% elif progress_obj.rating >= 4 %}
+                                                                {% elif review_obj.rating >= 4 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 3.5 %}
+                                                                {% elif review_obj.rating >= 3.5 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 3 %}
+                                                                {% elif review_obj.rating >= 3 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 2.5 %}
+                                                                {% elif review_obj.rating >= 2.5 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 2 %}
+                                                                {% elif review_obj.rating >= 2 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 1.5 %}
+                                                                {% elif review_obj.rating >= 1.5 %}
                                                                     <i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 1 %}
+                                                                {% elif review_obj.rating >= 1 %}
                                                                     <i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
-                                                                {% elif progress_obj.rating >= 0.5 %}
+                                                                {% elif review_obj.rating >= 0.5 %}
                                                                     <i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
                                                                 {% else %}
                                                                     <i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>

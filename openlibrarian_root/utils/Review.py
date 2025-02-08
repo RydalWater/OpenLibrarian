@@ -27,7 +27,7 @@ class Review:
         self.rating_normal = "NA"
         self.rating_raw = "NA"
         self.rating = None
-        self.content = "NA"
+        self.content = ""
         self.tags = []
         self.bevent = None
 
@@ -86,7 +86,7 @@ class Review:
             if event.content() != "":
                 self.content = event.content()
             else:
-                self.content = "NA"
+                self.content = ""
 
             # Populate missing fields
             if self.identifier is None:
@@ -129,7 +129,7 @@ class Review:
         ]
         if self.tags not in ([], None):
             for tag in self.tags:
-                tags.append(Tag.hashtag(f"#{tag}"))
+                tags.append(Tag.hashtag(f"{tag}"))
         if self.content not in(None, ""):
             content = f"{self.content.strip()}"
         else:
