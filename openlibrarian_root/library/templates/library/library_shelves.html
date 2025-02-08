@@ -108,8 +108,8 @@
                                         <p class="mt-2 container text-start">
                                             <b>Author(s):</b> {{ book.a }} <br>
                                             <b>ISBN:</b> {{ book.i }} <br>
-                                            <b>My Review:</b>
                                             {% if library.s == "HR" %}
+                                                <b>My Review:</b>
                                                 {% for isbn, review_obj in session.reviews.items %}
                                                     {% if isbn == book.i %}
                                                         {% if not review_obj.rating and review_obj.rating != 0.0 %}
