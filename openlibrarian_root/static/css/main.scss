@@ -3,8 +3,8 @@ $primary: #65558F;
 $secondary: #625B71;
 
 // Import Bootstrap functions and variables
-@import "../../../node_modules/bootstrap/scss/_functions";
-@import "../../../node_modules/bootstrap/scss/_variables";
+@import "../../node_modules/bootstrap/scss/_functions";
+@import "../../node_modules/bootstrap/scss/_variables";
 
 $custom-theme-colors: (
   "on-primary": #FFFFFF,
@@ -18,7 +18,7 @@ $custom-theme-colors: (
 $theme-colors: map-merge($theme-colors, $custom-theme-colors);
 
 // Import Bootstrap
-@import "../../../node_modules/bootstrap/scss/bootstrap";
+@import "../../node_modules/bootstrap/scss/bootstrap";
 
 .profile-card {
   border: 1px solid #ddd;
@@ -84,4 +84,8 @@ $theme-colors: map-merge($theme-colors, $custom-theme-colors);
   padding: 0;
   line-height: 1.5;
   white-space: pre-wrap;
+}
+.star {
+  font-size: 1.5rem;
+  color: #ffd700; /* Gold color for stars */
 }

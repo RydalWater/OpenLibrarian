@@ -1,7 +1,7 @@
 from django.test import TestCase
-from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Event
+from nostr_sdk import EventBuilder, Keys, Kind, Tag, TagKind, SingleLetterTag, Alphabet
 from utils.Progress import Progress, fetch_progress
-import datetime, hashlib, sys, io
+import datetime, hashlib
 from aioresponses import aioresponses
 from unittest.mock import patch
 
@@ -721,9 +721,9 @@ class ProgressUnitTests(TestCase):
         self.assertEqual(progress.default_pages, "423")
         self.assertEqual(progress.max, "423")
 
-    async def test_progress_fetch(self):
+    async def test_progress_fetch_empty(self):
         """
-        Test fetching progress
+        Test fetching progress (empty)
         """
         npub = KEYS.public_key().to_bech32()
         relays = {"wss://relay.damus.io": None}
@@ -750,9 +750,9 @@ class ProgressUnitTests(TestCase):
         self.assertEqual(result, detailed_dict)
 
     @patch('utils.Progress.nostr_get')
-    async def test_fetch_progress(self, mock_nostr_get):
+    async def test_progress_fetch_patch(self, mock_nostr_get):
         """
-        Test fetching progress
+        Test fetching progress (patch)
         """
 
         # Mock events

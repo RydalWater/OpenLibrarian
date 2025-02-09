@@ -1,11 +1,11 @@
 from django.shortcuts import render, redirect
-from django.http import JsonResponse
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
 from utils.Library import prepare_libraries, Library
 from utils.Progress import fetch_progress, Progress
 from utils.Notifications import build_notification
+from utils.Review import fetch_reviews, Review
 from utils.Network import nostr_prepare
-import datetime, json
+import datetime, json, asyncio
 
 async def library(request):
     """Returns Simple view for Library."""
@@ -17,7 +17,7 @@ async def library(request):
         return render(request, 'library/library.html', session)
     
 async def library_shelves(request):
-    """Returns Simple view for Library."""
+    """Returns view for Library Shelves."""
     # Return to index if the user is not logged in
     if await async_logged_in(request) == False:
         return redirect('circulation_desk:index')
@@ -51,11 +51,13 @@ async def library_shelves(request):
                     for book in library["b"]:
                         if "Hidden" not in book["i"]:
                             isbns.append(book["i"])
-            progress = await fetch_progress(npub=npub, isbns=isbns, relays=session['relays'])
-            await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress)
+            tasks_prog_review = [fetch_progress(npub=npub, isbns=isbns, relays=session["relays"]), fetch_reviews(npub=npub, relays=session["relays"], isbns=isbns)]
+            progress, reviews = await asyncio.gather(*tasks_prog_review)
+            await async_set_session_info(request,npub=npub,libraries=libraries, progress=progress, reviews=reviews)
         else:
             libraries = session["libraries"]
             progress = session["progress"]
+            reviews = session["reviews"]
         
         # Order libraries by "s" in the following order "CR" > "TRS" > "TRW" > "HR"
         sorted_keys = ["CR", "TRS", "TRW", "HR"]
@@ -67,23 +69,40 @@ async def library_shelves(request):
                 "libraries": libraries,
                 "session": session,
                 "progress": progress,
+                "reviews": reviews,
                 "noted": noted
             }
             return render(request, 'library/library_shelves.html', context)
         
         if request.method == 'POST':
-            # Get post data
+            # Get general post data
             book_info = request.POST.get('book_info').split("-")
             shelf_id = book_info[0]
             book_id = book_info[1]
-            status = request.POST.get('status')
-            if request.POST.get('hidden'):
-                hidden = "Y"
-            else:
-                hidden = "N"
+            status = request.POST.get('status', None)
+            is_hidden = request.POST.get('hidden', None)
             stDt = request.POST.get('stDt', None)
             enDt = request.POST.get('enDt', None)
             unitRadio = request.POST.get('unitRadio', None)
+            rating = request.POST.get('rating', None)
+
+            # Get post type
+            if request.POST.get('remove_book'):
+                post_type = "remove"
+            elif request.POST.get('update'):
+                post_type = "update"
+            elif request.POST.get('moved'):
+                post_type = "moved"
+            elif request.POST.get('finished'):
+                post_type = "finished"
+
+            # Set hidden
+            if is_hidden:
+                hidden = "Y"
+            else:
+                hidden = "N"
+            
+            # Set progress data
             if unitRadio == "pages":
                 max = request.POST.get('maxPage')
                 cur = request.POST.get('currentPage')
@@ -94,6 +113,7 @@ async def library_shelves(request):
                 max = None
                 cur = None
 
+            # Validate progress data
             if stDt not in (None, "", "NA") and enDt not in (None, "", "NA"):
                 if datetime.datetime.strptime(enDt, "%Y-%m-%d") < datetime.datetime.strptime(stDt, "%Y-%m-%d"):
                     noted = "false:End date is before start date."
@@ -106,7 +126,7 @@ async def library_shelves(request):
             event_list = []
             if noted is None:
                 # Remove book from library
-                if request.POST.get('remove_book'):
+                if post_type == "remove":
                     for library in libraries:
                         if library["i"] == shelf_id:
                             for book in library["b"]:
@@ -119,7 +139,7 @@ async def library_shelves(request):
                                     break
 
                 # Update book information (inc hidden) and pubish updated library and update session
-                elif request.POST.get('update'):
+                elif post_type == "update":
                     for library in libraries:
                         if library["i"] == shelf_id:
                             for book in library["b"]:
@@ -170,9 +190,12 @@ async def library_shelves(request):
 
                                         
                 # Update the shelves
-                elif request.POST.get('moved'):
+                elif post_type in ("moved", "finished"):
                     inlib = None
                     outlib = None
+                    if post_type == "finished" and rating:
+                        rating = int(rating)/2
+
                     for library in libraries:
                         if library["i"] == shelf_id:
                             for book in library["b"]:
@@ -185,7 +208,7 @@ async def library_shelves(request):
                                     break
 
                     for library in libraries:
-                        if library["s"] == status or (library["s"] == "HR" and status != "" and float(status)>=0):
+                        if library["s"] == status or (library["s"] == "HR" and rating>=0.0):
                             inlib = Library(dict=library, npub=session["npub"])
                             await inlib.add_book(dict=book_moving, hidden=hidden)
                             libraries[libraries.index(library)] = inlib.__dict__()
@@ -205,17 +228,20 @@ async def library_shelves(request):
                                 progress_obj.build_event()
                                 event_list.append(progress_obj.bevent)
                                 progress[book_id] = progress_obj.detailed()
-                                await async_set_session_info(request, progress=progress)
-
+                                
                                 # Send notification (if moving from current reading shelve)
                                 if from_shelf == "CR":
                                     try:
-                                        float(status)
-                                        notify = await build_notification(book=book_moving, nym_relays=session["relays"], note_type="en", score=status)
+                                        float(rating)
+                                        notify = await build_notification(book=book_moving, nym_relays=session["relays"], note_type="en", score=rating)
+                                        review = await Review().review(isbn=book_moving["i"], rating=rating)
                                         event_list.append(notify)
+                                        event_list.append(review.build_event().bevent)
+                                        reviews[book_id] = review.detailed()
                                     except:
                                         pass
-                                # TODO: Add a review
+                                # Add progress and review to session
+                                await async_set_session_info(request, progress=progress, reviews=reviews)
                             
                             # Update library (moving book to current reading shelf)
                             elif library["s"] == "CR":
@@ -241,14 +267,12 @@ async def library_shelves(request):
                     if inlib and outlib:
                         # Update session data
                         await async_set_session_info(request, libraries=libraries)
-                        # TODO: Publish Events in a more efficient way
                         inlib.build_event(npub=session["npub"])
                         event_list.append(inlib.bevent)
                         outlib.build_event(npub=session["npub"])
                         event_list.append(outlib.bevent)
                     else:
-                        # TODO: Add error message
-                        print("Something went wrong")
+                        noted = "false:Error moving book, please refresh and try again."
             
             # Prepare events for passing to signer
             if event_list != []:
@@ -260,7 +284,55 @@ async def library_shelves(request):
                 "libraries": libraries,
                 "session": session,
                 "progress": progress,
+                "reviews": reviews,
                 "noted": noted,
                 "events": events
             }
             return render(request, 'library/library_shelves.html', context)
+
+async def reviews(request):
+    """Returns view for Reviews page."""
+    # Return to index if the user profile is not logged in
+    if await async_logged_in(request) == False:
+        return redirect('circulation_desk:index')
+    else:
+        event_list = []
+        noted = None
+        session = await async_get_session_info(request)
+
+        # Determine if there are any eligible items for review
+        canReview = False
+        for review in session["reviews"].values():
+            if review["rating"] is not None:
+                canReview = True
+        for library in session["libraries"]:
+            if library["s"] in("HR"):
+                if library["b"] != []:
+                    canReview = True
+
+        if request.method == 'POST':
+            # Get general post data
+            book_info = request.POST.get('book_info').split("-")
+            book_id = book_info[1]
+            comments = request.POST.get('comments')
+            try:
+                rating = int(request.POST.get('rating'))/2
+                review = await Review().review(isbn=book_id, rating=rating, content=comments)
+                event_list.append(review.build_event().bevent)
+                session["reviews"][book_id] = review.detailed()
+                await async_set_session_info(request, reviews=session["reviews"])
+            except:
+                noted = "false:Error rating book, please refresh and try again."
+        
+        if event_list != []:
+            events = nostr_prepare(event_list)
+        else:
+            events = None
+        
+        context = {
+            "session": session,
+            "events": events,
+            "noted": noted,
+            "canReview": canReview
+        }
+        return render(request, 'library/reviews.html', context)

@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    # Third-party Apps
+    'mathfilters',
+
     # Site Apps
     'circulation_desk',
     'almanac',

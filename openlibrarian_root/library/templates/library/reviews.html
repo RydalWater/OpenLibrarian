@@ -1,0 +1,289 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+{% load mathfilters %}
+
+{% block content %}
+    <div class="container mt-2">
+        <div class="chapter-header">
+            <p>Reviews</p>
+        </div>
+    </div>
+    {% if not canReview %}
+        <div class="container mt-2">
+            <p class="book-text text-center"> You currently have no books to review. Your reviews will appear here as you move books to your finished reading library shelf.</p>
+            {% if session.nsec %}
+                <p class="book-text text-center">Head over the <a href="{% url 'library:library_shelves' %}">library</a> to track your progress!</p>
+            {% endif %}
+        </div>
+    {% endif %}
+    {% for isbn, review_obj in session.reviews.items %}
+        {% for library in session.libraries %}
+            {% if review_obj.rating or review_obj.rating == 0.0 or library.s == "HR" %}
+                {% if library.b %}
+                    {% for book in library.b %}
+                        {% if book.i == isbn %}
+                            <div class="row container">
+                                <div class="card mb-1">
+                                    <div class="row">
+                                        <div class="col-3 p-1">
+                                                {% if book.c not in "N,M" %}
+                                                    <img src="{{ book.c }}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
+                                                {% elif book.c == "M" %}
+                                                    <img src="{% static 'images/hidden_book.jpg' %}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
+                                                {% else %}
+                                                    <img src="{% static 'images/book.jpg' %}" class="rounded" style="max-height: auto; max-width: 75px" alt="cover-img">
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-8">
+                                                <div class="row text-start text-wrap">
+                                                    <p class="fw-lighter fw-semibold lh-me">{{ book.t }} <br><i class="fw-lighter fst-italic">- {{ book.a }}</i></p>
+                                                </div>
+                                                <div class="row">
+                                                <div class="d-inline-flex gap-1 p-1 justify-content-between">
+                                                    <div class="card-review d-flex align-items-center">
+                                                        {% if not review_obj.rating and review_obj.rating != 0.0 %}
+                                                            No rating added yet
+                                                        {% else %}
+                                                            <span style="display: inline-block;">
+                                                                {% if review_obj.rating >= 5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
+                                                                {% elif review_obj.rating >= 4.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i>
+                                                                {% elif review_obj.rating >= 4 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 3.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 3 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 2.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 2 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 1.5 %}
+                                                                    <i class="fas fa-star"></i><i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 1 %}
+                                                                    <i class="fas fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% elif review_obj.rating >= 0.5 %}
+                                                                    <i class="fas fa-star-half-alt"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% else %}
+                                                                    <i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i><i class="far fa-star"></i>
+                                                                {% endif %}
+                                                            </span>
+                                                        {% endif %}
+                                                    </div> 
+                                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#review{{ book.i }}{{ library.i }}">
+                                                    <i class="fa-solid fa-comment"></i>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-1 p-1">
+                                            {% if book.h == "Y" %}
+                                                <i class="fa-solid fa-eye-slash"></i>
+                                            {% else %}
+                                                <i class="fa-solid fa-eye"></i>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Review Modal -->
+                            <div class="modal fade" id="review{{ book.i }}{{ library.i }}" tabindex="-1" aria-labelledby="review{{ book.i }}{{ library.i }}Label" aria-hidden="true">
+                                <div class="modal-dialog modal-dialog-centered">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="review{{ book.i }}{{ library.i }}Label">{{ book.t }}</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            {% if book.c not in "N,M" %}
+                                                <img src="{{ book.c }}" class="rounded" style="max-height: auto; max-width: 100px" alt="cover-img">
+                                            {% elif book.c == "M" %}
+                                                <img src="{% static 'images/hidden_book.jpg' %}" class="rounded" style="max-height: auto; max-width: 100px" alt="cover-img">
+                                            {% else %}
+                                                <img src="{% static 'images/book.jpg' %}" class="rounded" style="max-height: auto; max-width: 100px" alt="cover-img">
+                                            {% endif %}
+                                            <form method="post">
+                                                {% csrf_token %}
+                                                <div class="container mt-2">
+                                                    <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
+                                                    
+                                                    <!-- Slider -->
+                                                    {% if review_obj.rating == 0.0  or review_obj.rating %}
+                                                        <div class="input-group mt-2">
+                                                            <span class="input-group-text" id="rating-label">Review</span>
+                                                            <span class="form-control" id="rating-description{{ book.i }}{{ library.i }}"  aria-describedby="rating-label">
+                                                                {% if review_obj.rating >= 5 %}
+                                                                    I can't wait to read it again!
+                                                                {% elif review_obj.rating >= 4.5 %}
+                                                                    I really enjoyed this.
+                                                                {% elif review_obj.rating >= 4 %}
+                                                                    I may read it again.
+                                                                {% elif review_obj.rating >= 3.5 %}
+                                                                    Happily recommend this to others.
+                                                                {% elif review_obj.rating >= 3 %}
+                                                                    Enjoyable read but probably won't read it again.
+                                                                {% elif review_obj.rating >= 2.5 %}
+                                                                    Kind of enjoyable, but not memorable.
+                                                                {% elif review_obj.rating >= 2 %}
+                                                                    It was fine, but nothing special.
+                                                                {% elif review_obj.rating >= 1.5 %}
+                                                                    Meh, barely kept my attention.
+                                                                {% elif review_obj.rating >= 1 %}
+                                                                    Not my cup of tea.
+                                                                {% elif review_obj.rating >= 0.5 %}
+                                                                    This book was a big miss.
+                                                                {% else %}
+                                                                    I want my time back!
+                                                                {% endif %}
+                                                            </span>
+                                                        </div>
+                                                        <div id="star-container{{ book.i }}{{ library.i }}" class="mt-2">
+                                                            {% if review_obj.rating >= 5 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i>
+                                                            {% elif review_obj.rating >= 4.5 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star-half-alt star"></i>
+                                                            {% elif review_obj.rating >= 4 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 3.5 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star-half-alt star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 3 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 2.5 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="fas fa-star-half-alt star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 2 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 1.5 %}
+                                                                <i class="fas fa-star star"></i><i class="fas fa-star-half-alt star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 1 %}
+                                                                <i class="fas fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% elif review_obj.rating >= 0.5 %}
+                                                                <i class="fas fa-star-half-alt star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% else %}
+                                                                <i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i><i class="far fa-star star"></i>
+                                                            {% endif %}
+                                                        </div>
+                                                        <input 
+                                                        type="range" 
+                                                        class="form-range" 
+                                                        id="rating-slider{{ book.i }}{{ library.i }}"
+                                                        name="rating"
+                                                        min="0" 
+                                                        max="10" 
+                                                        step="1"
+                                                        value="{{ review_obj.rating|mul:2 }}"
+                                                        style="width: 75%;"
+                                                        oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')"
+                                                        {% if not session.nsec %} disabled {% endif %}>
+                                                    {% else %}
+                                                    <div class="input-group mt-2">
+                                                        <span class="input-group-text" id="rating-label">Review</span>
+                                                        <span class="form-control" id="rating-description{{ book.i }}{{ library.i }}"  aria-describedby="rating-label">
+                                                            Use slider to add review
+                                                        </span>
+                                                    </div>
+                                                        <div id="star-container{{ book.i }}{{ library.i }}" class="mt-2">
+                                                        </div>
+                                                        <input 
+                                                        type="range" 
+                                                        class="form-range" 
+                                                        id="rating-slider{{ book.i }}{{ library.i }}"
+                                                        name="rating"
+                                                        min="0" 
+                                                        max="10" 
+                                                        step="1"
+                                                        value="0"
+                                                        style="width: 75%;"
+                                                        oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')"
+                                                        {% if not session.nsec %} disabled {% endif %}>
+                                                    {% endif %}
+
+                                                    <div class="form-floating">
+                                                        <textarea class="form-control" placeholder="Leave a comment here (optional)" name="comments" id="comments{{ book.i }}{{ library.i }}" style="height: 100px;" {% if not session.nsec %} disabled {% endif %}>
+                                                            {{ review_obj.content }}
+                                                        </textarea>
+                                                        <label for="comments{{ book.i }}{{ library.i }}">Comments (optional)</label>
+                                                    </div>
+                                                    {% if not session.nsec %}
+                                                        <p class="mt-2"><i class="fa-solid fa-eye-slash"></i> Update Review Unavailable in Read-Only Mode</p>
+                                                    {% else %}
+                                                        <button id="finished{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled>
+                                                            Update Review
+                                                        </button>
+                                                    {% endif %}
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    {% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        <!-- Save/Refresh Button -->
+        <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+            <a id="back" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <!-- {% if session.nsec %}
+                <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="shelves"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            {% endif %} -->
+        </div>
+    </form>
+    <script>
+        function updateStars(value, counter, library) {
+            const starContainerId = `star-container${counter}${library}`;
+            const ratingDescriptionId = `rating-description${counter}${library}`;
+            const ratingSliderId = `rating-slider${counter}${library}`;
+            const finishedButtonId = `finished${counter}${library}`;
+        
+            const starContainer = document.getElementById(starContainerId);
+            const ratingDescription = document.getElementById(ratingDescriptionId);
+            const ratingSlider = document.getElementById(ratingSliderId);
+            const finishedButton = document.getElementById(finishedButtonId);
+        
+            // Convert the slider value to the corresponding rating value (0, 0.5, 1, ..., 5)
+            const rating = value / 2;
+
+            // Update the description based on the rating
+            const ratingDescriptions = {
+                0: "I want my time back!",
+                0.5: "This book was a big miss.",
+                1: "Not my cup of tea.",
+                1.5: "Meh, barely kept my attention.",
+                2: "It was fine, but nothing special.",
+                2.5: "Kind of enjoyable, but not memorable.",
+                3: "Enjoyable read but probably won't read it again.",
+                3.5: "Happily recommend this to others.",
+                4: "I may read this again.",
+                4.5: "I really enjoyed this.",
+                5: "I can't wait to read it again!"
+            };
+            ratingDescription.textContent = ratingDescriptions[rating] || "No description available";
+        
+            // Clear the existing stars
+            starContainer.innerHTML = '';
+        
+            // Add filled, half-filled, and empty stars based on the rating
+            for (let i = 1; i <= 5; i++) {
+                if (i <= Math.floor(rating)) {
+                    // Full star
+                    starContainer.innerHTML += '<i class="fas fa-star star"></i>';
+                } else if (i === Math.ceil(rating) && rating % 1 !== 0) {
+                    // Half star
+                    starContainer.innerHTML += '<i class="fas fa-star-half-alt star"></i>';
+                } else {
+                    // Empty star
+                    starContainer.innerHTML += '<i class="far fa-star star"></i>';
+                }
+            }
+            // Activate finished button if rating is 5
+            finishedButton.disabled = false;
+        };
+    </script>
+{% endblock content %}

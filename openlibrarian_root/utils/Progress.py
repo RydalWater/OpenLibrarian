@@ -1,4 +1,4 @@
-from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, Keys, SingleLetterTag, Alphabet, Filter, PublicKey, Client, NostrSigner
+from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Filter, PublicKey, Client
 from utils.Login import check_npub
 from utils.Network import nostr_get
 import aiohttp, datetime, hashlib, os, asyncio, tenacity
@@ -29,6 +29,7 @@ class Progress:
         """
         Set new progress object with isbn
         input: isbn (str)
+        output: self (Progress object)
         """
         self.isbn = isbn
         self.identifier = hashlib.sha256(isbn.encode()).hexdigest()

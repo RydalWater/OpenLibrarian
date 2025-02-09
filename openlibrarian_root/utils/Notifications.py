@@ -3,7 +3,7 @@ import os, ast
 
 
 # Notification function
-async def build_notification(book: dict, nym_relays: dict, note_type: str, text: str=None, tags: list=None, score: int=None):
+async def build_notification(book: dict, nym_relays: dict, note_type: str, text: str=None, tags: list=None, score: float=None):
     """Send notification to relays"""
     if note_type.lower() not in ["st", "en", "rv"]:
         raise Exception("Invalid note type.")
@@ -20,6 +20,8 @@ async def build_notification(book: dict, nym_relays: dict, note_type: str, text:
 
         # Construct event
         if text is None:
+            if score:
+                score = round(score)
             if note_type == "st":
                 text = f"I just started reading '{title}' by {author} and am tracking my progress on www.OpenLibrarian.com \n"
             elif note_type == "en" and score:

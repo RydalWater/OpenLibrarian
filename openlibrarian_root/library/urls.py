@@ -8,4 +8,7 @@ urlpatterns = [
 
     # Shelves page
     path('shelves/', views.library_shelves, name='library_shelves'),
+
+    # Review page
+    path('reviews/', views.reviews, name='reviews'),
 ]
