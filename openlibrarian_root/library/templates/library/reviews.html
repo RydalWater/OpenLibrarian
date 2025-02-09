@@ -9,6 +9,14 @@
             <p>Reviews</p>
         </div>
     </div>
+    {% if not canReview %}
+        <div class="container mt-2">
+            <p class="book-text text-center"> You currently have no books to review. Your reviews will appear here as you move books to your finished reading library shelf.</p>
+            {% if session.nsec %}
+                <p class="book-text text-center">Head over the <a href="{% url 'library:library_shelves' %}">library</a> to track your progress!</p>
+            {% endif %}
+        </div>
+    {% endif %}
     {% for isbn, review_obj in session.reviews.items %}
         {% for library in session.libraries %}
             {% if review_obj.rating or review_obj.rating == 0.0 or library.s == "HR" %}
@@ -167,7 +175,8 @@
                                                         step="1"
                                                         value="{{ review_obj.rating|mul:2 }}"
                                                         style="width: 75%;"
-                                                        oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')">
+                                                        oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')"
+                                                        {% if not session.nsec %} disabled {% endif %}>
                                                     {% else %}
                                                     <div class="input-group mt-2">
                                                         <span class="input-group-text" id="rating-label">Review</span>
@@ -187,16 +196,23 @@
                                                         step="1"
                                                         value="0"
                                                         style="width: 75%;"
-                                                        oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')">
+                                                        oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')"
+                                                        {% if not session.nsec %} disabled {% endif %}>
                                                     {% endif %}
 
                                                     <div class="form-floating">
-                                                        <textarea class="form-control" placeholder="Leave a comment here (optional)" name="comments" id="comments{{ book.i }}{{ library.i }}" style="height: 100px;">{{ review_obj.content }}</textarea>
+                                                        <textarea class="form-control" placeholder="Leave a comment here (optional)" name="comments" id="comments{{ book.i }}{{ library.i }}" style="height: 100px;" {% if not session.nsec %} disabled {% endif %}>
+                                                            {{ review_obj.content }}
+                                                        </textarea>
                                                         <label for="comments{{ book.i }}{{ library.i }}">Comments (optional)</label>
                                                     </div>
-                                                    <button id="finished{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled>
-                                                        Update Review
-                                                    </button>
+                                                    {% if not session.nsec %}
+                                                        <p class="mt-2"><i class="fa-solid fa-eye-slash"></i> Update Review Unavailable in Read-Only Mode</p>
+                                                    {% else %}
+                                                        <button id="finished{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled>
+                                                            Update Review
+                                                        </button>
+                                                    {% endif %}
                                                 </div>
                                             </form>
                                         </div>
@@ -209,6 +225,16 @@
             {% endif %}
         {% endfor %}
     {% endfor %}
+    <form method="post">
+        {% csrf_token %}
+        <!-- Save/Refresh Button -->
+        <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+            <a id="back" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <!-- {% if session.nsec %}
+                <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="shelves"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            {% endif %} -->
+        </div>
+    </form>
     <script>
         function updateStars(value, counter, library) {
             const starContainerId = `star-container${counter}${library}`;

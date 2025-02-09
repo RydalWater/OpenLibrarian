@@ -6,6 +6,7 @@ from utils.Book import Book
 from utils.Library import Library
 from utils.Interests import Interests, fetch_interests
 from utils.Progress import Progress
+from utils.Review import Review
 from utils.Constants import INTERESTS_HASHMAP, INTERESTS
 from utils.Network import nostr_prepare
 
@@ -85,8 +86,11 @@ async def search(request):
                                 if library["s"] == "CR":
                                     progress.start_book()
                                 else:
+                                    progress.start_book()
                                     progress.end_book()
                                 progress.build_event()
+                                review = await Review().new(isbn=isbn)
+                                session["reviews"][isbn] = review.detailed()
                                 session["progress"][isbn] = progress.detailed()
                                 event_list.append(progress.bevent)
 
@@ -94,7 +98,7 @@ async def search(request):
                             events = nostr_prepare(event_list)
 
                             # Update session
-                            await async_set_session_info(request, libraries=session['libraries'], progess=session["progress"])
+                            await async_set_session_info(request, libraries=session['libraries'], progess=session["progress"], reviews=session["reviews"])
                             break
                     noted = None
                 else:

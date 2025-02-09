@@ -299,6 +299,17 @@ async def reviews(request):
         event_list = []
         noted = None
         session = await async_get_session_info(request)
+
+        # Determine if there are any eligible items for review
+        canReview = False
+        for review in session["reviews"].values():
+            if review["rating"] is not None:
+                canReview = True
+        for library in session["libraries"]:
+            if library["s"] in("HR"):
+                if library["b"] != []:
+                    canReview = True
+
         if request.method == 'POST':
             # Get general post data
             book_info = request.POST.get('book_info').split("-")
@@ -321,6 +332,7 @@ async def reviews(request):
         context = {
             "session": session,
             "events": events,
-            "noted": noted
+            "noted": noted,
+            "canReview": canReview
         }
         return render(request, 'library/reviews.html', context)
