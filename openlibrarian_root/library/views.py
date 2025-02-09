@@ -208,7 +208,7 @@ async def library_shelves(request):
                                     break
 
                     for library in libraries:
-                        if library["s"] == status or (library["s"] == "HR" and rating>=0.0):
+                        if library["s"] == status or library["s"] == "HR":
                             inlib = Library(dict=library, npub=session["npub"])
                             await inlib.add_book(dict=book_moving, hidden=hidden)
                             libraries[libraries.index(library)] = inlib.__dict__()
