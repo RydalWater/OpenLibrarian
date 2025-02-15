@@ -64,6 +64,8 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
         nym_relays = {}
         for tag in relays_event[0].tags():
             tagvec = tag.as_vec()
+            if "wss://" not in tagvec[1].lower() and "ws://" not in tagvec[1].lower():
+                continue
             if len(tagvec) == 3:
                 url = tagvec[1]
                 rw = tagvec[2].upper()
