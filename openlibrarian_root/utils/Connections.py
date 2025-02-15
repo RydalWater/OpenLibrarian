@@ -26,8 +26,9 @@ async def fetch_social_list(relays: dict, npub: str = None, list_type: str = "fo
         if eventlist:
             for tag in eventlist[0].tags():
                 if tag.as_vec()[0] == "p":
-                    follow_list.append(PublicKey.from_hex(tag.content()))
-
+                        if check_npub(tag.content()):
+                            follow_list.append(PublicKey.parse(tag.content()))
+                            
         # Get following and related profile data
         f = Filter().kind(Kind(0)).authors(follow_list)
         profiles = await nostr_get(client=client, relays_dict=relays, filters=[f], wait=10, connect=False, disconnect=True)
