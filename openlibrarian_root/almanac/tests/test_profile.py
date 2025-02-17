@@ -21,13 +21,13 @@ class ProfileFunctionalTestCase(TestCase):
         self.driver = webdriver.Firefox()
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
         self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
-        self.driver.find_element(by=By.ID, value="submit").click()
-        sleep(1)
+        self.driver.find_element(by=By.ID, value="login").click()
 
     def test_almanac_profile(self):
         """
         Test Profile Back Button
         """
+        sleep(10)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
         self.assertIn("/almanac/", self.driver.current_url)

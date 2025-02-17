@@ -16,15 +16,14 @@ class LibraryFunctionalTestCase(TestCase):
         self.driver = webdriver.Firefox()
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
         self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
-        self.driver.find_element(by=By.ID, value="submit").click()
-        sleep(1)
+        self.driver.find_element(by=By.ID, value="login").click()
 
     def test_library_shelves(self):
         """
         Test Library Shelves Button
         """
+        sleep(10)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        sleep(1)
         self.driver.find_element(by=By.ID, value="shelves").click()
         self.assertIn("/shelves/", self.driver.current_url)
     

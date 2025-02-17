@@ -30,7 +30,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -61,7 +61,7 @@ class ProgressUnitTests(TestCase):
         ]
         content=""
         kind = Kind(30250)
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -106,7 +106,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind4 = Kind(30251)
         content=""
-        event = EventBuilder(kind=kind4, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind4, content=content).tags(tags).sign_with_keys(keys=KEYS)
 
         progress = Progress()
         self.assertRaises(ValueError, progress.parse_event, event=event, isbn=ISBN)
@@ -126,7 +126,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -158,7 +158,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -189,7 +189,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -221,7 +221,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -245,7 +245,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -276,7 +276,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -307,7 +307,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
                 
         progress = Progress()
         progress.parse_event(event=event, isbn=ISBN)
@@ -425,12 +425,12 @@ class ProgressUnitTests(TestCase):
         progress.progress = "100"
 
         progress = progress.build_event()
-        event = progress.bevent.to_event(keys=KEYS)
+        event = progress.bevent.sign_with_keys(keys=KEYS)
 
         self.assertEqual(type(progress.bevent), EventBuilder)
         self.assertEqual(event.kind(), Kind(30250))
         self.assertEqual(event.content(), "")
-        tags_list = event.tags()
+        tags_list = event.tags().to_vec()
         for tag in tags_list:
             self.assertEqual(type(tag), Tag)
         
@@ -767,7 +767,7 @@ class ProgressUnitTests(TestCase):
         ]
         kind = Kind(30250)
         content=""
-        event1 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event1 = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
         
         tags = [
             Tag.identifier(hashlib.sha256(ISBN2.encode()).hexdigest()),
@@ -779,7 +779,7 @@ class ProgressUnitTests(TestCase):
             Tag.custom(TagKind.UNKNOWN("ended"), ["2021-06-02"]),
         ]
 
-        event2 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event2 = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
         events = [event1, event2]
 
         mock_nostr_get.return_value = events

@@ -12,12 +12,12 @@ let nip07 = null;
 let login = null;
 
 // Check if nsec/words/nip07 and login exist on the page
-if (document.getElementById('nsec')) {
-    nsec = document.getElementById('nsec');
+if (window.location.href.indexOf("login-nsec") > -1) {
+    nsec = true;
 }
 
-if (document.getElementById('word1')) {
-    seed = document.getElementById('word1');
+if (window.location.href.indexOf("login-seed") > -1) {
+    seed = true;
 }
 
 if (window.location.href.indexOf("login-nip07") > -1) {
@@ -38,12 +38,15 @@ if ((nsec != null || seed != null || nip07) && login != null) {
         let seedValue = "";
         let nsecValue = "";
         let npubValue = "";
+        let fetchView = "";
         let signer = null;
 
         if (nsec != null) {
             // Check valid nsec
+            nsec = document.getElementById('nsec');
             nsecValue = nsec.value;
             result = check_nsec(nsecValue);
+            fetchView = "login-nsec";
         } else if (seed != null) {
             // Check valid seed 
             for (let i = 1; i <= 12; i++) {
@@ -54,12 +57,14 @@ if ((nsec != null || seed != null || nip07) && login != null) {
             }
             seedValue = seedValue.trim();
             result = check_seed(seedValue);
+            fetchView = "login-seed";
         } else if (nip07) {
             // Check valid nip07
             try {
                 loadWasmSync();
                 signer = new Nip07Signer(window.nostr);
                 result = true;
+                fetchView = "login-nip07";
             } catch (e) {
                 console.log("Issue with NIP-07");
             }            
@@ -102,10 +107,13 @@ if ((nsec != null || seed != null || nip07) && login != null) {
             });
             let decryptedEvents = [];
             const data = await response.json();
+
             if (data.raw_events != null) {
                 // Parse raw events as json array
-                let events = JSON.parse(data.raw_events);
+                let events = data.raw_events;
+  
                 for (let i = 0; i < events.length; i++) {
+                    
                     let event = await parseEvent(events[i]);
                     // Extract element of event decrypt content and rebuild event
                     let tags = event.tags.asVec();
@@ -153,7 +161,8 @@ if ((nsec != null || seed != null || nip07) && login != null) {
             // Execute the login-nsec view with events
             payload.decryptedEvents = decryptedEvents;
             let csrf = getCsrfToken();
-            fetch('/login-nsec/', {
+            
+            fetch(`/${fetchView}/`, {
                 method: 'POST',
                 headers: {
                 'Content-Type': 'application/json',

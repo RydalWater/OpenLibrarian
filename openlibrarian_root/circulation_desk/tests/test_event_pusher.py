@@ -1,10 +1,10 @@
 import json, re, io, sys
 from django.test import TestCase, Client
 from django.urls import reverse
-from circulation_desk.views import event_publisher
 from nostr_sdk import Keys, EventBuilder
 
-dum_event = EventBuilder.text_note("This", []).to_event(Keys.generate()).as_json()
+dum_event = EventBuilder.text_note("This").sign_with_keys(Keys.generate()).as_json()
+
 invalid_event = re.sub(r'"sig":"', r'"sig":"' + 'WRONG', dum_event)
 
 

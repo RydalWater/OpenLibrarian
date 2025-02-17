@@ -22,7 +22,7 @@ class LoginNpubFunctionalTestCase(BaseFunctionalTest):
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="npub").send_keys("npubmadeup123456blahblah")
-        self.driver.find_element(by=By.ID, value="submit").click()
+        self.driver.find_element(by=By.ID, value="login").click()
         self.assertIn("/login-npub/", self.driver.current_url)
         self.assertIn("Invalid NPUB", self.driver.page_source)
     

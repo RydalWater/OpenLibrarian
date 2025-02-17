@@ -18,7 +18,7 @@ class Interests:
                 raise ValueError("Event object must be of type nostr_sdk.Event.")
             event = kwargs["event"]
             interests = []
-            for tag in event.tags():
+            for tag in event.tags().to_vec():
                 if tag.as_vec()[0] == "t":
                     interests.append(tag.as_vec()[1]) 
             self.interests = interests
@@ -56,9 +56,8 @@ class Interests:
         # Build event
         builder = EventBuilder(
             kind = kind,
-            tags = tags,
             content = content
-        )
+        ).tags(tags)
 
         self.bevent = builder
 
@@ -79,20 +78,20 @@ async def fetch_interests(npub: str, nym_relays: dict):
         event_id = event_id.hexdigest()
 
         # Filter
-        filter = Filter().author(PublicKey.from_bech32(npub)).identifier(event_id).limit(10)
+        filter = Filter().author(PublicKey.parse(npub)).identifier(event_id).limit(10)
 
         # Instantiate client
         client = Client(None)
 
         # get events
-        events = await nostr_get(client=client, wait=10, filters=[filter], relays_dict=nym_relays)
+        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=nym_relays)
 
         # Sort and take the latest
         events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
 
         # Convert events to interests
         for event in events:
-            if event.identifier() == event_id:
+            if event.id() == event_id:
                 interests = Interests(event=event)
                 event_id = None
                 break

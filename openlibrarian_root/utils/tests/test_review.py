@@ -119,10 +119,10 @@ class ReviewUnitTests(TestCase):
         review.content = "This is a review"
         review.tags = ["tag1", "tag2"]
         review.build_event()
-        event = review.bevent.to_event(KEYS)
+        event = review.bevent.sign_with_keys(KEYS)
         self.assertEqual(event.kind(), Kind(31025))
         self.assertEqual(event.content(), "This is a review")
-        tags = event.tags()
+        tags = event.tags().to_vec()
         self.assertEqual(tags[0].as_vec()[0], "d")
         self.assertEqual(tags[0].as_vec()[1], hashlib.sha256(ISBN.encode()).hexdigest())
         self.assertEqual(tags[1].as_vec()[0], "k")
@@ -146,10 +146,10 @@ class ReviewUnitTests(TestCase):
         review.content = ""
         review.tags = ["tag1", "tag2"]
         review.build_event()
-        event = review.bevent.to_event(KEYS)
+        event = review.bevent.sign_with_keys(KEYS)
         self.assertEqual(event.kind(), Kind(31025))
         self.assertEqual(event.content(), "")
-        tags = event.tags()
+        tags = event.tags().to_vec()
         self.assertEqual(tags[0].as_vec()[0], "d")
         self.assertEqual(tags[0].as_vec()[1], hashlib.sha256(ISBN.encode()).hexdigest())
         self.assertEqual(tags[1].as_vec()[0], "k")
@@ -173,8 +173,8 @@ class ReviewUnitTests(TestCase):
             Tag.hashtag(f"tag2")
         ]
         content="This is a review"
-        event1 = EventBuilder(kind=kind1, content=content, tags=tags).to_event(keys=KEYS)
-        event2 = EventBuilder(kind=kind2, content=content, tags=tags).to_event(keys=KEYS)
+        event1 = EventBuilder(kind=kind1, content=content).tags(tags).sign_with_keys(keys=KEYS)
+        event2 = EventBuilder(kind=kind2, content=content).tags(tags).sign_with_keys(keys=KEYS)
 
         review = Review()
         self.assertRaises(ValueError, review.parse_event, event=event2)
@@ -192,8 +192,8 @@ class ReviewUnitTests(TestCase):
         self.assertEqual(review.bevent, None)
 
         # Repeat with no content
-        event1 = EventBuilder(kind=kind1, content="", tags=tags).to_event(keys=KEYS)
-        event2 = EventBuilder(kind=kind2, content="", tags=tags).to_event(keys=KEYS)
+        event1 = EventBuilder(kind=kind1, content="").tags(tags).sign_with_keys(keys=KEYS)
+        event2 = EventBuilder(kind=kind2, content="").tags(tags).sign_with_keys(keys=KEYS)
 
         review = Review()
         self.assertRaises(ValueError, review.parse_event, event=event2)
@@ -215,7 +215,7 @@ class ReviewUnitTests(TestCase):
         Test Review (parse_event_missing_fields)
         """
         kind = Kind(31025)
-        event = EventBuilder(kind=kind, content="", tags=[]).to_event(keys=KEYS)
+        event = EventBuilder(kind=kind, content="").sign_with_keys(keys=KEYS)
 
         review = Review()
         review.parse_event(event=event, isbn=ISBN)
@@ -311,7 +311,7 @@ class ReviewUnitTests(TestCase):
             Tag.hashtag(f"tag2")
         ]
         
-        event1 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event1 = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
         
         tags = [
             Tag.identifier(hashlib.sha256(ISBN2.encode()).hexdigest()),
@@ -322,7 +322,7 @@ class ReviewUnitTests(TestCase):
             Tag.hashtag(f"tag5")
         ]
 
-        event2 = EventBuilder(kind=kind, content=content, tags=tags).to_event(keys=KEYS)
+        event2 = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
         events = [event1, event2]
 
         mock_nostr_get.return_value = events

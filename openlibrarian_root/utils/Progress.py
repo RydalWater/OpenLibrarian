@@ -147,7 +147,7 @@ class Progress:
             raise ValueError("Invalid event kind")
         else:
             self.isbn = isbn
-            tags = event.tags()
+            tags = event.tags().to_vec()
             for tag in tags:
                 if tag.as_vec()[0] == "d":
                     self.identifier = tag.as_vec()[1]
@@ -321,9 +321,9 @@ class Progress:
         # Build event
         builder = EventBuilder(
             kind = kind,
-            tags = tags,
             content = content
-        )
+        ).tags(tags)
+        
         self.bevent = builder
 
         return self
@@ -370,11 +370,11 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
         id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
         ids = id_isbn_map.keys()
         # Instantiate client and set signer
-        filter = Filter().author(PublicKey.from_bech32(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
+        filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
         client = Client(None)
 
         # get events
-        events = await nostr_get(client=client, wait=10, filters=[filter], relays_dict=relays)
+        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=relays)
 
         if events in [None, []]:
             # Create new progress objects
@@ -387,8 +387,8 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
         # Parse events
         progress_events = []
         for event in events:
-            if event.identifier() in ids:
-                isbn = id_isbn_map[event.identifier()]
+            if event.tags().identifier() in ids:
+                isbn = id_isbn_map[event.tags().identifier()]
                 progress_events.append(Progress().parse_event(event,isbn=isbn))
         
         # Set up get_default_pages as tasks

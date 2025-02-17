@@ -1,8 +1,8 @@
-from nostr_sdk import Client, Filter, Kind, Metadata, PublicKey, RelayMetadata, EventBuilder
+from nostr_sdk import Client, Filter, Kind, KindStandard, Metadata, PublicKey, RelayMetadata, EventBuilder
 from utils.Network import nostr_get
 from utils.Login import check_npub
 import os, ast
-
+from datetime import timedelta
 
 async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     """Fetches the profile information from Nostr Default Relay."""
@@ -26,8 +26,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
 
     # Request profile Metadata
     f_meta = Filter().kind(Kind(0)).author(author).limit(1)
-    metaevent = await nostr_get(client=client, relays_dict=drelays, filters=[f_meta], wait=10, disconnect=False)
-
+    metaevent = await nostr_get(client=client, relays_dict=drelays, filters=f_meta, wait=15)
     # If metadata is available extract relevant information
     if metaevent:
         metadata = Metadata.from_json(metaevent[0].content())
@@ -56,13 +55,15 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
         }
     
     # Request check for relay metadata event
-    f_relays = Filter().kind(Kind(10002)).author(author).limit(1)
-    relays_event = await nostr_get(client=client, relays_dict=drelays, filters=[f_relays], wait=10, connect=False, disconnect=True)
+    f_relays = Filter().kind(Kind.from_std(KindStandard.RELAY_LIST)).author(author)
+    client = Client(None)
+    relays_event = await nostr_get(client=client, relays_dict=drelays, filters=f_relays, wait=15)
+
 
     # If relays data is available extract relevant otherwise, use input or default relays.
     if relays_event:
         nym_relays = {}
-        for tag in relays_event[0].tags():
+        for tag in relays_event[0].tags().to_vec():
             tagvec = tag.as_vec()
             if "wss://" not in tagvec[1].lower() and "ws://" not in tagvec[1].lower():
                 continue
