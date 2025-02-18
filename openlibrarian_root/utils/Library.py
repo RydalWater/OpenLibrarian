@@ -13,7 +13,7 @@ section_title_map = {
 
 section_description_map = {
     "TRS" : "Books on the shelf ready to read",
-    "TRW" : "Books I want to read but don't own yet",
+    "TRW" : "Books I want to read but do not own yet",
     "CR" : "Books I am currently reading",
     "HR" : "Books I have finished reading",
 }
@@ -63,9 +63,10 @@ class Library:
             else:
                 event = kwargs["event"]
                 # Convert the tags to dictonaries
-                tags = event.tags()
+                tags = event.tags().to_vec()
                 tags_dict = {}
                 extIDs = []
+
                 for tag in tags:
                     if tag.as_vec()[0] != "i":
                         tags_dict[tag.as_vec()[0]] = tag.as_vec()[1]
@@ -199,9 +200,8 @@ class Library:
         # Build event
         builder = EventBuilder(
             kind = kind,
-            tags = tags,
             content = content
-        )
+        ).tags(tags)
 
         self.bevent = builder
 
@@ -236,19 +236,23 @@ async def fetch_libraries(npub: str = None, relays: dict = None):
             library_id[id] = section
 
         # Instantiate client and set filter
-        filter = Filter().author(PublicKey.from_bech32(npub)).kinds([Kind(30003)]).identifiers(ids).limit(50)
+        filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(30003)]).identifiers(ids).limit(50)
         client = Client(None)
 
         # get events
-        events = await nostr_get(client=client, wait=10, filters=[filter], relays_dict=relays)
+        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=relays)
 
         # Sort to the latest of each event by ID
         events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
 
         # Keep just first of each event by ID
-        raw_libraries = [x.as_json() for n, x in enumerate(events) if x.identifier() not in events[n + 1:]]
-        
+        raw_libraries = []
+        for event in events:
+            if event.tags().identifier() not in raw_libraries:
+                raw_libraries.append(event.as_json())
+    
         return raw_libraries
+    
 
 # Function to prepare fetched Library objects from relays
 async def prepare_libraries(libEvents: list=None, npub: str=None, read_only: bool=False):
@@ -273,7 +277,10 @@ async def prepare_libraries(libEvents: list=None, npub: str=None, read_only: boo
         events = []
         if len(libEvents) > 0:
             for each in libEvents:
-                events.append(Event.from_json(each))
+                evt = Event.from_json(each)
+                dtag = evt.tags().identifier()
+                if dtag in ids:
+                    events.append(evt)
 
         # Build list of parsed libraries
         libraries = []
@@ -283,10 +290,10 @@ async def prepare_libraries(libEvents: list=None, npub: str=None, read_only: boo
             ids.remove(library.identifier)
             return library.__dict__()
         tasks = []
-        for event in events:
-            if event.identifier() in ids:
-                task = asyncio.create_task(parse_libraries(event))
-                tasks.append(task)
+
+        for e in events:
+            task = asyncio.create_task(parse_libraries(e))
+            tasks.append(task)
         libraries = await asyncio.gather(*tasks)
         
         # Add in missing libraries

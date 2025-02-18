@@ -1,12 +1,14 @@
 from django.test import TestCase
-import io, sys, os, ast
+import os, ast, asyncio
+from datetime import timedelta
 from utils.Profile import fetch_profile_info, edit_profile_info, edit_relay_list
 from nostr_sdk import Keys
 
 TC_NPUB1 = "npub1039j8zfxafe5xtx5qhmjf02rv7upgwgx54kd35e5qehj36egkjuqx9f704"
 TC_NPUB2 = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
 TC_NSEC2 = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-TC_RELAYS = {"wss://relay.damus.io": None}
+TC_RELAYS = {"wss://relay.damus.io": None, "wss://nostr.mom": None}
+
 
 class ProfileUnitTests(TestCase):
     def setUp(self):
@@ -126,63 +128,63 @@ class ProfileUnitTests(TestCase):
         # Update the profile nym
         profile["nym"] = "TestProfile"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"name":"TestProfile"}')
         
         # Update the profile nip05
         profile["nym"] = None
         profile["nip05"] = "test.nip05@nostr.test"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"nip05":"test.nip05@nostr.test"}')
 
         # Update the profile displayname
         profile["nip05"] = None
         profile["displayname"] = "TestDisplayname"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"display_name":"TestDisplayname"}')
 
         # Update the profile about
         profile["displayname"] = None
         profile["about"] = "TestAbout"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"about":"TestAbout"}')
 
         # Update the profile picture
         profile["about"] = None
         profile["picture"] = "https://somepicture.com/picture.jpg"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"picture":"https://somepicture.com/picture.jpg"}')
 
         # Update the profile website
         profile["picture"] = None
         profile["website"] = "https://somewebsite.com"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"website":"https://somewebsite.com/"}')
 
         # Update the profile banner
         profile["website"] = None
         profile["banner"] = "https://somebanner.com"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"banner":"https://somebanner.com/"}')
 
         # Update the profile lud06
         profile["banner"] = None
         profile["lud06"] = "test.lud06@nostr.test"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"lud06":"test.lud06@nostr.test"}')
 
         # Update the profile lud16
         profile["lud06"] = None
         profile["lud16"] = "test.lud16@nostr.test"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"lud16":"test.lud16@nostr.test"}')
 
         # Combine all
@@ -196,7 +198,7 @@ class ProfileUnitTests(TestCase):
         profile["lud06"] = "test.lud06@nostr.test"
         profile["lud16"] = "test.lud16@nostr.test"
         builder = await edit_profile_info(nym_profile=profile)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(event.content(), '{"name":"TestProfile","display_name":"TestDisplayname","about":"TestAbout","website":"https://somewebsite.com/","picture":"https://somepicture.com/picture.jpg","banner":"https://somebanner.com/","nip05":"test.nip05@nostr.test","lud06":"test.lud06@nostr.test","lud16":"test.lud16@nostr.test"}')
     
     async def test_edit_relay_list_none_session(self):
@@ -205,10 +207,10 @@ class ProfileUnitTests(TestCase):
         """
         keys = Keys.parse(TC_NSEC2)
         update, builder = await edit_relay_list(session_relays=None, mod_relays=TC_RELAYS)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(update, True)
         for relay in TC_RELAYS:
-            self.assertIn('["r","'+relay+'/"]',event.as_json())
+            self.assertIn('["r","'+relay,event.as_json())
     
     async def test_edit_relay_list_none_mod(self):
         """
@@ -216,11 +218,11 @@ class ProfileUnitTests(TestCase):
         """
         keys = Keys.parse(TC_NSEC2)
         update, builder = await edit_relay_list(session_relays=TC_RELAYS, mod_relays=None)
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
         self.assertEqual(update, True)
         for relay in default_relays:
-            self.assertIn('["r","'+relay+'/"]',event.as_json())
+            self.assertIn('["r","'+relay,event.as_json())
 
     async def test_edit_relay_list_no_update(self):
         """
@@ -236,7 +238,7 @@ class ProfileUnitTests(TestCase):
         """
         keys = Keys.parse(TC_NSEC2)
         update, builder = await edit_relay_list(session_relays=TC_RELAYS, mod_relays={'wss://relay.primal.net/': None})
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(update, True)
         self.assertIn('["r","wss://relay.primal.net/"]',event.as_json())
         
@@ -246,7 +248,7 @@ class ProfileUnitTests(TestCase):
         """
         keys = Keys.parse(TC_NSEC2)
         update, builder = await edit_relay_list(session_relays={}, mod_relays={'wss://relay.primal.net/': "READ", 'wss://nostr.mom/': "WRITE", 'wss://relay.damus.io/': None, 'wss://relay.test/': "BUG"})
-        event = builder.to_event(keys)
+        event = builder.sign_with_keys(keys)
         self.assertEqual(update, True)
         self.assertIn('["r","wss://relay.primal.net/","read"]',event.as_json())
         self.assertIn('["r","wss://nostr.mom/","write"]',event.as_json())

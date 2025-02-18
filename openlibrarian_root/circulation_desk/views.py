@@ -92,7 +92,7 @@ async def login_rw_view(request, form_class, template_name, redirect_url_on_erro
     # If already logged in then redirect to the home page
     if await async_logged_in(request):
         return redirect('circulation_desk:index')
-    
+
     if request.method == 'GET':
         form = form_class()
         context = {
@@ -104,6 +104,7 @@ async def login_rw_view(request, form_class, template_name, redirect_url_on_erro
         return render(request, template_name, context)
 
     if request.method == 'POST':
+
         # Get the frontend data including npub and decrypted events
         data = json.loads(request.body)
         npub = data.get('npubValue', '')
@@ -139,8 +140,10 @@ async def login_nip07_view(request):
     # If already logged in then redirect to the home page
     if await async_logged_in(request):
         return redirect('circulation_desk:index')
-    
-    return render(request, 'circulation_desk/login_nip07.html')
+    if request.method == 'GET':
+        return render(request, 'circulation_desk/login_nip07.html')
+    else:
+        return await login_rw_view(request, None, 'circulation_desk/login_nip07.html', '/login/nip07')
 
 @csrf_exempt
 def logout_view(request):
@@ -289,24 +292,20 @@ async def fetch_events(request):
         refresh = data.get('refresh', '')
     except Exception as e:
         return JsonResponse({'raw_events': []})
-
-    if refresh == "":    
+    
+    if refresh == "":
         profile, relays, added_relays = await fetch_profile_info(npub=npub)
         tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
         raw_libraries, interests = await asyncio.gather(*tasks)
         nym = profile.get('nym', None)
-
-        raw_libraries = json.dumps(raw_libraries)
-        response = {'raw_events': [raw_libraries]}
-
+        response = {'raw_events': raw_libraries}
         await async_set_session_info(request, nsec=nsec, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests)
 
     else:
         if refresh == "shelves":
-            libraries = await fetch_libraries(npub=npub)
-            libraries = json.dumps(libraries)
-            response = {'raw_events': [libraries]}
+            relays = request.session.get('relays', None)
+            libraries = await fetch_libraries(npub=npub, relays=relays)
+            response = {'raw_events': libraries}
         else:
             response = {'raw_events': []}
-
     return JsonResponse(response)

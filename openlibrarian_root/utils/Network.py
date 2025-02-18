@@ -1,10 +1,10 @@
 # Various functions to allow for quick maintaince of Nostr Network connections
-from nostr_sdk import Client, Event, EventBuilder, EventSource, Keys, init_logger, LogLevel
+from nostr_sdk import Client, Event, EventBuilder, Keys, Filter, Events, init_logger, LogLevel, UnsignedEvent
 from datetime import timedelta
-import os, ast, json
+import os, ast, json, asyncio
 
 os.environ
-async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
+async def nostr_get(client: Client, filters: list | Filter, wait: int, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
     """Get events from relays and return"""
     # init_logger(LogLevel.INFO)
 
@@ -13,13 +13,16 @@ async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True
         relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
 
     # Add and Connect to relays
+    relay_urls = []
     if relays_dict is not None:
         for relay in relays_dict:
             if relays_dict[relay] in [None, "READ"]:
                     await client.add_relay(relay)
+                    relay_urls.append(relay)
     else:
         for relay in relays_list:
             await client.add_relay(relay)
+            relay_urls.append(relay)
     
     if connect:
         await client.connect()
@@ -28,16 +31,19 @@ async def nostr_get(client: Client, filters: list, wait: int, connect: bool=True
     if wait:
         td = timedelta(seconds=wait)
     else:
-        td = timedelta(seconds=10)
+        td = timedelta(seconds=15)
     
-    events = await client.get_events_of(filters, source=EventSource.relays(td))
+    if type(filters) == list:
+        events = await asyncio.gather(*[client.fetch_events(filter=f, timeout=td) for f in filters])
+    else:
+        events = await client.fetch_events(filter=filters, timeout=td)
 
     # Disconnect
     if disconnect:
         await client.disconnect()
 
     # Return
-    return events
+    return events.to_vec()
 
 async def nostr_push(events: list[Event]=None, relays_dict: dict=None, relays_list: list=None):
     """Push Signed Events to relays"""
@@ -95,5 +101,5 @@ def nostr_prepare(eventbuilders: list[EventBuilder]=None):
 
         events_list = []
         for builder in eventbuilders:
-            events_list.append(builder.to_event(keys).as_json())
+            events_list.append(builder.sign_with_keys(keys).as_json())
     return json.dumps(events_list)

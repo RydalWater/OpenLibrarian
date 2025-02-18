@@ -18,15 +18,14 @@ class SettingsFunctionalTestCase(TestCase):
         self.driver = webdriver.Firefox()
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
         self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
-        self.driver.find_element(by=By.ID, value="submit").click()
-        sleep(1)
+        self.driver.find_element(by=By.ID, value="login").click()
 
     def test_almanac_profile(self):
         """
         Test Almanac Profile Button
         """
+        sleep(10)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        sleep(1)
         self.driver.find_element(by=By.ID, value="profile").click()
         self.assertIn("/profile/", self.driver.current_url)
     
@@ -34,6 +33,7 @@ class SettingsFunctionalTestCase(TestCase):
         """
         Test Almanac Relays Button
         """
+        sleep(10)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         sleep(1)
         self.driver.find_element(by=By.ID, value="relays").click()
@@ -43,6 +43,7 @@ class SettingsFunctionalTestCase(TestCase):
         """
         Test Almanac Friends Button
         """
+        sleep(10)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         sleep(1)
         self.driver.find_element(by=By.ID, value="friends").click()
@@ -52,6 +53,7 @@ class SettingsFunctionalTestCase(TestCase):
         """
         Test Almanac Export/Import Button
         """
+        sleep(10)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         sleep(1)
         self.driver.find_element(by=By.ID, value="transfers").click()

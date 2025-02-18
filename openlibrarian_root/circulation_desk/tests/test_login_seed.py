@@ -41,7 +41,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.assertIn("/login-seed/", self.driver.current_url)
         self.assertIn("Invalid Seed", self.driver.page_source)
     
-    def test_valid_npub(self):
+    def test_valid_seed(self):
         """
         Test Valid Seed Words
         """
@@ -59,7 +59,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="word11").send_keys("next")
         self.driver.find_element(by=By.ID, value="word12").send_keys("quantum")
         self.driver.find_element(by=By.ID, value="login").click()
-        sleep(2)
+        sleep(15)
         self.assertNotIn("/login-seed/", self.driver.current_url)
     
     def test_back(self):

@@ -32,16 +32,18 @@
                             {% for key, values in friends.items %}
                             <ul class="list-group bg-secondary-container text-start">
                                 <li class="list-group-item container d-flex flex-row justify-content-md-between align-items-center">
-                                    <div class="col-md-2">
-                                        <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
-                                        <a class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
-                                    </div>
-                                    <div class="col-md-1">
-                                        {% if values.image %}
-                                            <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
-                                        {% else %}
-                                            <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
-                                        {% endif %}
+                                    <div class="d-inline-flex gap-1">
+                                        <div class="col-md-3 d-inline-flex gap-1">
+                                            <button id="copyButton" class="btn btn-sm btn-secondary" name="copy", value="{{ values.npub }}"><i class="fa-solid fa-copy"></i></button>
+                                            <a class="btn btn-sm btn-primary" name="profile", href="{% url 'library_card:library_card' values.npub %}"><i class="fa-solid fa-id-card"></i></a>
+                                        </div>
+                                        <div class="col-md-1">
+                                            {% if values.image %}
+                                                <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 35px; height: 35px;">
+                                            {% else %}
+                                                <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 35px; height: 35px;">
+                                            {% endif %}
+                                        </div>
                                     </div>
                                     <div class="col-md-8 ps-1 flex-grow-1">
                                         <p class="mb-0">{{ values.name }}</p>
@@ -77,9 +79,9 @@
                                     </div>
                                     <div class="col-1">
                                         {% if values.image %}
-                                            <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
+                                            <img src="{{ values.image }}" alt="img" class="rounded-circle" style="width: 35px; height: 35px;">
                                         {% else %}
-                                            <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 40px; height: auto;">
+                                            <img src="{% static 'images/person.jpg' %}" alt="img" class="rounded-circle" style="width: 35px; height: 35px;">
                                         {% endif %}
                                     </div>
                                     <div class="col-md-9 ps-1 flex-grow-1">

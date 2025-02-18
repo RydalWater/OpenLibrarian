@@ -3,8 +3,7 @@ from utils.Session import async_logged_in, async_get_session_info, async_set_ses
 from utils.Profile import edit_profile_info, edit_relay_list, fetch_profile_info
 from utils.Connections import fetch_social_list, add_follow, remove_follow
 from utils.Network import nostr_prepare
-from nostr_sdk import Keys
-import os, ast, copy
+import os, ast
 
 # Users Settings View
 async def user_settings(request):
