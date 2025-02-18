@@ -58,7 +58,7 @@ if (refreshButton) {
             const data = await response.json();
             if (data.raw_events != null) {
                 // Parse raw events as json array
-                let events = JSON.parse(data.raw_events);
+                let events = data.raw_events;
                 for (let i = 0; i < events.length; i++) {
                     let event = await parseEvent(events[i]);
                     // Extract element of event decrypt content and rebuild event

@@ -57,7 +57,7 @@ async def nostr_push(events: list[Event]=None, relays_dict: dict=None, relays_li
             relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
 
         # Add and Connect to relays
-        client = Client()
+        client = Client(None)
         if relays_dict is not None:
             for relay in relays_dict:
                 if relays_dict[relay] in [None, "WRITE"]:

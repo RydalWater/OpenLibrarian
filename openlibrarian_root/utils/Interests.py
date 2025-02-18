@@ -78,7 +78,7 @@ async def fetch_interests(npub: str, nym_relays: dict):
         event_id = event_id.hexdigest()
 
         # Filter
-        filter = Filter().author(PublicKey.parse(npub)).identifier(event_id).limit(10)
+        filter = Filter().author(PublicKey.parse(npub)).kind(Kind(30015)).identifier(event_id).limit(10)
 
         # Instantiate client
         client = Client(None)
@@ -91,7 +91,7 @@ async def fetch_interests(npub: str, nym_relays: dict):
 
         # Convert events to interests
         for event in events:
-            if event.id() == event_id:
+            if event.tags().identifier() == event_id:
                 interests = Interests(event=event)
                 event_id = None
                 break
