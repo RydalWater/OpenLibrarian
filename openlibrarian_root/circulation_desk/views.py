@@ -264,7 +264,7 @@ async def event_publisher(request):
         if post:
             # Push events to relays
             try:
-                await nostr_push(events=post)
+                await nostr_push(events=post, relays_dict=session['relays'])
                 message = "Success: Updated."
             except Exception as e:
                 message = "Unable to push event to relays."
