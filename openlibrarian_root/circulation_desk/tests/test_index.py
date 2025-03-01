@@ -67,7 +67,7 @@ class BaseUnitTests(TestCase):
     def setUp(self):
         self.url = "/"
         self.template = "circulation_desk/index.html"
-        self.content = ["Circulation Desk", "Sign-up", "Log-in"]
+        self.content = ["Circulation Desk", "Sign-up", "Log-in","an open social network protocol","heart of this app is built on the brilliant work"]
         self.redirect = False
     
     # Test page returns a 200 response
@@ -131,12 +131,18 @@ class IndexUnitTests(TestCase):
         session.save()
         response = self.client.get("/")
         self.assertIn(b"Read-Only Mode", response.content)
+        self.assertIn(b"Shareable Profile", response.content)
         self.assertIn(b'id="logout"', response.content)
         self.assertIn(b'id="home"', response.content)
         self.assertIn(b'id="settings"', response.content)
         self.assertIn(b'id="social"', response.content)
         self.assertIn(b'id="cataglogue"', response.content)
         self.assertIn(b'id="library"', response.content)
+        self.assertNotIn(b"Sign-up", response.content)
+        self.assertNotIn(b"Log-in", response.content)
+        self.assertNotIn(b"an open social network protocol", response.content)
+        self.assertNotIn(b"heart of this app is built on the brilliant work", response.content)
+
     
     def test_logged_in_nsec(self):
         """
@@ -148,13 +154,17 @@ class IndexUnitTests(TestCase):
         session.save()
         response = self.client.get("/")
         self.assertNotIn(b"Read-Only Mode", response.content)
-        self.assertIn(b"Shareable Profile", response.content)
+        self.assertIn(b"My Shareable Profile", response.content)
         self.assertIn(b'id="logout"', response.content)
         self.assertIn(b'id="home"', response.content)
         self.assertIn(b'id="settings"', response.content)
         self.assertIn(b'id="social"', response.content)
         self.assertIn(b'id="cataglogue"', response.content)
         self.assertIn(b'id="library"', response.content)
+        self.assertNotIn(b"Sign-up", response.content)
+        self.assertNotIn(b"Log-in", response.content)
+        self.assertNotIn(b"an open social network protocol", response.content)
+        self.assertNotIn(b"heart of this app is built on the brilliant work", response.content)
     
     def test_urls_of_links(self):
         """

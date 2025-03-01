@@ -6,52 +6,92 @@
         <div class="chapter-header">
             <p>Circulation Desk</p>
         </div>
-        <p class="book-text">
-            <span class="dropcap">O</span>pen Librarian was created to help you track and share your 
-            love of books and reading. It is still early in the development so please
-            forgive, or better still, <i><a href="https://github.com/RydalWater/OpenLibrarian/issues" target="_blank">report any bugs</a></i> you find.
-        </p>
-        <p class="book-text">
-            It is built on <i><a href="https://nostr.com/" target="_blank">Nostr</a></i> which is an open social network protocol where you
-            are free to bring your profile and connections with you, or even take them to other applications on the network.
-        </p>
-        <p class="book-text">
-            The heart of this app is built on the brilliant work of the
-            <i><a href="https://openlibrary.org" target="_blank">Open Library</a></i> team. Check out their work and contribute to it.
-        </p>
-        {% if session.nsec %}
-            {% if session.profile.displayname %}
-                <p class="fw-bold book-text text-center">Welcome back, {{ session.profile.displayname }}!</p>
-            {% elif session.nym %}
-                <p class="fw-bold book-text text-center">Welcome back, {{ session.nym }}!</p>
-            {% else %}
-                <p class="fw-bold book-text text-center">Welcome back!</p>
-                <p class="book-text text-center">Head over to the Almanac to update your profile.</p>
+        {% if session.npub %}
+
+            <p class="book-text">
+                <span class="dropcap">O</span>pen Librarian was created to help you track and share your 
+                love of books and reading. Please <i><a href="https://github.com/RydalWater/OpenLibrarian/issues" target="_blank">report any bugs</a></i> you find on GitHub.
+            </p>
+
+            <div class="container my-2">
+                <div class="row">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <a id="profile" href="{% url 'almanac:settings' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-gear"></i> Almanac (Settings)</a>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <a id="relays" href="{% url 'cataglogue:cataglogue' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-magnifying-glass"></i> Catalogue (Search)</a>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <a id="friends" href="{% url 'library:library' %}" class="btn btn-sm btn-primary w-100"><i class="fa-solid fa-book-open"></i> Library (My Books)</a>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-1"></div>
+                    <div class="col-10">
+                        <a id="friends" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-100"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+                    </div>
+                </div>
+            </div>
+
+            {% if session.nsec %}
+                {% if session.profile.displayname %}
+                    <p class="fw-bold book-text text-center">Welcome, {{ session.profile.displayname }}!</p>
+                {% elif session.nym %}
+                    <p class="fw-bold book-text text-center">Welcome, {{ session.nym }}!</p>
+                {% else %}
+                    <p class="book-text"> You've not yet set up your profile so we don't know what to call you. Head over to the Almanac to update your profile.</p>
+                {% endif %}
             {% endif %}
+
+            <p class="book-text">
+                Remember, you can share a profile with anyone on the network and let them see it through the owners eyes in read-only mode.
+            </p>
+
+            <!-- Share my profile button via npub and card section -->
+            <div class="container mt-2">
+                <a id="share" href="{% url 'library_card:library_card' npub=session.npub %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-share-nodes"></i> 
+                    {% if session.nsec %}
+                        My Shareable Profile
+                    {% else %}
+                        Shareable Profile
+                    {% endif %}
+                </a>
+            </div>
+    
+        {% else %}
+            <p class="book-text">
+                <span class="dropcap">O</span>pen Librarian was created to help you track and share your 
+                love of books and reading. It is still early in the development so please
+                forgive, or better still, <i><a href="https://github.com/RydalWater/OpenLibrarian/issues" target="_blank">report any bugs</a></i> you find.
+            </p>
+            <p class="book-text">
+                It is built on <i><a href="https://nostr.com/" target="_blank">Nostr</a></i> which is an open social network protocol where your
+                profile, connections and other data can be accessed from many different applications on the network without needing to sign-up to each service.
+            </p>
+            <p class="book-text">
+                The heart of this app is built on the brilliant work of the
+                <i><a href="https://openlibrary.org" target="_blank">Open Library</a></i> team. Check out their work and contribute to it.
+            </p>
         {% endif %}
     </div>
-{% if session.npub %}
-    <!-- Share my profile button via npub and card section -->
-    <div class="container mt-2">
-        <a id="share" href="{% url 'library_card:library_card' npub=session.npub %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-share-nodes"></i> 
-            {% if session.nsec %}
-                My Shareable Profile
-            {% else %}
-                Shareable Profile
-            {% endif %}
-        </a>
-    </div>
-{% else %}
-    <div class="container">
-        <div class="row">
-            <div class="col">
-                <a id="login" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
-            </div>
-            <div class="col">
-                <a id="signup" href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
+    {% if not session.npub %}
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <a id="login" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user"></i> Log-in</a>
+                </div>
+                <div class="col">
+                    <a id="signup" href="{% url 'circulation_desk:create-account' %}" class="btn btn-sm btn-primary"><i class="fa-solid fa-user-plus"></i> Sign-up</a>
+                </div>
             </div>
         </div>
-    </div>
-{% endif %}
+    {% endif %}
 
 {% endblock content %}

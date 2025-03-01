@@ -14,7 +14,8 @@ async def user_settings(request):
     # Otherwise return the user profile
     else:
         session = await async_get_session_info(request)
-        return render(request, 'almanac/user_setting.html', session)
+        context = {"session": session}
+        return render(request, 'almanac/user_setting.html', context=context)
 
 
 # User profile view
