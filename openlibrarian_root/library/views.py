@@ -95,7 +95,6 @@ async def library_shelves(request):
                 post_type = "moved"
             elif request.POST.get('finished'):
                 post_type = "finished"
-                print("Finished")
 
             # Set hidden
             if is_hidden:

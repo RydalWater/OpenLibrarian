@@ -79,8 +79,14 @@ async def nostr_push(events: list[Event]=None, relays_dict: dict=None, relays_li
 
             await client.disconnect()
         else:
-            print("TESTMODE: Event not posted.")
+            print("\nTESTMODE: Running in test mode.")
+            print(f"TESTMODE: {len(events)} Events found.")
+            push_relays = await client.relays()
+            print(f"TESTMODE: {push_relays.keys()} Relays found.")
             for event in events:
+                i = events.index(event)
+                print(f"\nTESTMODE: Event {i+1}.")
+                print(f"TESTMODE: {event.author().to_bech32()} Author.")
                 print(f"TESTMODE: {event.as_json()}")
             print("")
     except Exception as e:
