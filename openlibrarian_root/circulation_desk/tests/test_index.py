@@ -1,6 +1,9 @@
 from django.test import TestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
+from time import sleep
+
+TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
 
 # Functional Test Cases (user action)
 class BaseFunctionalTest(TestCase):
@@ -53,6 +56,54 @@ class IndexFunctionalTests(TestCase):
         self.driver.find_element(by=By.ID, value="signup").click()
         self.assertIn("/create-account/", self.driver.current_url)
     
+    def test_click_almanac(self):
+        """
+        Click on Almanac button (logged in)
+        """
+        self.driver.get("http://127.0.0.1:8000/login-npub/")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
+        self.driver.find_element(by=By.ID, value="login").click()
+        sleep(3)
+        self.driver.get("http://127.0.0.1:8000/")
+        self.driver.find_element(by=By.ID, value="almanac").click()
+        self.assertIn("/almanac/", self.driver.current_url)
+    
+    def test_click_catalogue(self):
+        """
+        Click on Catalogue button (logged in)
+        """
+        self.driver.get("http://127.0.0.1:8000/login-npub/")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
+        self.driver.find_element(by=By.ID, value="login").click()
+        sleep(3)
+        self.driver.get("http://127.0.0.1:8000/")
+        self.driver.find_element(by=By.ID, value="catalogue").click()
+        self.assertIn("/catalogue/", self.driver.current_url)
+    
+    def test_click_library(self):
+        """
+        Click on Library button (logged in)
+        """
+        self.driver.get("http://127.0.0.1:8000/login-npub/")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
+        self.driver.find_element(by=By.ID, value="login").click()
+        sleep(3)
+        self.driver.get("http://127.0.0.1:8000/")
+        self.driver.find_element(by=By.ID, value="library").click()
+        self.assertIn("/library/", self.driver.current_url)
+    
+    def test_click_logout(self):
+        """
+        Click on logout button (logged in)
+        """
+        self.driver.get("http://127.0.0.1:8000/login-npub/")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
+        self.driver.find_element(by=By.ID, value="login").click()
+        sleep(3)
+        self.driver.get("http://127.0.0.1:8000/")
+        self.driver.find_element(by=By.ID, value="logout").click()
+        self.assertIn("/logout/", self.driver.current_url)
+    
     def tearDown(self):
         """
         Tear Down function to close driver
@@ -67,7 +118,7 @@ class BaseUnitTests(TestCase):
     def setUp(self):
         self.url = "/"
         self.template = "circulation_desk/index.html"
-        self.content = ["Circulation Desk", "Sign-up", "Log-in"]
+        self.content = ["Circulation Desk", "Sign-up", "Log-in","an open social network protocol","heart of this app is built on the brilliant work"]
         self.redirect = False
     
     # Test page returns a 200 response
@@ -96,7 +147,7 @@ class BaseUnitTests(TestCase):
         for item in self.content:
             self.assertIn(item.encode(), response.content)
 
-    # Test  redirect when loggged
+    # Test redirect when logged
     def test_logged_redirect(self):
         """
         BASE: Test the redirect response when logged in
@@ -127,35 +178,53 @@ class IndexUnitTests(TestCase):
         Check Logged in Buttons (NPUB)
         """
         session = self.client.session
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["npub"] = TC_NPUB
         session.save()
         response = self.client.get("/")
         self.assertIn(b"Read-Only Mode", response.content)
+        self.assertIn(b"Shareable Profile", response.content)
         self.assertIn(b'id="logout"', response.content)
         self.assertIn(b'id="home"', response.content)
         self.assertIn(b'id="settings"', response.content)
         self.assertIn(b'id="social"', response.content)
-        self.assertIn(b'id="glossary"', response.content)
+        self.assertIn(b'id="catalogue"', response.content)
         self.assertIn(b'id="library"', response.content)
+        self.assertIn(b'Almanac (Settings)', response.content)
+        self.assertIn(b'Catalogue (Search)', response.content)
+        self.assertIn(b'Library (My Books)', response.content)
+        self.assertIn(b'Logout', response.content)
+        self.assertNotIn(b"Sign-up", response.content)
+        self.assertNotIn(b"Log-in", response.content)
+        self.assertNotIn(b"an open social network protocol", response.content)
+        self.assertNotIn(b"heart of this app is built on the brilliant work", response.content)
+
     
     def test_logged_in_nsec(self):
         """
         Check Logged in Buttons (NSEC)
         """
         session = self.client.session
-        session["nsec"] = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
-        session["npub"] = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+        session["nsec"] = "Y"
+        session["npub"] = TC_NPUB
         session.save()
         response = self.client.get("/")
         self.assertNotIn(b"Read-Only Mode", response.content)
-        self.assertIn(b"Shareable Profile", response.content)
+        self.assertIn(b"My Shareable Profile", response.content)
         self.assertIn(b'id="logout"', response.content)
         self.assertIn(b'id="home"', response.content)
         self.assertIn(b'id="settings"', response.content)
         self.assertIn(b'id="social"', response.content)
-        self.assertIn(b'id="glossary"', response.content)
+        self.assertIn(b'id="catalogue"', response.content)
         self.assertIn(b'id="library"', response.content)
-    
+        self.assertIn(b'Almanac (Settings)', response.content)
+        self.assertIn(b'Catalogue (Search)', response.content)
+        self.assertIn(b'Library (My Books)', response.content)
+        self.assertIn(b'Logout', response.content)
+        self.assertNotIn(b"Sign-up", response.content)
+        self.assertNotIn(b"Log-in", response.content)
+        self.assertNotIn(b"an open social network protocol", response.content)
+        self.assertNotIn(b"heart of this app is built on the brilliant work", response.content)
+
     def test_urls_of_links(self):
         """
         Check URLs of links on page
@@ -164,5 +233,4 @@ class IndexUnitTests(TestCase):
         self.assertIn(b'href="https://github.com/RydalWater/OpenLibrarian/issues"', response.content)
         self.assertIn(b'href="https://nostr.com/"', response.content)
         self.assertIn(b'href="https://openlibrary.org"', response.content)
-
     

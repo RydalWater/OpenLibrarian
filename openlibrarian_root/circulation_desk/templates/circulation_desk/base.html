@@ -89,9 +89,9 @@
                     <a id="logout" class="navbar-brand text-on-secondary" href="{% url 'circulation_desk:logout' %}"><i class="fa-solid fa-right-from-bracket"></i></a>
                     <a id="settings" class="navbar-brand text-on-secondary" href="{% url 'almanac:settings' %}"><i class="fa-solid fa-gear"></i></a>
                     <a id="home" class="navbar-brand text-on-secondary" href="{% url 'circulation_desk:index' %}"><i class="fa-solid fa-house"></i></a>
-                    <a id="social" class="navbar-brand text-on-secondary disabled" href="{% url 'circulation_desk:index' %}"><i class="fa-solid fa-comments"></i></a>
-                    <a id="glossary" class="navbar-brand text-on-secondary" href="{% url 'glossary:glossary' %}"><i class="fa-solid fa-map-location-dot"></i></a>
-                    <a id="library" class="navbar-brand text-on-secondary" href="{% url 'library:library' %}"><i class="fa-solid fa-book"></i></a>
+                    <!-- <a id="social" class="navbar-brand text-on-secondary" href="{% url 'circulation_desk:index' %}"><i class="fa-solid fa-comments"></i></a> -->
+                    <a id="catalogue" class="navbar-brand text-on-secondary" href="{% url 'catalogue:catalogue' %}"><i class="fa-solid fa-magnifying-glass"></i></a>
+                    <a id="library" class="navbar-brand text-on-secondary" href="{% url 'library:library' %}"><i class="fa-solid fa-book-open"></i></a>
                 </div>
             </nav>
         {% endif %}

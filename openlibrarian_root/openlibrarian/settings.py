@@ -53,7 +53,7 @@ INSTALLED_APPS = [
     # Site Apps
     'circulation_desk',
     'almanac',
-    'glossary',
+    'catalogue',
     'library',
     'library_card',
     'archives',

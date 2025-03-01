@@ -74,8 +74,9 @@ class CardFunctionalTestCase(TestCase):
         Test explore button (not logged in)
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        sleep(1)
+        sleep(5)
         self.driver.find_element(by=By.ID, value="explore").click()
+        sleep(5)
         self.assertNotIn(f"/card/{TC_NPUB}/", self.driver.current_url)
         self.assertIn("Read-Only Mode", self.driver.page_source)
 
@@ -84,7 +85,7 @@ class CardFunctionalTestCase(TestCase):
         Test signup button (not logged in)
         """
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        sleep(1)
+        sleep(5)
         self.driver.find_element(by=By.ID, value="new").click()
         self.assertIn("/create-account/", self.driver.current_url)
 
@@ -95,13 +96,13 @@ class CardFunctionalTestCase(TestCase):
         self.driver.get(f"http://127.0.0.1:8000/login-nsec/")
         self.driver.find_element(by=By.ID, value="nsec").send_keys(TC_NSEC)
         self.driver.find_element(by=By.ID, value="login").click()
-        sleep(10)
+        sleep(5)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
-        sleep(20)
+        sleep(2)
         self.assertIn("Home", self.driver.page_source)
         self.assertIn("Share", self.driver.page_source)
         self.driver.find_element(by=By.ID, value="home").click()
-        sleep(10)
+        sleep(5)
         self.assertIn("/", self.driver.current_url)
         self.assertIn("Circulation Desk", self.driver.page_source)
 

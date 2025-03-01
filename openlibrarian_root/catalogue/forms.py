@@ -1,7 +1,7 @@
 from django import forms
 
 class SearchForm(forms.Form):
-    """Search Form for Glossary"""
+    """Search Form for Catalogue"""
     # Main Search field
     search_field = forms.CharField(
         required=True,

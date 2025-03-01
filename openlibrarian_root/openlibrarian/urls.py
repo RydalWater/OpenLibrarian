@@ -23,8 +23,8 @@ urlpatterns = [
     path('', include('circulation_desk.urls')),
     # User profile
     path('almanac/', include('almanac.urls')),
-    # Glossary
-    path('glossary/', include('glossary.urls')),
+    # Catalogue
+    path('catalogue/', include('catalogue.urls')),
     # Library
     path('library/', include('library.urls')),
     # Library Card

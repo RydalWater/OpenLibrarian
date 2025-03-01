@@ -3,10 +3,12 @@ from django.test import TestCase, Client
 from django.urls import reverse
 from nostr_sdk import Keys, EventBuilder
 
-dum_event = EventBuilder.text_note("This").sign_with_keys(Keys.generate()).as_json()
+TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+TC_NSEC = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+
+dum_event = EventBuilder.text_note("This").sign_with_keys(Keys.parse(TC_NSEC)).as_json()
 
 invalid_event = re.sub(r'"sig":"', r'"sig":"' + 'WRONG', dum_event)
-
 
 class TestEventPublisher(TestCase):
 
@@ -67,11 +69,16 @@ class TestEventPublisher(TestCase):
         output = capturedOutput.getvalue().strip()
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {'event_message': 'Success: Updated.'})
-        event_str = output.split("\n")[2]
+        print(output.split("\n"))
+        event_count = output.split("\n")[3]
+        event_author = output.split("\n")[7]
+        event_str = output.split("\n")[-1]
+        self.assertEqual(event_count, 'TESTMODE: 1 Events found.')
+        self.assertEqual(event_author, f'TESTMODE: {TC_NPUB} Author.')
         self.assertIn('"content":"This"', event_str)
         self.assertIn('"sig":"', event_str)
         self.assertIn('"created_at":', event_str)
         self.assertIn('"kind":1', event_str)
-        self.assertIn('"pubkey":"', event_str)
+        self.assertIn(f'"pubkey":"{Keys.parse(TC_NSEC).public_key().to_hex()}"', event_str)
         self.assertIn('"id":"', event_str)
         self.assertIn('"tags":[]', event_str)

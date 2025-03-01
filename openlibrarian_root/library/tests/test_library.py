@@ -22,7 +22,7 @@ class LibraryFunctionalTestCase(TestCase):
         """
         Test Library Shelves Button
         """
-        sleep(10)
+        sleep(5)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="shelves").click()
         self.assertIn("/shelves/", self.driver.current_url)
