@@ -5,7 +5,7 @@
 {% block content %}
 
 <div class="container my-3">
-    <div class="profile-card position-relative border border-1 border-primary">
+    <div class="profile-card position-relative border border-1 border-primary placeholder-glow">
         <!-- Banner/Stripe -->
         <div class="position-absolute start-0 end-0 bg-on-primary-container" style="height: 105px; z-index: 0; pointer-events: none;"></div>
         <!-- Logo on left -->
@@ -22,110 +22,305 @@
                 <span class="d-block text-on-primary" style="font-size: 1rem; white-space: nowrap;"><i>Library Card</i></span>
             </div>
         </div>
-        <div class="text-center" style="z-index: 1; position: relative;">
-            {% if picture != None %}
-                <img src="{{ picture }}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
-            {% else %}
-                <img src="{% static 'images/person.jpg' %}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
-            {% endif %}
-            {% if displayname %}
-                <h4>{{ displayname }}</h4>
-            {% elif nym %}
-                <h4>{{ nym }}</h4>
-            {% else %}
-                <h4>{{ username }}</h3>
-            {% endif %}
-        </div>
-        {% if about != None %}
-            <p class="text-center">{{ about }}</p>
-        {% else %}
-            <p class="text-center">We do not have the words to describe this character.</p>
-        {% endif %}
-        <hr>
-        <div class="mb-3">
-            <h5>Reading</h5>
-            <ul class="list-group">
-                {% for key, book in current_books.items %}
-                    {% if key == "0" %}
-                        <li class="list-group-item">
-                            <p class="fw-lighter fw-semibold lh-sm"><i class="fw-lighter fst-italic">{{ book.t}}</i></p>
-                        </li>
-                    {% else %}
-                        <li class="list-group-item">
-                            <p class="fw-lighter fw-semibold lh-sm">{{ book.t }}<i class="fw-lighter fst-italic"> by {{ book.a }}</i></p>
-                            {% if book.i == "hidden" %}
-                                <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
-                                    <div class="progress-bar progress-bar-striped bg-secondary" style="width: 50%"></div>
-                                </div>
-                            {% else %}
-                                {% for isbn, progress_obj in progress.items %}
-                                    {% if isbn == book.i %}
-                                        <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="{{ progress_obj.progress }}" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
-                                            <div class="progress-bar progress-bar-striped" style="width: {{ progress_obj.progress }}%"></div>
-                                        </div>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                        </li>
-                    {% endif %}
-                {% endfor %}
-            </ul>
-        </div>
-        <div class="row mb-3">
-            <div class="col-6 col-md-3 mb-3">
-                <h6>Wait List</h6>
-                <span class="badge bg-primary">{{ to_read }}</span>
+        <div id="actual-content" hidden>
+            <div class="text-center" style="z-index: 1; position: relative;">
+                <img id="picture" src="" alt="Profile Picture" class="rounded mb-3 border border-primary border-2" style="height: 120px; width: 120px;">
+                <h4 id="name"></h4>
             </div>
-            <div class="col-6 col-md-3 mb-3">
-                <h6>Finished</h6>
-                <span class="badge bg-primary">{{ read }}</span>
+            <p class="text-center" id="about"></p>
+        
+            <hr>
+            <div class="mb-3">
+                <h5>Reading</h5>
+                <ul class="list-group" id="reading-list">
+                </ul>
             </div>
-            <div class="col-6 col-md-3 mb-3">
-                <h6>Challenges</h6>
-                <span class="badge bg-secondary">Soon<sup>TM</sup></span>
-            </div>
-            <div class="col-6 col-md-3 mb-3">
-                <h6>Badges</h6>
-                <span class="badge bg-secondary">Soon<sup>TM</sup></span>
-            </div>
-        </div>
-        <div>
-            <h5>Interests</h5>
-            <div class="interests">
-                {% for interest in interests %}
-                    <span>{{ interest }}</span>
-                {% endfor %}
-            </div>
-        </div>
-        <hr>
-        <form method="POST">
-            {% csrf_token %}
-            <div class="text-center">
-                {% if owner %}
-                    <h5>Share your Profile with others!</h5>
-                {% else %}
-                    <h5>Explore my Profile or Build your Own!</h5>
-                {% endif %}
-                <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
-                    {% if owner %}
-                        <button type="submit" id="home" name="home" value="true" class="btn btn-sm btn-secondary w-50">
-                            <i class="fa-solid fa-home"></i> Home
-                        </button>
-                        <button id="copyButton" value="{{ request.build_absolute_uri }}" name="copy" class="btn btn-sm btn-primary w-50">
-                            <i class="fa-solid fa-share"></i> Share
-                        </button>
-                    {% else %}
-                        <button type="submit" id="explore" name="explore" value="true" class="btn btn-sm btn-secondary w-50">
-                            <i class="fa-solid fa-magnifying-glass"></i> Explore
-                        </button>
-                        <button type="submit" id="new" name="new" value="true" class="btn btn-sm btn-primary w-50">
-                            <i class="fa-solid fa-plus"></i> New
-                        </button>
-                    {% endif %}
+            <div class="row mb-3">
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Wait List</h6>
+                    <span class="badge bg-primary" id="wait-list"></span>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Finished</h6>
+                    <span class="badge bg-primary" id="finished"></span>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Challenges</h6>
+                    <span class="badge bg-secondary">Soon<sup>TM</sup></span>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Badges</h6>
+                    <span class="badge bg-secondary">Soon<sup>TM</sup></span>
                 </div>
             </div>
-        </form>
+            <div>
+                <h5>Interests</h5>
+                <div class="interests" id="interests">
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <h5 id="button-label">Share your Profile with others!</h5>
+                <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+                    <button type="submit" id="home" name="home" value="true" class="btn btn-sm btn-secondary w-50" hidden>
+                        <i class="fa-solid fa-home"></i> Home
+                    </button>
+                    <button id="copyButton" value="{{ request.build_absolute_uri }}" name="copy" class="btn btn-sm btn-primary w-50" hidden>
+                        <i class="fa-solid fa-share"></i> Share
+                    </button>
+                    <button type="submit" id="explore" name="explore" value="true" class="btn btn-sm btn-secondary w-50" hidden>
+                        <i class="fa-solid fa-magnifying-glass"></i> Explore
+                    </button>
+                    <button type="submit" id="new" name="new" value="true" class="btn btn-sm btn-primary w-50" hidden>
+                        <i class="fa-solid fa-plus"></i> New
+                    </button>
+                </div>
+                <div id="spinnerBox" class="col mt-2 not-visible">
+                    <div class="spinner-border" role="status"></div>
+                </div>
+            </div>
+        </div>
+        <div id="placeholder-content">
+            <div class="text-center" style="z-index: 1; position: relative;">
+                <img src="{% static 'images/person.jpg' %}" alt="Profile Picture" class="rounded mb-3 border border-primary border-2 placeholder" style="height: 120px; width: 120px;">
+                <h4>
+                    <span class="placeholder col-6"> </span>
+                </h4>
+            </div>
+            <p class="text-center">
+                <span class="placeholder col-10"> </span>
+            </p>
+            <hr>
+            <div class="mb-3">
+                <h5>Reading</h5>
+                <ul class="list-group">
+                    <li class="list-group-item">
+                        <p class="fw-lighter fw-semibold lh-sm"><i class="fw-lighter fst-italic"></i>
+                            <span class="placeholder col-12"></span>
+                        </p>
+                        <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
+                            <div class="placeholder progress-bar progress-bar-striped bg-secondary" style="width: 50%"></div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="row mb-3">
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Wait List</h6>
+                    <span class="badge bg-primary placeholder col-8"> </span>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Finished</h6>
+                    <span class="badge bg-primary placeholder col-8"> </span>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Challenges</h6>
+                    <span class="badge bg-secondary placeholder col-8"> </span>
+                </div>
+                <div class="col-6 col-md-3 mb-3">
+                    <h6>Badges</h6>
+                    <span class="badge bg-secondary placeholder col-8"> </span>
+                </div>
+            </div>
+            <div>
+                <h5>Interests</h5>
+                <div class="interests">
+                    <span class="bg-secondary placeholder col-3"> </span>
+                    <span class="bg-secondary placeholder col-3"> </span>
+                    <span class="bg-secondary placeholder col-3"> </span>
+                </div>
+            </div>
+            <hr>
+            <div class="text-center">
+                <h5>
+                    <span class="placeholder col-6"></span>
+                </h5>
+                <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+                    <button class="btn btn-sm btn-secondary w-50" disabled>
+                        <i class="fa-solid fa-magnifying-glass"></i> ...
+                    </button>
+                    <button class="btn btn-sm btn-primary w-50" disabled>
+                        <i class="fa-solid fa-plus"></i> ...
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Get npub and go load data
+        const url = new URL(window.location.href);
+        const npub = url.pathname.match(/\/card\/([^\/]+)/)[1];
+        const response = await fetch(`/card/card-data/${npub}`, {
+            headers: { 'Content-Type': 'application/json' },
+        });
+        const responseData = await response.json();
+
+        // Update data on page
+        const placeholder = document.getElementById('placeholder-content');
+        const actualContent = document.getElementById('actual-content');
+        const nameField = document.getElementById('name');
+        const aboutField = document.getElementById('about');
+        const pictureField = document.getElementById('picture');
+        const interestsField = document.getElementById('interests');
+        const readingField = document.getElementById('reading-list');
+        const waitField = document.getElementById('wait-list');
+        const finishedField = document.getElementById('finished');
+        const buttonLabel = document.getElementById('button-label');
+        const homeButton = document.getElementById('home');
+        const shareButton = document.getElementById('copyButton');
+        const exploreButton = document.getElementById('explore');
+        const newButton = document.getElementById('new');
+        const spinner = document.getElementById('spinnerBox');
+
+        if (responseData) {
+            // Get the relevant data objects
+            displayname = responseData.displayname;
+            if (displayname == "None" || displayname == "" || displayname == null) {
+                if (responseData.nym == "None" || responseData.nym == "" || responseData.nym == null) {
+                    displayname = "Anon";
+                } else {
+                    displayname = responseData.nym;
+                }
+            }
+            about = responseData.about;
+            if (about == "None" || about == "" || about == null) {
+                about = "We do not have the words to describe this character.";
+            }
+            picture = responseData.picture;
+            if (picture == "None" || picture == "" || picture == null) {
+                picture = "{% static 'images/person.jpg' %}";
+            }
+            interests = responseData.interests;
+            current_books = responseData.current_books;
+            to_read = responseData.to_read;
+            finished = responseData.read;
+            owner = responseData.owner;
+            progress = responseData.progress;
+
+            // Replace placeholder content
+            placeholder.hidden = true;
+            actualContent.hidden = false;
+            nameField.textContent = displayname;
+            aboutField.textContent = about;
+            pictureField.setAttribute('src', picture);
+            
+            if (current_books) {
+                // Check if the first key for current book == 0
+                if (Object.keys(current_books)[0] == "0") {
+                    const book = document.createElement('li');
+                    book.classList.add('list-group-item');
+                    var title = current_books["0"].t;
+                    book.innerHTML = `<p class="fw-lighter fw-semibold lh-sm"><i class="fw-lighter fst-italic">${title}</i></p>`
+                    readingField.appendChild(book);
+                } else {
+                    for (let i = 0; i < Object.keys(current_books).length; i++) {
+                        const readingBook = current_books[Object.keys(current_books)[i]];
+                        var title = readingBook.t;
+                        var author = readingBook.a;
+                        var isbn = readingBook.i;
+                        
+                        const book = document.createElement('li');
+                        book.classList.add('list-group-item');
+
+                        if (isbn == "hidden") {
+                            book.innerHTML = `
+                                <p class="fw-lighter fw-semibold lh-sm">${title}<i class="fw-lighter fst-italic"> by ${author}</i></p>
+                                <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
+                                    <div class="progress-bar progress-bar-striped bg-secondary" style="width: 50%"></div>
+                                </div>
+                            `
+                        } else {
+                            let prog = progress[isbn].progress;
+                            book.innerHTML = `
+                                <p class="fw-lighter fw-semibold lh-sm">${title}<i class="fw-lighter fst-italic"> by ${author}</i></p>
+                                <div class="row progress mb-1 mx-1" role="progressbar" aria-label="progressbar" aria-valuenow="${prog}" aria-valuemin="0" aria-valuemax="100"  style="height: 5px">
+                                    <div class="progress-bar progress-bar-striped" style="width: ${prog}%"></div>
+                                </div>
+                            `
+                        }
+                        readingField.appendChild(book);
+                    };
+                }
+            }
+
+            waitField.textContent = to_read;
+            finishedField.textContent = finished;
+
+            if (interests) {
+                for (let i = 0; i < interests.length; i++) {
+                    const interest = document.createElement('span');
+                    interest.textContent = interests[i];
+                    interestsField.appendChild(interest);
+                }
+            }
+
+            if (owner) {
+                buttonLabel.textContent = "Share Profile with others!";
+                homeButton.hidden = false;
+                shareButton.hidden = false;
+                exploreButton.hidden = true;
+                newButton.hidden = true;
+            } else {
+                buttonLabel.textContent = "Explore my Profile or Build your Own!";
+                homeButton.hidden = true;
+                shareButton.hidden = true;
+                exploreButton.hidden = false;
+                newButton.hidden = false;
+            }
+        }
+
+        // New sign-up button
+        newButton.addEventListener('click', () => {
+            // Prevent default behavior
+            event.preventDefault();
+            // Clear backend session data using logout view
+            return fetch('/logout/', {
+                method: 'POST'
+            }).then(() => {
+                // Redirect to signup page
+                window.location.href = "/create-account/";
+            });
+        });
+
+        // Home button
+        homeButton.addEventListener('click', () => {
+            // Prevent default behavior
+            event.preventDefault();
+            // Redirect to home page
+            window.location.href = "/";
+        });
+
+        // Explore button
+        exploreButton.addEventListener('click', () => {
+            // Prevent default behavior
+            event.preventDefault();
+            buttonLabel.textContent = "Logging into Read-Only Mode. See the world through my eyes...";
+            exploreButton.disabled = true;
+            newButton.disabled = true;
+            spinner.classList.remove("not-visible");
+
+            // Clear backend session data using logout view
+            return fetch('/logout/', {
+                method: 'POST'
+            }).then( async () => {
+                const exploreResponse = await fetch(`/card/explore-profile/${npub}`, {
+                    headers: { 'Content-Type': 'application/json' },
+                });
+                const exploreData = await exploreResponse.json();
+                if (exploreData.success == true) {
+                    // Redirect to homepage
+                    window.location.href = "/";
+                } else {
+                    // Redirect to login page
+                    window.location.href = "/login-npub/";
+                }
+            });
+
+        });
+    });
+</script>
 
 {% endblock content %}
