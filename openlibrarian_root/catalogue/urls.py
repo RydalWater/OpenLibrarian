@@ -1,10 +1,10 @@
 from django.urls import path
 from . import views
 
-app_name = 'cataglogue'
+app_name = 'catalogue'
 urlpatterns = [
-    # Cataglogue Index page
-    path('', views.cataglogue, name='cataglogue'),
+    # Catalogue Index page
+    path('', views.catalogue, name='catalogue'),
 
     # Search page
     path('search/', views.search, name='search'),

@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from cataglogue.forms import SearchForm
+from catalogue.forms import SearchForm
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, cache_get, cache_set, cache_key, cache_delete
 from utils.OpenLibrary import search_books
 from utils.Book import Book
@@ -11,7 +11,7 @@ from utils.Constants import INTERESTS_HASHMAP, INTERESTS
 from utils.Network import nostr_prepare
 
 
-async def cataglogue(request):
+async def catalogue(request):
     """Returns Simple view for Search."""
     # Return to index if the user profile is not logged in
     if await async_logged_in(request) == False:
@@ -20,7 +20,7 @@ async def cataglogue(request):
     # Otherwise return the user profile
     else:
         session = await async_get_session_info(request)
-        return render(request, 'cataglogue/cataglogue.html', session)
+        return render(request, 'catalogue/catalogue.html', session)
     
 
 async def search(request):
@@ -48,7 +48,7 @@ async def search(request):
         
         # Handle Get request
         if request.method == 'GET':
-            return render(request, 'cataglogue/search.html', context)
+            return render(request, 'catalogue/search.html', context)
 
         # If POST then update the user profile
         elif request.method == 'POST' and await async_logged_in(request):
@@ -163,7 +163,7 @@ async def search(request):
                 else:
                     print("Error: Invalid search type.")
 
-            return render(request, 'cataglogue/search.html', context)
+            return render(request, 'catalogue/search.html', context)
 
 # Intersts view 
 async def interests(request):
@@ -218,4 +218,4 @@ async def interests(request):
                 'events' : events
             }
 
-        return render(request, 'cataglogue/interests.html', context)
+        return render(request, 'catalogue/interests.html', context)
