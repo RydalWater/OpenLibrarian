@@ -95,6 +95,7 @@ async def library_shelves(request):
                 post_type = "moved"
             elif request.POST.get('finished'):
                 post_type = "finished"
+                print("Finished")
 
             # Set hidden
             if is_hidden:
@@ -231,15 +232,12 @@ async def library_shelves(request):
                                 
                                 # Send notification (if moving from current reading shelve)
                                 if from_shelf == "CR":
-                                    try:
-                                        float(rating)
-                                        notify = await build_notification(book=book_moving, nym_relays=session["relays"], note_type="en", score=rating)
-                                        review = await Review().review(isbn=book_moving["i"], rating=rating)
-                                        event_list.append(notify)
-                                        event_list.append(review.build_event().bevent)
-                                        reviews[book_id] = review.detailed()
-                                    except:
-                                        pass
+                                    notify = await build_notification(book=book_moving, note_type="en", score=rating)
+                                    review = await Review().review(isbn=book_moving["i"], rating=rating)
+                                    event_list.append(notify)
+                                    event_list.append(review.build_event().bevent)
+                                    reviews[book_id] = review.detailed()
+
                                 # Add progress and review to session
                                 await async_set_session_info(request, progress=progress, reviews=reviews)
                             

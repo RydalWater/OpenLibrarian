@@ -20,7 +20,7 @@ async def build_notification(book: dict, note_type: str, text: str=None, tags: l
 
         # Construct event
         if text is None:
-            if score:
+            if ".0" in str(score):
                 score = round(score)
             if note_type == "st":
                 text = f"I just started reading '{title}' by {author} and am tracking my progress on www.OpenLibrarian.com \n"

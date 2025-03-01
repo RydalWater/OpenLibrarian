@@ -273,66 +273,61 @@
                                                 </div>
                                                 <div class="tab-pane fade" id="move-form-{{ forloop.counter }}{{ library.i }}" role="tabpanel" aria-labelledby="move-form-tab">
                                                     {% if library.s != "CR" %}
-                                                    <form method="post" class="d-inline-flex gap-1">
-                                                        {% csrf_token %}
-                                                        <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
-                                                        <div class="form-group mt-2">
-                                                                <select name="status" id="status" class="form-select">
-                                                                        <option value="">--- Select a shelf ---</option>
-                                                                    {% if library.s == "HR" %}
-                                                                        <option value="CR">Reading</option>
-                                                                        <option value="TRW">To Read (want)</option>
-                                                                        <option value="TRS">To Read (on the shelf)</option>
-                                                                        
-                                                                    {% elif library.s == "TRW" %}
-                                                                        <option value="HR">Have read</option>
-                                                                        <option value="CR">Reading</option>
-                                                                        <option value="TRS">To Read (on the shelf)</option>
-                                                                    {% elif library.s == "TRS" %}
-                                                                        <option value="HR">Have read</option>
-                                                                        <option value="CR">Reading</option>
-                                                                        <option value="TRW">To Read (want)</option>
-                                                                    {% endif %}
-                                                                </select>
-                                                        </div>
-                                                        <button type="submit" name="moved" value="true" class="btn btn-sm btn-primary mt-2">
-                                                            {% if library.s == "CR" %}
-                                                                Finished!
-                                                            {% else %}
-                                                                Move
-                                                            {% endif %}
-                                                        </button>
-                                                    </form>
-                                                    {% else %}
-                                                    <form method="post">
-                                                        {% csrf_token %}
-                                                        <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
-                                                        <div class="input-group mt-2">
-                                                            <span class="input-group-text" id="rating-label">Review</span>
-                                                            <span class="form-control" id="rating-description{{ forloop.counter }}{{ library.i }}"  aria-describedby="rating-label">Use slider to add review</span>
-                                                        </div>
-                                                        <div class="d-inline-flex gap-1">
-                                                            <div>
-                                                                <div id="star-container{{ forloop.counter }}{{ library.i }}" class="mt-2">
-                                                                </div>
-                                                                <!-- Slider -->
-                                                                <input 
-                                                                type="range" 
-                                                                class="form-range" 
-                                                                id="rating-slider{{ forloop.counter }}{{ library.i }}"
-                                                                name="rating" 
-                                                                min="0" 
-                                                                max="10" 
-                                                                step="1" 
-                                                                value="0"
-                                                                style="width: 75%;"
-                                                                oninput="updateStars(this.value, '{{ forloop.counter }}', '{{ library.i }}')">
+                                                        <form method="post" class="d-inline-flex gap-1">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
+                                                            <div class="form-group mt-2">
+                                                                    <select name="status" id="status" class="form-select">
+                                                                            <option value="">--- Select a shelf ---</option>
+                                                                        {% if library.s == "HR" %}
+                                                                            <option value="CR">Reading</option>
+                                                                            <option value="TRW">To Read (want)</option>
+                                                                            <option value="TRS">To Read (on the shelf)</option>
+                                                                        {% elif library.s == "TRW" %}
+                                                                            <option value="HR">Have read</option>
+                                                                            <option value="CR">Reading</option>
+                                                                            <option value="TRS">To Read (on the shelf)</option>
+                                                                        {% elif library.s == "TRS" %}
+                                                                            <option value="HR">Have read</option>
+                                                                            <option value="CR">Reading</option>
+                                                                            <option value="TRW">To Read (want)</option>
+                                                                        {% endif %}
+                                                                    </select>
                                                             </div>
-                                                            <button type="submit" name="finished" value="true" id="finished{{ forloop.counter }}{{ library.i }}" class="btn btn-sm btn-primary mt-2" disabled>
-                                                                Finished
+                                                            <button type="submit" name="moved" value="true" class="btn btn-sm btn-primary mt-2">
+                                                                Move
                                                             </button>
-                                                        </div>
-                                                    </form>
+                                                        </form>
+                                                    {% else %}
+                                                        <form method="post">
+                                                            {% csrf_token %}
+                                                            <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
+                                                            <div class="input-group mt-2">
+                                                                <span class="input-group-text" id="rating-label">Review</span>
+                                                                <span class="form-control" id="rating-description{{ forloop.counter }}{{ library.i }}"  aria-describedby="rating-label">Use slider to add review</span>
+                                                            </div>
+                                                            <div class="d-inline-flex gap-1">
+                                                                <div>
+                                                                    <div id="star-container{{ forloop.counter }}{{ library.i }}" class="mt-2">
+                                                                    </div>
+                                                                    <!-- Slider -->
+                                                                    <input 
+                                                                    type="range" 
+                                                                    class="form-range" 
+                                                                    id="rating-slider{{ forloop.counter }}{{ library.i }}"
+                                                                    name="rating" 
+                                                                    min="0" 
+                                                                    max="10" 
+                                                                    step="1" 
+                                                                    value="0"
+                                                                    style="width: 75%;"
+                                                                    oninput="updateStars(this.value, '{{ forloop.counter }}', '{{ library.i }}')">
+                                                                </div>
+                                                                <button type="submit" name="finished" value="true" id="finished{{ forloop.counter }}{{ library.i }}" class="btn btn-sm btn-primary mt-2" disabled>
+                                                                    Finished
+                                                                </button>
+                                                            </div>
+                                                        </form>
                                                     {% endif %}
                                                 </div>
                                             </div>
