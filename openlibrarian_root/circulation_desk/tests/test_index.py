@@ -135,7 +135,7 @@ class IndexUnitTests(TestCase):
         self.assertIn(b'id="home"', response.content)
         self.assertIn(b'id="settings"', response.content)
         self.assertIn(b'id="social"', response.content)
-        self.assertIn(b'id="glossary"', response.content)
+        self.assertIn(b'id="cataglogue"', response.content)
         self.assertIn(b'id="library"', response.content)
     
     def test_logged_in_nsec(self):
@@ -153,7 +153,7 @@ class IndexUnitTests(TestCase):
         self.assertIn(b'id="home"', response.content)
         self.assertIn(b'id="settings"', response.content)
         self.assertIn(b'id="social"', response.content)
-        self.assertIn(b'id="glossary"', response.content)
+        self.assertIn(b'id="cataglogue"', response.content)
         self.assertIn(b'id="library"', response.content)
     
     def test_urls_of_links(self):

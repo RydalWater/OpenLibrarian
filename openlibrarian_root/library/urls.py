@@ -3,7 +3,7 @@ from . import views
 
 app_name = 'library'
 urlpatterns = [
-    # Glossary Index page
+    # Library Index page
     path('', views.library, name='library'),
 
     # Shelves page
