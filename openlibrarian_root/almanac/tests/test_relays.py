@@ -3,8 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
 import io, sys
+from circulation_desk.tests.test_index import TC_NPUB
 
-TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
 TC_NSEC = "Y"
 
 class RelaysFunctionalTestCase(TestCase):

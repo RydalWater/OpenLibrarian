@@ -6,6 +6,7 @@ from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Login import check_npub
 from utils.Progress import fetch_progress
+from utils.Review import fetch_reviews
 from utils.Constants import INTERESTS_HASHMAP
 import asyncio
 
@@ -23,9 +24,10 @@ async def fetch_user_data(npub: str, read_only: bool = False):
             for book in library["b"]:
                 if "Hidden" not in book["i"]:
                     isbns.append(book["i"])
-    progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+    tasks_prog_review = [fetch_progress(npub=npub, isbns=isbns, relays=relays), fetch_reviews(npub=npub, relays=relays, isbns=isbns)]
+    progress, reviews = await asyncio.gather(*tasks_prog_review)
 
-    return profile, relays, added_relays, libraries, interest_list, progress    
+    return profile, relays, added_relays, libraries, interest_list, progress, reviews
 
 def library_card(request, npub: str=None):
     """Returns view for Library."""
@@ -46,7 +48,7 @@ async def card_data(request, npub: str=None):
         progress = session['progress']
         owner = True
     else:
-        profile, relays, added_relays, libraries, interest_list, progress = await fetch_user_data(npub=npub, read_only=True)
+        profile, relays, added_relays, libraries, interest_list, progress, reviews = await fetch_user_data(npub=npub, read_only=True)
         nym = profile['nym']
         owner = False
 
@@ -105,18 +107,11 @@ async def explore_profile(request, npub: str=None):
     valid_npub = check_npub(npub)
     if valid_npub:
         # Fetch Profile Info and set Session Data
-        profile, relays, added_relays, libraries, interests, progress = await fetch_user_data(npub=npub, read_only=True)
+        profile, relays, added_relays, libraries, interests, progress, reviews = await fetch_user_data(npub=npub, read_only=True)
         nym = profile.get('nym')
 
-        # Get list of ISBNs and then create progress object
-        isbns = []
-        for library in libraries:
-            if library["s"] == "CR":
-                for book in library["b"]:
-                    if "Hidden" not in book["i"]:
-                        isbns.append(book["i"])
-        progress = await fetch_progress(npub=npub, isbns=isbns, relays=relays)
+        await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress, reviews=reviews)
 
-        await async_set_session_info(request, npub=npub, nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress)
+        return JsonResponse({'success': True})
 
-    return JsonResponse({'success': True})
+    return JsonResponse({'success': False})

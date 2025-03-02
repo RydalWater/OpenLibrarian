@@ -12,7 +12,7 @@
     <div id="spinnerBox" class="col mt-2 not-visible">
         <div class="spinner-border" role="status"></div>
     </div>
-    <div class="accordion" id="dataBox" style="height: 55vh; overflow-y: auto;">
+    <div class="container" id="dataBox" style="height: 55vh; overflow-y: auto;">
         {% if not canReview %}
             <div class="container mt-2">
                 <p class="book-text text-center"> You currently have no books to review. Your reviews will appear here as you move books to your finished reading library shelf.</p>
@@ -27,7 +27,7 @@
                     {% if library.b %}
                         {% for book in library.b %}
                             {% if book.i == isbn %}
-                                <div class="row container">
+                                <div class="row">
                                     <div class="card mb-1">
                                         <div class="row">
                                             <div class="col-3 p-1">
@@ -213,7 +213,7 @@
                                                         {% if not session.nsec %}
                                                             <p class="mt-2"><i class="fa-solid fa-eye-slash"></i> Update Review Unavailable in Read-Only Mode</p>
                                                         {% else %}
-                                                            <button id="finished{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled>
+                                                            <button id="update{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled>
                                                                 Update Review
                                                             </button>
                                                         {% endif %}
@@ -235,9 +235,9 @@
         <!-- Save/Refresh Button -->
         <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
             <a id="back" href="{% url 'library:library' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
-            <!-- {% if session.nsec %}
+            {% if session.nsec %}
                 <button id="refresh" class="btn btn-sm btn-primary w-50" type="submit", name="refresh", value="shelves"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
-            {% endif %} -->
+            {% endif %}
         </div>
     </form>
     <script>

@@ -4,8 +4,7 @@ from selenium.webdriver.common.by import By
 from django.test import Client
 from django.urls import reverse
 from time import sleep
-
-TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+from circulation_desk.tests.test_index import TC_NPUB
 
 class LogoutFunctionalTestCase(BaseFunctionalTest):
     """
