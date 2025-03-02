@@ -61,7 +61,7 @@ TC_RELAYS = {"wss://relay.damus.io": None}
 
 class ShelvesFunctionalTestCase(TestCase):
     """
-    Functional Tests for the relays page
+    Functional Tests for the shelves page
     """
     def setUp(self):
         """
@@ -70,12 +70,12 @@ class ShelvesFunctionalTestCase(TestCase):
         self.url = "/library/shelves/"
         self.driver = webdriver.Firefox()
         self.driver.get(f"http://127.0.0.1:8000/login-npub/")
-        self.driver.find_element(by=By.ID, value="npub").send_keys("npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n")
+        self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
         self.driver.find_element(by=By.ID, value="login").click()
 
     def test_shelves_back(self):
         """
-        Test Relays Back Button
+        Test Shelves Back Button
         """
         sleep(5)
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
@@ -92,7 +92,7 @@ class ShelvesFunctionalTestCase(TestCase):
 
 class ShelvesUnitTestCase(TestCase):
     """
-    Unit Tests for the settings page
+    Unit Tests for the shelves page
     """
     def setUp(self):
         self.url = "/library/shelves/"

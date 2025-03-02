@@ -297,17 +297,7 @@ async def reviews(request):
         noted = None
         session = await async_get_session_info(request)
 
-        # Determine if there are any eligible items for review
-        canReview = False
-        for review in session["reviews"].values():
-            if review["rating"] is not None:
-                canReview = True
-        for library in session["libraries"]:
-            if library["s"] in("HR"):
-                if library["b"] != []:
-                    canReview = True
-
-        if request.method == 'POST':
+        if request.method == 'POST' and "refresh" not in request.POST:
             # Get general post data
             book_info = request.POST.get('book_info').split("-")
             book_id = book_info[1]
@@ -320,7 +310,36 @@ async def reviews(request):
                 await async_set_session_info(request, reviews=session["reviews"])
             except:
                 noted = "false:Error rating book, please refresh and try again."
+
+        elif request.method == 'POST':
+            # Get session info
+            npub = session["npub"]
+            relays = session["relays"]
+            libraries = session["libraries"]
+
+            # Fetch of Reviews Objects and process
+            isbns = []
+            for library in libraries:
+                if library["s"] in ("CR", "HR"):
+                    for book in library["b"]:
+                        if "Hidden" not in book["i"]:
+                            isbns.append(book["i"])
+            reviews = await fetch_reviews(npub=npub, relays=relays, isbns=isbns)
+            session["reviews"] = reviews
+            print(session["reviews"])
+            await async_set_session_info(request, reviews=reviews)
         
+        # Determine if there are any eligible items for review
+        canReview = False
+        for review in session["reviews"].values():
+            if review["rating"] is not None:
+                canReview = True
+        for library in session["libraries"]:
+            if library["s"] in("HR"):
+                if library["b"] != []:
+                    canReview = True
+
+        # Prepare events for passing to signer
         if event_list != []:
             events = nostr_prepare(event_list)
         else:
