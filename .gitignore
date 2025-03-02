@@ -8,3 +8,4 @@ package.json
 package-lock.json
 .coverage
 /htmlcov
+db.*
