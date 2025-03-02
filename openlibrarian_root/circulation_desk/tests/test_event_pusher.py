@@ -2,9 +2,7 @@ import json, re, io, sys
 from django.test import TestCase, Client
 from django.urls import reverse
 from nostr_sdk import Keys, EventBuilder
-
-TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
-TC_NSEC = "nsec13m07g3kktrjjcfft27rekza8k8wkkunhp3rnv24lqe0n5yeg0k8s05xwhm"
+from circulation_desk.tests.test_index import TC_NPUB, TC_NSEC
 
 dum_event = EventBuilder.text_note("This").sign_with_keys(Keys.parse(TC_NSEC)).as_json()
 

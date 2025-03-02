@@ -1,9 +1,7 @@
 import json
 from django.test import TestCase, Client
 from django.urls import reverse
-from unittest.mock import patch, MagicMock
-
-TC_NPUB = "npub1dpzan5jvyp0kl0sykx29397f7cnazgwa3mtkfyt8d9gga7htm9xsdsk85n"
+from circulation_desk.tests.test_index import TC_NPUB
 
 class TestCreateAccountEmptyView(TestCase):
     def setUp(self):
