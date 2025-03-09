@@ -18,7 +18,6 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     # Langing pages and login/logout
     path('', include('circulation_desk.urls')),
     # User profile
