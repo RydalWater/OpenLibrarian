@@ -369,12 +369,11 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     else:
         id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
         ids = id_isbn_map.keys()
-        # Instantiate client and set signer
-        filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
-        client = Client(None)
 
-        # get events
-        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=relays)
+        # Filter and fetch events
+        filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
+        fetched = await nostr_get(wait=10, filters={"progress":filter}, relays_dict=relays)
+        events = fetched.get("progress", None)
 
         if events in [None, []]:
             # Create new progress objects

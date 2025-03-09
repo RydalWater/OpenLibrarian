@@ -1,49 +1,39 @@
 # Various functions to allow for quick maintaince of Nostr Network connections
-from nostr_sdk import Client, Event, EventBuilder, Keys, Filter, Events, init_logger, LogLevel, UnsignedEvent
+from nostr_sdk import Client, EventBuilder, Keys, init_logger, LogLevel
 from datetime import timedelta
-import os, ast, json, asyncio
+import os, ast, json
 
-os.environ
-async def nostr_get(client: Client, filters: list | Filter, wait: int, connect: bool=True, disconnect: bool=True, relays_dict: dict=None, relays_list: list=None):
+async def nostr_get(filters:dict, wait:int, relays_dict:dict=None, relays_list:list=None):
     """Get events from relays and return"""
-    # init_logger(LogLevel.INFO)
+    init_logger(LogLevel.INFO)
 
-    # Get default relays if needed
-    if not relays_dict and not relays_list:
-        relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+    # Get relays list
+    fetch_relays = get_event_relays(relays_dict=relays_dict, relays_list=relays_list, rw="READ")
 
-    # Add and Connect to relays
-    relay_urls = []
-    if relays_dict is not None:
-        for relay in relays_dict:
-            if relays_dict[relay] in [None, "READ"]:
-                    await client.add_relay(relay)
-                    relay_urls.append(relay)
-    else:
-        for relay in relays_list:
-            await client.add_relay(relay)
-            relay_urls.append(relay)
-    
-    if connect:
-        await client.connect()
+    # Start client
+    client = Client(None)
 
-    # Get the events
+    # Add relays and connect
+    for relay in fetch_relays:
+        await client.add_relay(relay)
+    await client.connect()
+
+    # Get events for each filter can create a combined list
     if wait:
         td = timedelta(seconds=wait)
     else:
         td = timedelta(seconds=15)
+    events = {}
+    for key, f in filters.items():
+        fetched = await client.fetch_events(filter=f, timeout=td)
+        if fetched:
+            events[key] = fetched.to_vec()
     
-    if type(filters) == list:
-        events = await asyncio.gather(*[client.fetch_events(filter=f, timeout=td) for f in filters])
-    else:
-        events = await client.fetch_events(filter=filters, timeout=td)
-
     # Disconnect
-    if disconnect:
-        await client.disconnect()
+    await client.disconnect()
 
     # Return
-    return events.to_vec()
+    return events
 
 def nostr_prepare(eventbuilders: list[EventBuilder]=None):
     """Post event to relays"""

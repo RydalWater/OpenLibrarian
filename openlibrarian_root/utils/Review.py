@@ -186,12 +186,11 @@ async def fetch_reviews(npub: str, relays: dict, isbns: list = None):
         id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
         ids = id_isbn_map.keys()
 
-        # Instantiate client and set signer
+        # Filter and fetch events
         filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(31025)]).identifiers(ids).limit(2100)
-        client = Client(None)
-
-        # get events
-        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=relays)
+        fetched = await nostr_get(wait=10, filters={"reviews":filter}, relays_dict=relays)
+        events = fetched.get("reviews", None)
+        
         if events in [None, []]:
             # Create new review objects
             for isbn in isbns:

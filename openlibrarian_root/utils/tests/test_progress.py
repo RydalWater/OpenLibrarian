@@ -782,7 +782,7 @@ class ProgressUnitTests(TestCase):
         event2 = EventBuilder(kind=kind, content=content).tags(tags).sign_with_keys(keys=KEYS)
         events = [event1, event2]
 
-        mock_nostr_get.return_value = events
+        mock_nostr_get.return_value = {"progress": events}
         actual = await fetch_progress(isbns=[ISBN, ISBN2, ISBN3], npub=KEYS.public_key().to_bech32(), relays={"wss://relay.damus.io": None})
 
         parsed1 = await Progress().parse_event(event=event1, isbn=ISBN).get_default_pages()
