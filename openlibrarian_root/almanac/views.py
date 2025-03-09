@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info, cache_get, cache_set, cache_key, cache_delete
 from utils.Profile import edit_profile_info, edit_relay_list, fetch_profile_info
 from utils.Connections import fetch_social_list, add_follow, remove_follow
-from utils.Network import nostr_prepare
+from utils.Network import nostr_prepare, get_event_relays
 import os, ast
 
 # Users Settings View
@@ -29,6 +29,7 @@ async def user_profile(request):
     else:
         session = await async_get_session_info(request)
         events = None
+        event_relays = None
         noted = None
             
         # If POST then update the user profile
@@ -49,6 +50,7 @@ async def user_profile(request):
 
             builder = await edit_profile_info(session["profile"])
             events = nostr_prepare([builder])
+            event_relays = get_event_relays(session["relays"])
 
             # Update Session data and re-extract
             await async_set_session_info(request, profile=session["profile"], nym=nym_field)
@@ -70,7 +72,8 @@ async def user_profile(request):
         context  = {
             "session": session,
             "noted": noted,
-            "events": events
+            "events": events,
+            "event_relays": event_relays
         }
         
         return render(request, 'almanac/user_profile.html', context=context)
@@ -89,6 +92,7 @@ async def user_relays(request):
     else:
         noted = None
         events = None
+        event_relays = None
 
         # get default relays from environment variable
         default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
@@ -147,13 +151,15 @@ async def user_relays(request):
                     if update:
                         events = nostr_prepare([builder])
                     session["relays"] = temp_session["mod_relays"].copy()
+                    event_relays = get_event_relays(session["relays"])
                     await async_set_session_info(request, relays=session["relays"])
 
         context = {
             "session": session,
             "default_relays": default_relays,
             "noted": noted,
-            "events": events
+            "events": events,
+            "event_relays": event_relays
 
         }
         return render(request, 'almanac/user_relays.html', context=context)
@@ -169,6 +175,7 @@ async def user_friends(request):
         key_str = "user_connections"
         noted = None
         events = None
+        event_relays = None
 
         if request.method == 'GET':
             # Check if the friends list is cached
@@ -198,6 +205,7 @@ async def user_friends(request):
                 noted, build = await remove_follow(session['relays'], npub=session['npub'], follow_id=request.POST.get('remove'))
                 if build is not None:
                     events = nostr_prepare([build])
+            event_relays = get_event_relays(session["relays"])
 
             # Fetch lists again
             friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")
@@ -212,6 +220,7 @@ async def user_friends(request):
             "friends": friends,
             "muted": muted,
             "events": events,
+            "event_relays": event_relays,
             "noted": noted
         }
 

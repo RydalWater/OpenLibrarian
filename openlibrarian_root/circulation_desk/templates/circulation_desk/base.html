@@ -77,6 +77,8 @@
 
                 <!-- Event Objects -->
                 <input type="hidden" id="events" value="{{ events }}"></input>
+                <input type="hidden" id="event_relays" value="{{ event_relays }}"></input>
+                <input type="hidden" id="test_mode" value="{% if test_mode %}true{% else %}false{% endif %}"></input>
                 <input type="hidden" id="event-notification" value="{{ notification }}">
                 <input type="hidden" id="add-note" value="{{ noted }}">
                 <div id="event-toastContainer" class="position-fixed top-0 start-50 translate-middle-x p-3" style="z-index: 1000;"></div>

@@ -21,7 +21,6 @@ urlpatterns = [
     path('create-account-confirm/', views.create_account_confirm_view, name='create-account-confirm'),
 
     # Json Responses
-    path('event_publisher/', views.event_publisher, name='event_publisher'),
     path('fetch_events/', views.fetch_events, name='fetch_events'),
     path('create_account_empty/', views.create_account_empty, name='create_account_empty'),    
 ]

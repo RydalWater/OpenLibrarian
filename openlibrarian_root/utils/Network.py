@@ -45,53 +45,6 @@ async def nostr_get(client: Client, filters: list | Filter, wait: int, connect: 
     # Return
     return events.to_vec()
 
-async def nostr_push(events: list[Event]=None, relays_dict: dict=None, relays_list: list=None):
-    """Push Signed Events to relays"""
-    try:
-        # Get test_mode flag
-        test_mode = os.getenv("TEST_MODE")
-
-        # Get default relays if needed
-        if not relays_dict and not relays_list:
-            print("No relays provided loading default relays.")
-            relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
-
-        # Add and Connect to relays
-        client = Client(None)
-        if relays_dict is not None:
-            for relay in relays_dict:
-                if relays_dict[relay] in [None, "WRITE"]:
-                        await client.add_relay(relay)
-        else:
-            for relay in relays_list:
-                await client.add_relay(relay)
-
-        # Post events except when in test mode.
-        if test_mode != "Y":
-            # init_logger(LogLevel.INFO)
-            await client.connect()
-
-            for event in events:
-                if event.verify():
-                    await client.send_event(event)
-                else:
-                    print(f"Unable to verify event: {event.as_json()}")
-
-            await client.disconnect()
-        else:
-            print("\nTESTMODE: Running in test mode.")
-            print(f"TESTMODE: {len(events)} Events found.")
-            push_relays = await client.relays()
-            print(f"TESTMODE: {push_relays.keys()} Relays found.")
-            for event in events:
-                i = events.index(event)
-                print(f"\nTESTMODE: Event {i+1}.")
-                print(f"TESTMODE: {event.author().to_bech32()} Author.")
-                print(f"TESTMODE: {event.as_json()}")
-            print("")
-    except Exception as e:
-        return e
-
 def nostr_prepare(eventbuilders: list[EventBuilder]=None):
     """Post event to relays"""
     # Get test_mode flag
@@ -109,3 +62,16 @@ def nostr_prepare(eventbuilders: list[EventBuilder]=None):
         for builder in eventbuilders:
             events_list.append(builder.sign_with_keys(keys).as_json())
     return json.dumps(events_list)
+
+def get_event_relays(relays_dict: dict=None, relays_list: list=None, rw: str="WRITE"):
+    """Get relays for pushing events return list of relay urls"""
+    if relays_dict:
+        relays_list = []
+        for relay in relays_dict:
+            if relays_dict[relay] in [None, rw]:
+                relays_list.append(relay)
+
+    if relays_list in (None, []):
+        relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
+    
+    return relays_list

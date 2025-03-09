@@ -2,7 +2,6 @@ from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 from django.core.cache import cache
-from nostr_sdk import Event
 from mnemonic import Mnemonic
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
 from utils.Login import check_npub
@@ -11,7 +10,7 @@ from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Progress import fetch_progress
 from utils.Review import fetch_reviews
-from utils.Network import nostr_push, nostr_prepare
+from utils.Network import nostr_prepare, get_event_relays
 from circulation_desk.forms import SeedForm, NpubForm, NsecForm
 import asyncio, os, ast, json
 
@@ -204,10 +203,11 @@ async def create_account_empty(request):
         mod_relays[relay] = None
 
 
-    update, builder = await edit_relay_list(session_relays, mod_relays)
+    update, builder, new_relays = await edit_relay_list(session_relays, mod_relays)
 
     # Publish event
     events = nostr_prepare([builder])
+    event_relays = get_event_relays(relays_dict=new_relays)
 
     # Get default libraries and interests
     libraries = await prepare_libraries(libEvents=[], npub=npub)
@@ -221,60 +221,7 @@ async def create_account_empty(request):
     # Set Session Data
     await async_set_session_info(request,libraries=libraries, interests=interests, relays=mod_relays, npub=npub, nsec=nsec, progress=progress, reviews=reviews)
 
-    return JsonResponse({'raw_events': events})
-
-
-@csrf_exempt
-async def event_publisher(request):
-    if not request.method == 'POST':
-        return redirect('circulation_desk:index')
-    
-    # Get Session Info
-    session = await async_get_session_info(request)
-    message = None
-
-    if session['nsec'] != None:
-        # Get the Event from the request
-        try:
-            data = json.loads(request.body)
-            events_json = data.get('events_json', '')
-            # Convert events back from a json string
-            events = json.loads(events_json)
-        except Exception as e:
-            return JsonResponse({'event_message': 'Unable to parse event.'})
-        
-        # Parse event and check it is valid
-        post = []
-        for se in events:
-            try:
-                event = Event.from_json(se)
-            except Exception as e:
-                event = None
-                message = "Unable to parse event."
-
-            if event:
-                if not event.verify():
-                    message = "Invalid event."
-                else:
-                    post.append(event)
-
-        # Push events to relays
-        if post:
-            # Push events to relays
-            try:
-                await nostr_push(events=post, relays_dict=session['relays'])
-                message = "Success: Updated."
-            except Exception as e:
-                message = "Unable to push event to relays."
-        elif not message:
-            message = "No events to push."
-
-        # Response
-        response = {'event_message': f'{message}'}
-        return JsonResponse(response)
-    else:
-        return JsonResponse({'event_message': None})
-
+    return JsonResponse({'raw_events': events, 'event_relays': event_relays})
 
 # Login json response
 @csrf_exempt

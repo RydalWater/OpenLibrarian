@@ -4,7 +4,7 @@ from utils.Library import prepare_libraries, Library
 from utils.Progress import fetch_progress, Progress
 from utils.Notifications import build_notification
 from utils.Review import fetch_reviews, Review
-from utils.Network import nostr_prepare
+from utils.Network import nostr_prepare, get_event_relays
 import datetime, json, asyncio
 
 async def library(request):
@@ -274,8 +274,10 @@ async def library_shelves(request):
             # Prepare events for passing to signer
             if event_list != []:
                 events = nostr_prepare(event_list)
+                event_relays = get_event_relays(relays_dict=session["relays"])
             else:
                 events = None
+                event_relays = None
 
             context = {
                 "libraries": libraries,
@@ -283,7 +285,8 @@ async def library_shelves(request):
                 "progress": progress,
                 "reviews": reviews,
                 "noted": noted,
-                "events": events
+                "events": events,
+                "event_relays": event_relays
             }
             return render(request, 'library/library_shelves.html', context)
 
@@ -343,12 +346,15 @@ async def reviews(request):
         # Prepare events for passing to signer
         if event_list != []:
             events = nostr_prepare(event_list)
+            event_relays = get_event_relays(relays_dict=session["relays"])
         else:
             events = None
+            event_relays = None
         
         context = {
             "session": session,
             "events": events,
+            "event_relays": event_relays,
             "noted": noted,
             "canReview": canReview
         }

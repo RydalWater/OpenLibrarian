@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from utils.Session import async_get_session_info, async_logged_in
 from utils.Login import check_npub
 from utils.Connections import clone_follow
-from utils.Network import nostr_prepare
+from utils.Network import nostr_prepare, get_event_relays
 from circulation_desk.forms import NpubForm
 
 # Create your views here.
@@ -26,6 +26,7 @@ async def social_clone(request):
         session = await async_get_session_info(request)
         noted = None
         events = None
+        event_relay = None
         if not session["nsec"]:
             return render(request, 'transfers/social_clone.html', session)
 
@@ -41,6 +42,7 @@ async def social_clone(request):
             if valid_npub and copy_npub != session["npub"]:
                 event_list = await clone_follow(relays=session["relays"], npub=copy_npub)
                 events = nostr_prepare(event_list)
+                event_relay = get_event_relays(relays_list=session["relays"])
             else:
                 if not valid_npub:
                     noted = "false:Invalid NPUB."
@@ -51,6 +53,7 @@ async def social_clone(request):
         'form': form,
         'session': session,
         'events': events,
+        'event_relay': event_relay,
         'noted': noted
     }
     return render(request, 'transfers/social_clone.html', context)

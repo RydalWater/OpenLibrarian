@@ -12,11 +12,11 @@ async function buildSignEvent(event = null, encrypt = null) {
     let pubKey = null;
     let signer = null;
     if (nsec == "signer")  {
-        signer = new Nip07Signer(window.nostr);
-        pubKey = PublicKey.parse(localStorage.getItem("npub"));
+        signer = NostrSigner.nip07(new Nip07Signer(window.nostr));
     } else {
-        keys = Keys.parse(nsec);
+        signer = NostrSigner.keys(Keys.parse(nsec));
     }
+    pubKey = PublicKey.parse(localStorage.getItem("npub"));
     
     if (event != null  && event instanceof Event) {
         // Extract element of event
@@ -60,17 +60,12 @@ async function buildSignEvent(event = null, encrypt = null) {
 
         // Sign the event
         let signedEvent = null;
-        if (signer) {
-            signedEvent = await builder.sign(NostrSigner.nip07(signer));
-        } else {
-            signedEvent = builder.signWithKeys(keys);
-        }
+        signedEvent = await builder.sign(signer);
 
-        // Return the signed event
-        return signedEvent.asJson();
-
+        // Return the signed event and signer
+        return [signedEvent, signer];
     } else {
-        return null;
+        return [null, null];
     }
 }
 

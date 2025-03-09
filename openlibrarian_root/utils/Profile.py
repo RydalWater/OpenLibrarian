@@ -180,4 +180,4 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict):
         # Builder
         builder = EventBuilder.relay_list(new_relays)
 
-    return update, builder
+    return update, builder, new_relays

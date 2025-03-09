@@ -8,7 +8,7 @@ from utils.Interests import Interests, fetch_interests
 from utils.Progress import Progress
 from utils.Review import Review
 from utils.Constants import INTERESTS_HASHMAP, INTERESTS
-from utils.Network import nostr_prepare
+from utils.Network import nostr_prepare, get_event_relays
 
 
 async def catalogue(request):
@@ -39,6 +39,7 @@ async def search(request):
         form = SearchForm(request.POST or None)
         # Events
         events = None
+        event_relays = None
         # Context
         context = {
                 'session': session,
@@ -96,6 +97,8 @@ async def search(request):
 
                             # Prepare rough signed events
                             events = nostr_prepare(event_list)
+                            event_relays = get_event_relays(relays_list=session["relays"])
+                            
 
                             # Update session
                             await async_set_session_info(request, libraries=session['libraries'], progess=session["progress"], reviews=session["reviews"])
@@ -104,6 +107,7 @@ async def search(request):
                 else:
                     noted = "false:Book already in library."
                     events = None
+                    event_relays = None
 
                 # Fetch cached results
                 cached_results = await cache_get(key)
@@ -113,6 +117,7 @@ async def search(request):
                 context['results'] = cached_results['results']
                 context['noted'] = noted
                 context['events'] = events
+                context['event_relays'] = event_relays
 
             elif (form.is_valid() and request.POST.get('search')) or request.POST.get('next') or request.POST.get('prev') or request.POST.get('go'):
                 # Form fields
@@ -186,6 +191,7 @@ async def interests(request):
             session["interests"] = []
         
         events = None
+        event_relays = None
             
         # Handle Post request
         if request.method == 'POST':
@@ -200,6 +206,7 @@ async def interests(request):
                     interests_obj = Interests(list=interests)
                     interests_obj.build_event(npub=session["npub"])
                     events = nostr_prepare([interests_obj.bevent])
+                    event_relays = get_event_relays(relays_list=session["relays"])
 
         # Find if interests are in hashmap values and return key
         session = await async_get_session_info(request)
@@ -215,7 +222,8 @@ async def interests(request):
                 'selected': selected,
                 'session': session,
                 'noted': noted,
-                'events' : events
+                'events' : events,
+                'event_relays': event_relays
             }
 
         return render(request, 'catalogue/interests.html', context)
