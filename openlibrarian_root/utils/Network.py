@@ -14,7 +14,7 @@ async def nostr_get(filters:dict, wait:int, relays_dict:dict=None, relays_list:l
     client = Client(None)
 
     # Add relays and connect
-    for relay in fetch_relays:
+    for relay in json.loads(fetch_relays):
         await client.add_relay(relay)
     await client.connect()
 
@@ -64,4 +64,4 @@ def get_event_relays(relays_dict: dict=None, relays_list: list=None, rw: str="WR
     if relays_list in (None, []):
         relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
     
-    return relays_list
+    return json.dumps(relays_list)

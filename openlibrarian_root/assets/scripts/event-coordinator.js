@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         try {
             // Parse the value as a JSON array
             const events = JSON.parse(document.getElementById("events").value);
-            const eventRelays = document.getElementById("event_relays").value;
+            const eventRelays = JSON.parse(document.getElementById("event_relays").value);
             const testMode = document.getElementById("test_mode").value === "true";
             console.log("Test Mode:", testMode);
             // Parse and sign each event
