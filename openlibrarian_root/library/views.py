@@ -303,12 +303,13 @@ async def reviews(request):
             book_id = book_info[1]
             comments = request.POST.get('comments')
             try:
-                rating = int(request.POST.get('rating'))/2
+                rating = float(request.POST.get('rating'))/2
                 review = await Review().review(isbn=book_id, rating=rating, content=comments)
                 event_list.append(review.build_event().bevent)
                 session["reviews"][book_id] = review.detailed()
                 await async_set_session_info(request, reviews=session["reviews"])
-            except:
+            except Exception as e:
+                print(e)
                 noted = "false:Error rating book, please refresh and try again."
 
         elif request.method == 'POST':

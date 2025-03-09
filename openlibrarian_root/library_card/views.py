@@ -20,7 +20,7 @@ async def fetch_user_data(npub: str, read_only: bool = False):
     # Get list of ISBNs and then create progress object
     isbns = []
     for library in libraries:
-        if library["s"] == "CR":
+        if library["s"] in ("CR", "HR"):
             for book in library["b"]:
                 if "Hidden" not in book["i"]:
                     isbns.append(book["i"])
