@@ -147,7 +147,7 @@ async def user_relays(request):
             # Save changes submits event to write relays.
             elif request.POST.get('save'):
                 if session['nsec'] and session['nsec'].upper() == "Y":
-                    update, builder = await edit_relay_list(session['relays'], temp_session["mod_relays"])
+                    update, builder, new_relays_dict = await edit_relay_list(session['relays'], temp_session["mod_relays"])
                     if update:
                         events = nostr_prepare([builder])
                     session["relays"] = temp_session["mod_relays"].copy()

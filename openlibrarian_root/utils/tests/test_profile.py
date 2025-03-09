@@ -206,54 +206,59 @@ class ProfileUnitTests(TestCase):
         Test the edit_relay_list function (none session relays)
         """
         keys = Keys.parse(TC_NSEC2)
-        update, builder = await edit_relay_list(session_relays=None, mod_relays=TC_RELAYS)
+        update, builder, new_relays_dict = await edit_relay_list(session_relays=None, mod_relays=TC_RELAYS)
         event = builder.sign_with_keys(keys)
         self.assertEqual(update, True)
         for relay in TC_RELAYS:
             self.assertIn('["r","'+relay,event.as_json())
+        self.assertEqual(new_relays_dict, TC_RELAYS)
     
     async def test_edit_relay_list_none_mod(self):
         """
         Test the edit_relay_list function (none mod relays)
         """
         keys = Keys.parse(TC_NSEC2)
-        update, builder = await edit_relay_list(session_relays=TC_RELAYS, mod_relays=None)
+        update, builder, new_relays_dict_dict = await edit_relay_list(session_relays=TC_RELAYS, mod_relays=None)
         event = builder.sign_with_keys(keys)
         default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
         self.assertEqual(update, True)
         for relay in default_relays:
             self.assertIn('["r","'+relay,event.as_json())
+        self.assertEqual(new_relays_dict_dict, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
 
     async def test_edit_relay_list_no_update(self):
         """
         Test the edit_relay_list function (no updates)
         """
-        update, builder = await edit_relay_list(session_relays=TC_RELAYS, mod_relays=TC_RELAYS)
+        update, builder, new_relays_dict_dict = await edit_relay_list(session_relays=TC_RELAYS, mod_relays=TC_RELAYS)
         self.assertEqual(update, False)
         self.assertEqual(builder, None)
+        self.assertEqual(new_relays_dict_dict, {})
     
     async def test_edit_relay_list_update_same_len(self):
         """
         Test the edit_relay_list function (updates with same length)
         """
         keys = Keys.parse(TC_NSEC2)
-        update, builder = await edit_relay_list(session_relays=TC_RELAYS, mod_relays={'wss://relay.primal.net/': None})
+        update, builder, new_relays_dict = await edit_relay_list(session_relays=TC_RELAYS, mod_relays={'wss://relay.primal.net/': None})
         event = builder.sign_with_keys(keys)
         self.assertEqual(update, True)
         self.assertIn('["r","wss://relay.primal.net/"]',event.as_json())
+        self.assertEqual(new_relays_dict, {'wss://relay.primal.net/': None})
         
     async def test_edit_relay_list_update_diff_len(self):
         """
         Test the edit_relay_list function (updates with different length)
         """
         keys = Keys.parse(TC_NSEC2)
-        update, builder = await edit_relay_list(session_relays={}, mod_relays={'wss://relay.primal.net/': "READ", 'wss://nostr.mom/': "WRITE", 'wss://relay.damus.io/': None, 'wss://relay.test/': "BUG"})
+        update, builder, new_relays_dict = await edit_relay_list(session_relays={}, mod_relays={'wss://relay.primal.net/': "READ", 'wss://nostr.mom/': "WRITE", 'wss://relay.damus.io/': None, 'wss://relay.test/': "BUG"})
         event = builder.sign_with_keys(keys)
         self.assertEqual(update, True)
         self.assertIn('["r","wss://relay.primal.net/","read"]',event.as_json())
         self.assertIn('["r","wss://nostr.mom/","write"]',event.as_json())
         self.assertIn('["r","wss://relay.damus.io/"]',event.as_json())
-        self.assertIn('["r","wss://relay.test/","write"]',event.as_json())
+        self.assertNotIn('["r","wss://relay.test/"',event.as_json())
+        self.assertEqual(new_relays_dict, {'wss://relay.primal.net/': 'READ', 'wss://nostr.mom/': 'WRITE', 'wss://relay.damus.io/': None})
 
 
     def tearDown(self):

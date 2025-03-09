@@ -164,15 +164,19 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict):
                 break
 
     # For updates construct event sign and publish
+    new_relays = {}
+    new_relays_dict = {}
     if update:
-        new_relays = {}
         for relay in mod_relays:
-            if mod_relays[relay] == None:
-                new_relays[relay] = None
-            else:
-                new_relays[relay] = RelayMetadata.READ if mod_relays[relay] == "READ" else RelayMetadata.WRITE
+            if mod_relays[relay] in ("READ", "WRITE", None):
+                if mod_relays[relay] == None:
+                    new_relays[relay] = None
+                    new_relays_dict[relay] = None
+                else:
+                    new_relays[relay] = RelayMetadata.READ if mod_relays[relay] == "READ" else RelayMetadata.WRITE
+                    new_relays_dict[relay] = "READ" if mod_relays[relay] == "READ" else "WRITE"
 
         # Builder
         builder = EventBuilder.relay_list(new_relays)
 
-    return update, builder, new_relays
+    return update, builder, new_relays_dict

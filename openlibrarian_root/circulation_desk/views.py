@@ -203,11 +203,11 @@ async def create_account_empty(request):
         mod_relays[relay] = None
 
 
-    update, builder, new_relays = await edit_relay_list(session_relays, mod_relays)
+    update, builder, new_relays_dict = await edit_relay_list(session_relays, mod_relays)
 
     # Publish event
     events = nostr_prepare([builder])
-    event_relays = get_event_relays(relays_dict=new_relays)
+    event_relays = get_event_relays(relays_dict=new_relays_dict)
 
     # Get default libraries and interests
     libraries = await prepare_libraries(libEvents=[], npub=npub)

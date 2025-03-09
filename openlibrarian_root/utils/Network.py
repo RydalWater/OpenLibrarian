@@ -5,7 +5,7 @@ import os, ast, json
 
 async def nostr_get(filters:dict, wait:int, relays_dict:dict=None, relays_list:list=None):
     """Get events from relays and return"""
-    init_logger(LogLevel.INFO)
+    # init_logger(LogLevel.INFO)
 
     # Get relays list
     fetch_relays = get_event_relays(relays_dict=relays_dict, relays_list=relays_list, rw="READ")
