@@ -22,7 +22,6 @@ async def index(request):
     context = {
         'session': session,
     }
-    # TODO: Update index page content
     # TODO: Add basic social feed
     return render(request, 'circulation_desk/index.html', context)
 
@@ -32,7 +31,6 @@ async def login_view(request):
     # If already logged in then redirect to the home page
     if await async_logged_in(request):
         return redirect('circulation_desk:index')
-    # TODO: Add logic for handling the login using external service (Alby, nos2x, etc.)
     return render(request, 'circulation_desk/login.html')
 
 async def login_npub_view(request):
