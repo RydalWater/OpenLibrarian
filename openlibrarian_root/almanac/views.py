@@ -50,7 +50,7 @@ async def user_profile(request):
 
             builder = await edit_profile_info(session["profile"])
             events = nostr_prepare([builder])
-            event_relays = get_event_relays(session["relays"])
+            event_relays = get_event_relays(relays_dict=session["relays"])
 
             # Update Session data and re-extract
             await async_set_session_info(request, profile=session["profile"], nym=nym_field)
@@ -151,7 +151,7 @@ async def user_relays(request):
                     if update:
                         events = nostr_prepare([builder])
                     session["relays"] = temp_session["mod_relays"].copy()
-                    event_relays = get_event_relays(session["relays"])
+                    event_relays = get_event_relays(relays_dict=session["relays"])
                     await async_set_session_info(request, relays=session["relays"])
 
         context = {
@@ -205,7 +205,7 @@ async def user_friends(request):
                 noted, build = await remove_follow(session['relays'], npub=session['npub'], follow_id=request.POST.get('remove'))
                 if build is not None:
                     events = nostr_prepare([build])
-            event_relays = get_event_relays(session["relays"])
+            event_relays = get_event_relays(relays_dict=session["relays"])
 
             # Fetch lists again
             friends = await fetch_social_list(relays=session['relays'], npub=session['npub'], list_type="follow")

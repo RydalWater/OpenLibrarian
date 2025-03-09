@@ -206,7 +206,7 @@ async def interests(request):
                     interests_obj = Interests(list=interests)
                     interests_obj.build_event(npub=session["npub"])
                     events = nostr_prepare([interests_obj.bevent])
-                    event_relays = get_event_relays(relays_list=session["relays"])
+                    event_relays = get_event_relays(relays_dict=session["relays"])
 
         # Find if interests are in hashmap values and return key
         session = await async_get_session_info(request)

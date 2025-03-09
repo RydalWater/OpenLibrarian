@@ -42,7 +42,7 @@ async def social_clone(request):
             if valid_npub and copy_npub != session["npub"]:
                 event_list = await clone_follow(relays=session["relays"], npub=copy_npub)
                 events = nostr_prepare(event_list)
-                event_relay = get_event_relays(relays_list=session["relays"])
+                event_relay = get_event_relays(relays_dict=session["relays"])
             else:
                 if not valid_npub:
                     noted = "false:Invalid NPUB."
