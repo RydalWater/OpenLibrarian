@@ -1,6 +1,7 @@
-const { Keys, EventBuilder, loadWasmAsync } = require("@rust-nostr/nostr-sdk");
+const { Keys, EventBuilder, NostrSigner, loadWasmAsync } = require("@rust-nostr/nostr-sdk");
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
+import { pushEvents } from './event-push.js';
 
 if (document.getElementById('conf-seed')) {
     const confSeed = document.getElementById('conf-seed');
@@ -40,23 +41,21 @@ if (document.getElementById('conf-seed')) {
 
         if (responseData.raw_events) {
             const events = JSON.parse(responseData.raw_events);
+            const eventRelays = responseData.event_relays;
             const signedEvents = await Promise.all(events.map(async (event) => {
                 const parsedEvent = await parseEvent(event);
                 const builder = new EventBuilder(parsedEvent.kind, parsedEvent.content).tags(parsedEvent.tags.asVec());
-                return builder.signWithKeys(keys).asJson();
+                return builder.signWithKeys(keys);
             }));
-            const response = await fetch('/event_publisher/', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ events_json: JSON.stringify(signedEvents) })
-            });
-            const publisherResponse = await response.json();
-            if (publisherResponse.event_message && publisherResponse.event_message.startsWith("Success:")) {
-                showEventToast({ positive: true }, "Successfully set up account.");
-                document.getElementById('confirm-box').style.display = 'none';
-                document.getElementById('success-box').style.display = 'block';
-            } else {
-                showEventToast({ positive: false }, "Unable to complete sign-up with default relays.");
+            const signer = NostrSigner.keys(keys);
+            if (signedEvents.length > 0) {
+                try {
+                    await pushEvents(signer, signedEvents, eventRelays);
+                    showEventToast({ positive: true }, "Successfully set up account.");
+                } catch (e) {
+                    showEventToast({ positive: false }, "Unable to complete sign-up with default relays.");
+                    console.error("Error publishing events:", e);
+                }
             }
         }
     });

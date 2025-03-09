@@ -18,16 +18,16 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
         if type(relays) == dict:
             drelays = relays
 
-    # Open client connection
-    client = Client(None)
-
     # Get public key
     author = PublicKey.parse(npub)
 
-    # Request profile Metadata
+    # Filter and fetch events
     f_meta = Filter().kind(Kind(0)).author(author).limit(1)
-    metaevent = await nostr_get(client=client, relays_dict=drelays, filters=f_meta, wait=15)
+    f_relays = Filter().kind(Kind.from_std(KindStandard.RELAY_LIST)).author(author)
+    fetched = await nostr_get(relays_dict=drelays, filters={"metadata":f_meta,"relays":f_relays}, wait=15)
+    
     # If metadata is available extract relevant information
+    metaevent = fetched.get("metadata", None)
     if metaevent:
         metadata = Metadata.from_json(metaevent[0].content())
         nym_profile = {
@@ -53,14 +53,9 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             "lud06": None,
             "lud16": None
         }
-    
-    # Request check for relay metadata event
-    f_relays = Filter().kind(Kind.from_std(KindStandard.RELAY_LIST)).author(author)
-    client = Client(None)
-    relays_event = await nostr_get(client=client, relays_dict=drelays, filters=f_relays, wait=15)
-
 
     # If relays data is available extract relevant otherwise, use input or default relays.
+    relays_event = fetched.get("relays", None)
     if relays_event:
         nym_relays = {}
         for tag in relays_event[0].tags().to_vec():
@@ -169,15 +164,19 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict):
                 break
 
     # For updates construct event sign and publish
+    new_relays = {}
+    new_relays_dict = {}
     if update:
-        new_relays = {}
         for relay in mod_relays:
-            if mod_relays[relay] == None:
-                new_relays[relay] = None
-            else:
-                new_relays[relay] = RelayMetadata.READ if mod_relays[relay] == "READ" else RelayMetadata.WRITE
+            if mod_relays[relay] in ("READ", "WRITE", None):
+                if mod_relays[relay] == None:
+                    new_relays[relay] = None
+                    new_relays_dict[relay] = None
+                else:
+                    new_relays[relay] = RelayMetadata.READ if mod_relays[relay] == "READ" else RelayMetadata.WRITE
+                    new_relays_dict[relay] = "READ" if mod_relays[relay] == "READ" else "WRITE"
 
         # Builder
         builder = EventBuilder.relay_list(new_relays)
 
-    return update, builder
+    return update, builder, new_relays_dict

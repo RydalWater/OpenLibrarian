@@ -77,17 +77,14 @@ async def fetch_interests(npub: str, nym_relays: dict):
         event_id.update(f"{npub}OLInterests".encode("utf-8"))
         event_id = event_id.hexdigest()
 
-        # Filter
+        # Filter and fetch events
         filter = Filter().author(PublicKey.parse(npub)).kind(Kind(30015)).identifier(event_id).limit(10)
-
-        # Instantiate client
-        client = Client(None)
-
-        # get events
-        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=nym_relays)
+        fetched = await nostr_get(wait=10, filters={"interests":filter}, relays_dict=nym_relays)
+        events = fetched.get("interests", None)
 
         # Sort and take the latest
-        events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
+        if events:
+            events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
 
         # Convert events to interests
         for event in events:

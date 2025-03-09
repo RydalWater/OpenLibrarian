@@ -235,15 +235,14 @@ async def fetch_libraries(npub: str = None, relays: dict = None):
             ids.append(id)
             library_id[id] = section
 
-        # Instantiate client and set filter
+        # Filter and fetch events
         filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(30003)]).identifiers(ids).limit(50)
-        client = Client(None)
-
-        # get events
-        events = await nostr_get(client=client, wait=10, filters=filter, relays_dict=relays)
+        fetched = await nostr_get(wait=10, filters={"libraries":filter}, relays_dict=relays)
+        events = fetched.get("libraries", None)
 
         # Sort to the latest of each event by ID
-        events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
+        if events:
+            events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
 
         # Keep just first of each event by ID
         raw_libraries = []

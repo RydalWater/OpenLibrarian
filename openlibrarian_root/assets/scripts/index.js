@@ -12,6 +12,7 @@ import "./login-nip07.js"
 import "./event-coordinator.js"
 import "./event-parse.js"
 import "./event-build.js"
+import "./event-push.js"
 import "./refresher.js"
 
 // Import general scripts

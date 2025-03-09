@@ -12,29 +12,31 @@ async def fetch_social_list(relays: dict, npub: str = None, list_type: str = "fo
             raise Exception("Invalid or missing npub")
     public_key = PublicKey.parse(npub)
     
-    # Open client connection with read relays
-    client = Client(None)
+    # Get events
     try:
         # Request profile Metadata
         if list_type == "follow":
             kind = FOLLOW_KIND
         elif list_type == "mute":
             kind = MUTE_KIND
-        follow_filter = Filter().kind(kind).author(public_key).limit(1)
 
-        eventlist = await nostr_get(client=client, filters=follow_filter, relays_dict=relays, wait=10, connect=True, disconnect=False)
+        # Filter and fetch events
+        follow_filter = Filter().kind(kind).author(public_key).limit(1)
+        fetched = await nostr_get(filters={list_type: follow_filter}, relays_dict=relays, wait=10)
+        events = fetched.get(list_type, None)
 
         # If following_list event available extract relevant information
         follow_list = []
-        if eventlist:
-            for tag in eventlist[0].tags().to_vec():
+        if events:
+            for tag in events[0].tags().to_vec():
                 if tag.as_vec()[0] == "p":
                         if check_npub(tag.content()):
                             follow_list.append(PublicKey.parse(tag.content()))
                             
-        # Get following and related profile data
+        # Filter and fetch events (profile data for following list)
         f = Filter().kind(Kind(0)).authors(follow_list)
-        profiles = await nostr_get(client=client, relays_dict=relays, filters=f, wait=10, connect=False, disconnect=True)
+        p_fetched = await nostr_get(relays_dict=relays, filters={"profiles":f}, wait=10)
+        profiles = p_fetched.get("profiles", None)
 
         # Extract names/image/npub
         social_list = {}
@@ -75,11 +77,18 @@ async def clone_follow(relays: dict, npub: str = None):
     mute_clone_filter = Filter().kind(MUTE_KIND).author(clone_key).limit(1)
     mute_filter = Filter().kind(MUTE_KIND).author(PublicKey.parse(npub)).limit(1)
 
+    filters = {
+        "follow_clone": follow_clone_filter,
+        "follow": follow_filter,
+        "mute_clone": mute_clone_filter,
+        "mute": mute_filter
+    }
 
     # Get following list and extract p tags
-    follow_events = await nostr_get(client=client, filters=[follow_clone_filter,follow_filter], relays_dict=relays, wait=10, connect=True, disconnect=False) 
-    mute_events = await nostr_get(client=client, filters=[mute_clone_filter,mute_filter], relays_dict=relays, wait=10, connect=False, disconnect=False)
-
+    fetched = await nostr_get(filters=filters, relays_dict=relays)
+    follow_events = [fetched.get("follow", None), fetched.get("follow_clone", None)]
+    mute_events = [fetched.get("mute", None), fetched.get("mute_clone", None)]
+  
     follow_tags = []
     for follow in follow_events:
         for tag in follow.tags().to_vec():
@@ -117,12 +126,10 @@ async def add_follow(relays: dict, npub: str = None, follow_id: str = None):
         except:
            return "false:Invalid npub or nip05.", None
         
-    # Request profile Metadata
+    # Filter and fetch events 
     follow_filter = Filter().kind(FOLLOW_KIND).author(PublicKey.parse(npub)).limit(1)
-
-    # Get following list and extract p tags
-    client = Client(None)
-    follow_events = await nostr_get(client=client, filters=follow_filter, relays_dict=relays, wait=10, connect=True, disconnect=False) 
+    fetched = await nostr_get(filters={"follow":follow_filter}, relays_dict=relays, wait=10)
+    follow_events = fetched.get("follow", None)
 
     if follow_events in (None, []):
         tag = Tag.public_key(follow_key)
@@ -157,10 +164,8 @@ async def remove_follow(relays: dict, npub: str = None, follow_id: str = None):
         
     # Request profile Metadata
     follow_filter = Filter().kind(FOLLOW_KIND).author(PublicKey.parse(npub)).limit(1)
-
-    # Get following list and extract p tags
-    client = Client(None)
-    follow_events = await nostr_get(client=client, filters=follow_filter, relays_dict=relays, wait=10, connect=True, disconnect=False) 
+    fetched = await nostr_get(filters={"follow":follow_filter}, relays_dict=relays, wait=10)
+    follow_events = fetched.get("follow", None)
 
     if follow_events in (None, []):
         return "false:Not Following.", None
@@ -172,7 +177,7 @@ async def remove_follow(relays: dict, npub: str = None, follow_id: str = None):
                 follow_tags.remove(Tag.public_key(follow_key))
 
                 # Build follow event
-                build = EventBuilder(kind=FOLLOW_KIND, tags=follow_tags, content="")
+                build = EventBuilder(kind=FOLLOW_KIND, content="").tags(follow_tags)
                 return None, build
             
             else:

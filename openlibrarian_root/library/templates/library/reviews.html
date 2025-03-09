@@ -77,7 +77,7 @@
                                                             {% endif %}
                                                         </div> 
                                                         <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#review{{ book.i }}{{ library.i }}">
-                                                        <i class="fa-solid fa-comment"></i>
+                                                            <i class="fa-solid fa-comment"></i>
                                                         </button>
                                                     </div>
                                                 </div>
@@ -179,15 +179,15 @@
                                                             step="1"
                                                             value="{{ review_obj.rating|mul:2 }}"
                                                             style="width: 75%;"
-                                                            oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')"
+                                                            oninput="updateStars('{{ book.i }}', '{{ library.i }}')"
                                                             {% if not session.nsec %} disabled {% endif %}>
                                                         {% else %}
-                                                        <div class="input-group mt-2">
-                                                            <span class="input-group-text" id="rating-label">Review</span>
-                                                            <span class="form-control" id="rating-description{{ book.i }}{{ library.i }}"  aria-describedby="rating-label">
-                                                                Use slider to add review
-                                                            </span>
-                                                        </div>
+                                                            <div class="input-group mt-2">
+                                                                <span class="input-group-text" id="rating-label">Review</span>
+                                                                <span class="form-control" id="rating-description{{ book.i }}{{ library.i }}"  aria-describedby="rating-label">
+                                                                    Use slider to add review
+                                                                </span>
+                                                            </div>
                                                             <div id="star-container{{ book.i }}{{ library.i }}" class="mt-2">
                                                             </div>
                                                             <input 
@@ -200,20 +200,18 @@
                                                             step="1"
                                                             value="0"
                                                             style="width: 75%;"
-                                                            oninput="updateStars(this.value, '{{ book.i }}', '{{ library.i }}')"
+                                                            oninput="updateStars('{{ book.i }}', '{{ library.i }}')"
                                                             {% if not session.nsec %} disabled {% endif %}>
                                                         {% endif %}
 
                                                         <div class="form-floating">
-                                                            <textarea class="form-control" placeholder="Leave a comment here (optional)" name="comments" id="comments{{ book.i }}{{ library.i }}" style="height: 100px;" {% if not session.nsec %} disabled {% endif %}>
-                                                                {{ review_obj.content }}
-                                                            </textarea>
-                                                            <label for="comments{{ book.i }}{{ library.i }}">Comments (optional)</label>
+                                                            <textarea class="form-control" placeholder="Leave a comment here (optional)" name="comments" id="comments{{ book.i }}{{ library.i }}" style="height: 100px;" {% if not session.nsec %} disabled {% endif %} oninput="updateStars('{{ book.i }}', '{{ library.i }}')" maxlength="280">{{ review_obj.content }}</textarea>
+                                                            <label for="comments{{ book.i }}{{ library.i }}">Comments (optional, max. 280)</label>
                                                         </div>
                                                         {% if not session.nsec %}
                                                             <p class="mt-2"><i class="fa-solid fa-eye-slash"></i> Update Review Unavailable in Read-Only Mode</p>
                                                         {% else %}
-                                                            <button id="update{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled>
+                                                            <button id="update{{ book.i }}{{ library.i }}" type="submit" name="review_book" value="true" class="btn btn-primary btn-sm mt-2" disabled >
                                                                 Update Review
                                                             </button>
                                                         {% endif %}
@@ -241,19 +239,22 @@
         </div>
     </form>
     <script>
-        function updateStars(value, counter, library) {
+        function updateStars(counter, library) {
             const starContainerId = `star-container${counter}${library}`;
             const ratingDescriptionId = `rating-description${counter}${library}`;
             const ratingSliderId = `rating-slider${counter}${library}`;
-            const finishedButtonId = `finished${counter}${library}`;
+            const updateButtonId = `update${counter}${library}`;
         
             const starContainer = document.getElementById(starContainerId);
             const ratingDescription = document.getElementById(ratingDescriptionId);
             const ratingSlider = document.getElementById(ratingSliderId);
-            const finishedButton = document.getElementById(finishedButtonId);
-        
+            const updateButton = document.getElementById(updateButtonId);
+            
+            // Get existing value from star container
+            const existingValue = ratingSlider.value;
+
             // Convert the slider value to the corresponding rating value (0, 0.5, 1, ..., 5)
-            const rating = value / 2;
+            const rating = existingValue / 2;
 
             // Update the description based on the rating
             const ratingDescriptions = {
@@ -288,7 +289,7 @@
                 }
             }
             // Activate finished button if rating is 5
-            finishedButton.disabled = false;
+            updateButton.disabled = false;
         };
     </script>
 {% endblock content %}

@@ -23,6 +23,9 @@ load_dotenv(BASE_DIR / '.env', override=True)
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
+# Test Mode
+TEST_MODE = os.getenv('TEST_MODE', 'N') == 'Y'
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv('SECRET_KEY')
 # SECRET_KEY = 'SUPERsecretKEY123abc'
@@ -84,6 +87,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                # Add test_mode context processor
+                'circulation_desk.context_processors.test_mode',
             ],
         },
     },
