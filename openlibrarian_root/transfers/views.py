@@ -3,22 +3,24 @@ from utils.Session import async_get_session_info, async_logged_in
 from utils.Login import check_npub
 from utils.Connections import clone_follow
 from utils.Network import nostr_prepare, get_event_relays
+from utils.Importer import Importer
 from circulation_desk.forms import NpubForm
+from transfers.forms import UploadFileForm
+import os
 
 # Create your views here.
 async def transfers(request):
-    """Returns the user settings view."""
+    """Returns the user transfers view."""
     # Return to index if the user profile is not logged in
     if await async_logged_in(request) == False:
         return redirect('circulation_desk:index')
-    # Otherwise return the user profile
     else:
         session = await async_get_session_info(request)
         return render(request, 'transfers/transfers.html', session)
     
 # Import social lists
 async def social_clone(request):
-    """View for the login (npub) page of the website."""
+    """View for clone social lists."""
     # If not logged in then redirect to the home page
     if await async_logged_in(request)==False:
         return redirect('circulation_desk:index')
@@ -60,7 +62,7 @@ async def social_clone(request):
 
 # Import profile
 async def profile_clone(request):
-    """View for the login (npub) page of the website."""
+    """View for clone profile."""
     # If not logged in then redirect to the home page
     if await async_logged_in(request)==False:
         return redirect('circulation_desk:index')
@@ -111,3 +113,46 @@ async def profile_clone(request):
                 'error_message': err_txt
             }
             return render(request, 'transfers/profile_clone.html', context)
+
+
+async def list_clone(request):
+    """View for clone list options."""
+    # Return to index if the user profile is not logged in
+    if await async_logged_in(request) == False:
+        return redirect('circulation_desk:index')
+    else:
+        session = await async_get_session_info(request)
+        return render(request, 'transfers/list_clone.html', session)
+
+
+def handle_uploaded_file(f):
+    temp_dir = 'temp/'
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+    file_path = os.path.join(temp_dir, f.name)
+    with open(file_path, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+    importer = Importer(file_path, 'csv', 'goodreads')
+    importer.load_file()
+    importer.prepare_data()
+    return importer
+
+async def goodreads_clone(request):
+    """View for clone goodreads options."""
+    # Return to index if the user profile is not logged in
+    if await async_logged_in(request) == False:
+        return redirect('circulation_desk:index')
+    # Otherwise return the user profile
+    else:
+        session = await async_get_session_info(request)
+        if request.method == 'POST':
+            form = UploadFileForm(request.POST, request.FILES)
+            if form.is_valid():
+                importer = handle_uploaded_file(request.FILES['file'])
+                upload = importer.data  # Assuming this is your DataFrame
+                upload_list = upload.to_dict(orient='records')  # Convert DataFrame to list of dictionaries
+                return render(request, 'transfers/goodreads_clone.html', {'form': form, 'session': session, 'upload_list':upload_list})
+        else:
+            form = UploadFileForm()
+        return render(request, 'transfers/goodreads_clone.html', {'form': form, 'session': session})

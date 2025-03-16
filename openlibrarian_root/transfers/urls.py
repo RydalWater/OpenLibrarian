@@ -11,4 +11,9 @@ urlpatterns = [
 
     # Profile
     path('profile-clone/', views.profile_clone, name='profile_clone'),
+
+    # List Clone
+    path('list-clone/', views.list_clone, name='list_clone'),
+    path('gr-clone/', views.goodreads_clone, name='goodreads_clone')
+
 ]

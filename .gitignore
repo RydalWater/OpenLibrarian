@@ -9,3 +9,5 @@ package-lock.json
 .coverage
 /htmlcov
 db.*
+goodreads_library*
+/temp

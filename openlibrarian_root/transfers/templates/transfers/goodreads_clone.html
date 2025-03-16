@@ -1,0 +1,124 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load custom_filters %}
+
+{% block content %}
+
+<style>
+    thead th {
+        position: sticky;
+        top: 0;
+        background: white;
+        z-index: 10;
+        border-top: 0;
+    }
+</style>
+<div class="container mt-2">
+    <div class="chapter-header">
+        <p>Import Reading Lists</p>
+    </div>
+    {% if not upload_list %}
+        <p class="book-text text-center">Select your Goodreads export file and click upload to get started.</p>
+    {% else %}
+        <p class="book-text text-center">Review the items below, any items that have missing ISBN-13 will be skipped as will any you choose to exlcude. At this time you can also select if you prefer for a book to be hidden.</p>
+    {% endif %}
+</div>
+<div id="spinnerBox" class="col mt-2 not-visible">
+    <div class="spinner-border" role="status"></div>
+</div>
+
+<div class="" id="dataBox" style="height: 50vh; overflow-y: auto;">
+    <!-- Upload Form -->
+    {% if not upload_list %}
+        
+
+        <form method="post" enctype="multipart/form-data" class="mb-4">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-primary">Upload</button>
+        </form>
+    {% endif %}
+    
+    {% if upload_list %}
+        <form method="POST" action="">
+            {% csrf_token %}
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Author</th>
+                        <th>ISBN-13</th>
+                        <th>Hidden</th>
+                        <th>Details</th>
+                        <th>Exclude</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for book in upload_list %}
+                        <tr>
+                            <!-- Title Column -->
+                            <td>{{ book|get_item:"title" }}</td>
+                            <!-- Author Column -->
+                            <td>{{ book|get_item:"author" }}</td>
+                            <!-- ISBN-13 Column -->
+                            <td>
+                                {% with book|get_item:"isbn13" as isbn_value %}
+                                    {% if isbn_value %}
+                                        {{ isbn_value }}
+                                    {% else %}
+                                        <input type="text" name="isbn13[]" 
+                                            class="form-control border-danger" 
+                                            placeholder="Enter ISBN13">
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <!-- Hidden Checkbox -->
+                            <td class="text-center">
+                                <input type="checkbox" name="hidden[]">
+                            </td>
+                            <!-- Details Button -->
+                            <td class="text-center">
+                                <button type="button" class="btn btn-primary btn-sm" 
+                                        data-bs-toggle="modal" data-bs-target="#info{{ forloop.counter }}">
+                                    <i><i class="fa-solid fa-circle-info"></i></i>
+                                </button>
+                            </td>
+                            <!-- Exclude Checkbox -->
+                            <td class="text-center">
+                                <input type="checkbox" name="exclude[]">
+                            </td>
+                        </tr>
+                        
+                        <div class="modal fade" id="info{{ forloop.counter }}" tabindex="-1" aria-labelledby="info{{ forloop.counter }}Label" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="info{{ forloop.counter }}Label">{{ book | get_item:"title" }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <p class="mt-2 container text-start">
+                                            <b>Author(s):</b> {{ book | get_item:"author" }}<br>
+                                            <b>ISBN:</b>  {{ book | get_item:"isbn13" }}<br>
+                                            <b>Pages:</b> {{ book | get_item:"num_pages" }}<br>
+                                            <b>Shelf</b> {{ book | get_item:"shelf" }}<br>
+                                            <b>Date Finished:</b> {{ book | get_item:"date_read" }} <br>
+                                            <b>My Rating:</b> {{ book | get_item:"rating" }}<br>
+                                            <b>My Reivew:</b> {{ book | get_item:"review" }}
+                                            
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <button type="submit" class="btn btn-success">Confirm & Import</button>
+
+        </form>
+    {% endif %}
+</div>
+
+{% endblock content %}
