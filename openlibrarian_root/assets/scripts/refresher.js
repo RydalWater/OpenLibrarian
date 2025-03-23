@@ -3,7 +3,7 @@ import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
 import { waitForNostr } from "./wait-for-window.js";
-const { loadWasmSync, loadWasmAsync, Keys, PublicKey, EventBuilder, Nip07Signer, NostrSigner, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
+const { loadWasmSync, loadWasmAsync, Keys, PublicKey, EventBuilder, NostrSigner, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
 
 // Declare variables outside of if blocks
 const refreshButton = document.getElementById('refresh');

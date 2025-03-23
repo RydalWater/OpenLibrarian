@@ -68,6 +68,7 @@ if ((nsec != null || seed != null || nip07) && login != null) {
                 fetchView = "login-nip07";
             } catch (e) {
                 console.log("Issue with NIP-07");
+                console.log(e)
             }            
         }
         // Execute Login Actions 
