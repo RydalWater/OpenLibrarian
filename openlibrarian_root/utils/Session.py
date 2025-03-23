@@ -17,6 +17,7 @@ def get_session_info(request: object) -> dict:
         'progress' : request.session.get('progress', None),
         'reviews' : request.session.get('reviews', None),
         'app_key' : request.session.get('app_key', None),
+        'bunker': request.session.get('bunker', None),
     }
 
 def set_session_info(request: object, **kwargs):

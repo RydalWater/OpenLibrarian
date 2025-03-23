@@ -198,7 +198,7 @@ async def login_nip46_view(request):
             tasks_prog_review = [fetch_progress(npub=npub, isbns=isbns, relays=relays), fetch_reviews(npub=npub, relays=relays, isbns=isbns)]
             progress, reviews = await asyncio.gather(*tasks_prog_review)
  
-            await async_set_session_info(request, npub=npub, nsec="Y", nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress, reviews=reviews, app_key=app_keys.secret_key().to_bech32())
+            await async_set_session_info(request, npub=npub, nsec="Y", nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress, reviews=reviews, app_key=app_keys.secret_key().to_bech32(), bunker=signer)
             return redirect('circulation_desk:index')
         else:
             context['noted'] = "false:Invalid NIP-46 Bunker."
