@@ -4,15 +4,17 @@ from django.http import JsonResponse
 from django.core.cache import cache
 from mnemonic import Mnemonic
 from utils.Session import async_logged_in, async_get_session_info, async_set_session_info
-from utils.Login import check_npub
+from utils.Login import check_npub, check_nip46
 from utils.Profile import fetch_profile_info, edit_relay_list
 from utils.Library import fetch_libraries, prepare_libraries
 from utils.Interests import fetch_interests
 from utils.Progress import fetch_progress
 from utils.Review import fetch_reviews
 from utils.Network import nostr_prepare, get_event_relays
-from circulation_desk.forms import SeedForm, NpubForm, NsecForm
+from circulation_desk.forms import SeedForm, NpubForm, NsecForm, BunkerForm
 import asyncio, os, ast, json
+from nostr_sdk import NostrConnect, NostrConnectUri, NostrSigner, Keys
+from datetime import timedelta
 
 # Basic view for home page
 async def index(request):
@@ -141,6 +143,67 @@ async def login_nip07_view(request):
         return render(request, 'circulation_desk/login_nip07.html')
     else:
         return await login_rw_view(request, None, 'circulation_desk/login_nip07.html', '/login/nip07')
+
+async def login_nip46_view(request): 
+    # If already logged in then redirect to the home page
+    if await async_logged_in(request):
+        return redirect('circulation_desk:index')
+    if request.method == 'GET':
+        form = BunkerForm()
+        context = {
+            'form': form
+        }
+        return render(request, 'circulation_desk/login_nip46.html', context=context)
+    elif request.method == 'POST':
+        form = BunkerForm(request.POST)
+        context = {
+            'form': form
+        }
+
+        # Return if form invalid
+        if not form.is_valid():
+            return render(request, 'circulation_desk/login_nip46.html', context)
+
+        # Get bunker value and check if valid
+        bunker = request.POST.get('bunker')
+        valid_bunker = check_nip46(bunker)
+
+        if valid_bunker:
+            # Establish session connection
+            app_keys = Keys.generate()
+            uri = NostrConnectUri.parse(bunker)
+            try:
+                connect = NostrConnect(uri, app_keys, timedelta(seconds=60), None)
+                signer = NostrSigner.nostr_connect(connect)
+                public_key = await signer.get_public_key()
+                npub = public_key.to_bech32()
+            except Exception as e:
+                context['noted'] = f"false:Unable to connect ({e})."
+                return render(request, 'circulation_desk/login_nip46.html', context)
+
+            # Fetch Profile Info and set Session Data
+            profile, relays, added_relays = await fetch_profile_info(npub=npub)
+            tasks = [fetch_libraries(npub=npub, relays=relays), fetch_interests(npub, relays)]
+            raw_libraries, interests = await asyncio.gather(*tasks)
+            libraries = await prepare_libraries(libEvents=raw_libraries, npub=npub, read_only=True)
+            nym = profile.get('nym')
+
+            # Get list of ISBNs and then create progress object
+            isbns = []
+            for library in libraries:
+                if library["s"] in ("CR", "HR"):
+                    for book in library["b"]:
+                        if "Hidden" not in book["i"]:
+                            isbns.append(book["i"])
+            tasks_prog_review = [fetch_progress(npub=npub, isbns=isbns, relays=relays), fetch_reviews(npub=npub, relays=relays, isbns=isbns)]
+            progress, reviews = await asyncio.gather(*tasks_prog_review)
+ 
+            await async_set_session_info(request, npub=npub, nsec="Y", nym=nym, relays=relays, def_relays=added_relays, profile=profile, interests=interests, libraries=libraries, progress=progress, reviews=reviews, app_key=app_keys.secret_key().to_bech32())
+            return redirect('circulation_desk:index')
+        else:
+            context['noted'] = "false:Invalid NIP-46 Bunker."
+        
+        return render(request, 'circulation_desk/login_nip46.html', context)
 
 @csrf_exempt
 def logout_view(request):

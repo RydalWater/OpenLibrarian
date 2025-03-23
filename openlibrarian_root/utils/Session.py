@@ -15,7 +15,8 @@ def get_session_info(request: object) -> dict:
         'libraries': request.session.get('libraries', None),
         'interests': request.session.get('interests', None),
         'progress' : request.session.get('progress', None),
-        'reviews' : request.session.get('reviews', None)
+        'reviews' : request.session.get('reviews', None),
+        'app_key' : request.session.get('app_key', None),
     }
 
 def set_session_info(request: object, **kwargs):

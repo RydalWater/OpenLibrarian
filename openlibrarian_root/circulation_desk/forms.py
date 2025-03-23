@@ -19,3 +19,6 @@ class NpubForm(forms.Form):
     
 class NsecForm(forms.Form):
     nsec = forms.CharField(max_length=100, label='', required=True, widget=forms.PasswordInput(attrs={'id':'nsec', 'placeholder': 'nsec......', 'autocomplete': 'off', 'class': 'form-control', 'aria-describedby': 'inputGroup-sizing-sm'}, render_value=True))
+
+class BunkerForm(forms.Form):
+    bunker = forms.CharField(max_length=2000, label='', required=True, widget=forms.TextInput(attrs={'id':'bunker', 'placeholder': 'bunker://....', 'class': 'form-control', 'aria-describedby': 'inputGroup-sizing-sm'}))
