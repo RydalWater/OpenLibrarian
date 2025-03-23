@@ -1,4 +1,4 @@
-from nostr_sdk import PublicKey, Keys
+from nostr_sdk import PublicKey, Keys, NostrConnectUri
 from mnemonic import Mnemonic
 
 def check_npub(npub: str) -> bool:
@@ -35,3 +35,12 @@ def check_mnemonic(mnemonic: str) -> bool:
         return False
 
     return Mnemonic('english').check(mnemonic)
+
+def check_nip46(bunker: str) -> bool:
+    """Check if nip46 key is valid."""
+    try:
+        NostrConnectUri.parse(bunker)
+
+        return True
+    except:
+        return False

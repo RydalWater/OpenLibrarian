@@ -1,0 +1,67 @@
+{% extends 'circulation_desk/base.html' %}
+
+{% load static %}
+
+{% block content %}
+
+<div class="container mt-2">
+    <div class="chapter-header">
+        <p>Log-in</p>
+    </div>
+    <p class="book-text text-center"><i class="fa-solid fa-eye"></i>/<i class="fa-solid fa-pen"></i> Browser Extension, NIP-46 (read/write)</p>
+</div>
+<div class="container">
+    <form method="post">
+        {% csrf_token %}
+        <div class="container mt-2">
+            <div class="input-group input-group-sm mb-3">
+            <span class="input-group-text" id="inputGroup-sizing-sm">NIP-46</span>
+            {{ form.bunker }}
+            <span class="input-group-text" id="inputGroup-sizing-sm"><i class="fa-solid fa-link"></i></span>
+            </div>
+        </div>
+
+        <p class="book-text" >
+            Enter your bunker address then click <b class="fst-italic">'Log-In'</b> and follow you're external signer instructions to continue. You will automatically be redirected once login is complete.
+        </p>
+
+        <!-- Back/Login Buttons -->
+        <div class="gap-2 mx-auto d-flex justify-content-between mt-2">
+            <a id="back" href="{% url 'circulation_desk:login' %}" class="btn btn-sm btn-secondary w-50"><i class="fa-solid fa-arrow-left"></i> Back</a>
+            <button id="login" type="submit" class="btn btn-sm btn-primary w-50" name="nip46_login"><i class="fa-solid fa-right-to-bracket"></i> Log-In</button>
+        </div>
+
+        <div id="spinnerBox" class="col mt-2 not-visible">
+            <div class="spinner-border" role="status"></div>
+        </div>
+    </form>
+
+    <!-- NIP-46 Info -->
+    <div class="accordion-flush mt-2" id="nip46-info">
+        <div class="accordion-item">
+            <p class="accordion-header" id="headingOne">
+                <button class="accordion-button collapsed d-block text-center book-text" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                    <i class="fa-solid fa-circle-info"></i> What is a NIP-46 External Signer?
+                </button>
+            </p>
+            <div id="collapseOne" class="accordion-collapse collapse" aria-labelledby="headingOne" data-bs-parent="#nip46-info">
+                <div class="accordion-body pe-2">
+                    <p class="mt-2 book-text">
+                        <span class="dropcap">A</span> NIP-46 external signer is a separate application that establishes two-way communication with the client for event signing. 
+                        You cans log into Open Librarian (and other Nostr powered applications) but without entering your secret key (NSEC) or your seed phrase directly. 
+                    </p>
+                    <p class="book-text">
+                        It is generally best practice to <b>NOT</b> regularly enter your secret key or seed phrase into any application. 
+                        This carries inherent risks as you cannot be sure how the application will store and protect this information.
+                    </p>
+                    <p class="book-text"> 
+                        One of the most commonly used NIP-46 application is Amber which is available on Android, but there are a range of other options out there <a href="https://nsec.app/" target="_blank" class="">Nsec.app</a> is another web-based alternative.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock content %}
