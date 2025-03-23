@@ -264,12 +264,12 @@ class ShelvesUnitTestCase(TestCase):
         self.assertEqual(response.context["progress"]["9780718183899"]["id"], sha256("9780718183899".encode()).hexdigest())
         self.assertEqual(response.context["progress"]["9780718183899"]["exid"], "isbn")
         self.assertEqual(response.context["progress"]["9780718183899"]["curr"], "0")
-        self.assertEqual(response.context["progress"]["9780718183899"]["max"], "NOT AVAILABLE")
+        self.assertEqual(response.context["progress"]["9780718183899"]["max"], "320")
         self.assertEqual(response.context["progress"]["9780718183899"]["st"], stDt)
         self.assertEqual(response.context["progress"]["9780718183899"]["en"], "NA")
         self.assertEqual(response.context["progress"]["9780718183899"]["unit"], "pages")
         self.assertEqual(response.context["progress"]["9780718183899"]["progress"], "0")
-        self.assertEqual(response.context["progress"]["9780718183899"]["default"], "NOT AVAILABLE")
+        self.assertEqual(response.context["progress"]["9780718183899"]["default"], "320")
         for book in old_lib["b"]:
             self.assertNotEqual("9780718183899", book["i"])
         
@@ -303,13 +303,13 @@ class ShelvesUnitTestCase(TestCase):
         self.assertIn("9780718183899", response.context["progress"].keys())
         self.assertEqual(response.context["progress"]["9780718183899"]["id"], sha256("9780718183899".encode()).hexdigest())
         self.assertEqual(response.context["progress"]["9780718183899"]["exid"], "isbn")
-        self.assertEqual(response.context["progress"]["9780718183899"]["curr"], "NOT AVAILABLE")
-        self.assertEqual(response.context["progress"]["9780718183899"]["max"], "NOT AVAILABLE")
+        self.assertEqual(response.context["progress"]["9780718183899"]["curr"], "320")
+        self.assertEqual(response.context["progress"]["9780718183899"]["max"], "320")
         self.assertEqual(response.context["progress"]["9780718183899"]["st"], stDt)
         self.assertEqual(response.context["progress"]["9780718183899"]["en"], enDt)
         self.assertEqual(response.context["progress"]["9780718183899"]["unit"], "pages")
         self.assertEqual(response.context["progress"]["9780718183899"]["progress"], "100")
-        self.assertEqual(response.context["progress"]["9780718183899"]["default"], "NOT AVAILABLE")
+        self.assertEqual(response.context["progress"]["9780718183899"]["default"], "320")
         for book in old_lib["b"]:
             self.assertNotEqual("9780718183899", book["i"])
     
