@@ -2,7 +2,8 @@ import { check_nsec, check_seed } from "./login-utils.js";
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
-const { loadWasmSync, loadWasmAsync, Keys, EventBuilder, nip04Decrypt, Nip07Signer, NostrSigner } = require("@rust-nostr/nostr-sdk");
+import { waitForNostr } from "./wait-for-window.js";
+const { loadWasmSync, loadWasmAsync, Keys, EventBuilder, nip04Decrypt, NostrSigner } = require("@rust-nostr/nostr-sdk");
 
 
 // Declare variables outside of if blocks
@@ -62,7 +63,7 @@ if ((nsec != null || seed != null || nip07) && login != null) {
             // Check valid nip07
             try {
                 loadWasmSync();
-                signer = new Nip07Signer(window.nostr);
+                signer = await waitForNostr();
                 result = true;
                 fetchView = "login-nip07";
             } catch (e) {
@@ -85,10 +86,10 @@ if ((nsec != null || seed != null || nip07) && login != null) {
                 npubValue = keys.publicKey.toBech32();
                 // Set session Nsec
                 localStorage.setItem('nsec', keys.secretKey.toBech32());
-            } else {
+            } else if (nip07) {
                 npubValue = pubKey.toBech32();
                 // Set session Nsec
-                localStorage.setItem('nsec', 'signer');
+                localStorage.setItem('nsec', 'signer-nip07');
             }
             
             // Set session Npub
