@@ -1,4 +1,4 @@
-const { loadWasmSync, Keys, PublicKey } = require("@rust-nostr/nostr-sdk");
+const { loadWasmSync, loadWasmAsync, Keys, PublicKey, NostrConnectURI } = require("@rust-nostr/nostr-sdk");
 
 function check_nsec(nsec) {
     loadWasmSync();
@@ -55,4 +55,14 @@ function checkLocalStorage() {
     return Promise.resolve();
 }
 
-export { check_nsec, check_seed, check_npub_of_nsec, checkLocalStorage };
+async function check_uri(uri) {
+    await loadWasmAsync();
+    try {
+        NostrConnectURI.parse(uri);
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+export { check_nsec, check_seed, check_npub_of_nsec, checkLocalStorage, check_uri };

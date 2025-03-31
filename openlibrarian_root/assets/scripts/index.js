@@ -7,6 +7,7 @@ import "./login-utils.js"
 import "./login-rw.js"
 import "./logout.js"
 import "./login-nip07.js"
+import "./login-nip46.js"
 import "./wait-for-window.js"
 
 // Import event scripts

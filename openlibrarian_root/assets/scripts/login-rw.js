@@ -1,9 +1,9 @@
-import { check_nsec, check_seed } from "./login-utils.js";
+import { check_nsec, check_seed, check_uri } from "./login-utils.js";
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
 import { waitForNostr } from "./wait-for-window.js";
-const { loadWasmSync, loadWasmAsync, Keys, EventBuilder, nip04Decrypt, NostrSigner } = require("@rust-nostr/nostr-sdk");
+const { loadWasmAsync, Keys, EventBuilder, nip04Decrypt, NostrSigner, NostrConnectURI, NostrConnect, Duration, initLogger, LogLevel } = require("@rust-nostr/nostr-sdk");
 
 
 // Declare variables outside of if blocks
@@ -11,6 +11,7 @@ let nsec = null;
 let seed = null;
 let nip07 = null;
 let login = null;
+let nip46 = null;
 
 // Check if nsec/words/nip07 and login exist on the page
 if (window.location.href.indexOf("login-nsec") > -1) {
@@ -25,13 +26,20 @@ if (window.location.href.indexOf("login-nip07") > -1) {
     nip07 = true;
 }
 
+if (window.location.href.indexOf("login-nip46") > -1) {
+    nip46 = true;
+}
+
 if (document.getElementById('login')) {
     login = document.getElementById('login');
 }
 
-if ((nsec != null || seed != null || nip07) && login != null) {
+if ((nsec != null || seed != null || nip07 || nip46) && login != null) {
     login.addEventListener('click', async function(event) {    
         event.preventDefault();
+        await loadWasmAsync();
+        initLogger(LogLevel.info());
+
         login.disabled = true;        
         let result = false;
         let keys = null;
@@ -62,35 +70,59 @@ if ((nsec != null || seed != null || nip07) && login != null) {
         } else if (nip07) {
             // Check valid nip07
             try {
-                loadWasmSync();
                 signer = await waitForNostr();
                 result = true;
                 fetchView = "login-nip07";
             } catch (e) {
                 console.log("Issue with NIP-07");
-                console.log(e)
+                console.log(e);
             }            
+        } else if (nip46) {
+            // Check valid nip46
+            let bunker = document.getElementById('bunker').value;
+            let valid = await check_uri(bunker);
+            if (valid) {
+                try {
+                    // App keys
+                    let appKeys = Keys.generate();
+
+                    // Remote signer (NIP46)
+                    let uri = NostrConnectURI.parse(bunker);
+                    let timeout = Duration.fromSecs(60);
+                    let connect = new NostrConnect(uri, appKeys, timeout);
+                    localStorage.setItem("bunker", bunker);
+                    localStorage.setItem("appKeys", appKeys.secretKey.toHex());
+                    result = true;
+                    fetchView = "login-nip46";
+
+                } catch (e) {
+                    console.log("Issue with NIP-46");
+                    console.log(e);
+                }
+            } 
         }
         // Execute Login Actions 
         if (result) {
-            // Load WASM
-            loadWasmAsync();
             if (nsec != null) {
                 keys = Keys.parse(nsecValue);
             } else if (seed != null) {
                 keys = Keys.fromMnemonic(seedValue);
-            } else if (nip07) {
-                pubKey = await signer.getPublicKey();
+            } else if (signer) {
+                pubKey = await signer.publicKey();
             }
-
             if (keys) {
                 npubValue = keys.publicKey.toBech32();
                 // Set session Nsec
                 localStorage.setItem('nsec', keys.secretKey.toBech32());
+                console.log("NPUB: ", npubValue);
             } else if (nip07) {
                 npubValue = pubKey.toBech32();
                 // Set session Nsec
                 localStorage.setItem('nsec', 'signer-nip07');
+            } else if (nip46) {
+                npubValue = pubKey.toBech32();
+                // Set session Nsec
+                localStorage.setItem('nsec', 'signer-nip46');
             }
             
             // Set session Npub
@@ -151,11 +183,8 @@ if ((nsec != null || seed != null || nip07) && login != null) {
             
                     // Sign the event
                     let signedEvent = null;
-                    if (signer) {
-                        signedEvent = await builder.sign(NostrSigner.nip07(signer));
-                    } else {
-                        signedEvent = builder.signWithKeys(keys);
-                    }
+                    signedEvent = await builder.sign(signer);
+
                     // Add event to array
                     decryptedEvents.push(signedEvent.asJson());
                 }
@@ -188,8 +217,10 @@ if ((nsec != null || seed != null || nip07) && login != null) {
                 document.getElementById('event-notification').value = "Invalid NSEC";
             } else if (seed != null) {
                 document.getElementById('event-notification').value = "Invalid Seed";
-            } else {
+            } else if (nip07) {
                 document.getElementById('event-notification').value = "Invalid NIP07";
+            } else if (nip46) {
+                document.getElementById('event-notification').value = "Invalid NIP46";
             }
             showEventToast({positive:false}); 
         }

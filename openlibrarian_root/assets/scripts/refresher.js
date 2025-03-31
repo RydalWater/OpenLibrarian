@@ -2,8 +2,10 @@ import { check_nsec, checkLocalStorage } from "./login-utils.js";
 import { showEventToast } from './toast.js';
 import { parseEvent } from './event-parse.js';
 import { getCsrfToken } from "./get-cookie.js";
+import { nip46Connect } from "./login-nip46.js";
 import { waitForNostr } from "./wait-for-window.js";
-const { loadWasmSync, loadWasmAsync, Keys, PublicKey, EventBuilder, NostrSigner, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
+const { loadWasmAsync, Keys, PublicKey, EventBuilder, NostrSigner, nip04Decrypt } = require("@rust-nostr/nostr-sdk");
+
 
 // Declare variables outside of if blocks
 const refreshButton = document.getElementById('refresh');
@@ -15,8 +17,9 @@ if (refreshButton) {
 
     refreshButton.addEventListener('click', async function(event) {   
         await checkLocalStorage();
-         
         event.preventDefault();
+        await loadWasmAsync();
+
         // Deactivate the refresh button
         refreshButton.disabled = true;
         const nsecValue = localStorage.getItem('nsec');
@@ -26,10 +29,15 @@ if (refreshButton) {
         let pubKey = null;
         let signer = null;
 
-        // Check valid nsec
-        if (nsecValue == "signer-nip07") {
-            loadWasmSync();
-            signer = await waitForNostr();
+        if (nsecValue.startsWith("signer-")) {
+            if (nsecValue === "signer-nip07") {
+                signer = await waitForNostr();
+            } else if (nsecValue === "signer-nip46") {
+                let localBunker = localStorage.getItem('bunker');
+                let localAppKeys = localStorage.getItem('appKeys');
+                signer = await nip46Connect(localBunker, localAppKeys);  
+                signer = NostrSigner.nip46(connect);
+            }
             pubKey = PublicKey.parse(npubValue);
             result = true;
         } else {
@@ -38,12 +46,10 @@ if (refreshButton) {
 
         // Execute Login Actions 
         if (result) {
-            // Load WASM
-            loadWasmAsync();
             if (signer == null) {
                 keys = Keys.parse(nsecValue);
+                signer = NostrSigner.keys(keys);
             }
-
             // Set payload and call backend
             let payload = {'npubValue': npubValue, 'hasNsec': "Y", 'refresh': refreshValue}
             // Fetch event publisher
@@ -95,11 +101,7 @@ if (refreshButton) {
             
                     // Sign the event
                     let signedEvent = null;
-                    if (signer) {
-                        signedEvent = await builder.sign(NostrSigner.nip07(signer));
-                    } else {
-                        signedEvent = builder.signWithKeys(keys);
-                    }
+                    signedEvent = await builder.sign(signer);
 
                     // Add event to array
                     decryptedEvents.push(signedEvent.asJson());
