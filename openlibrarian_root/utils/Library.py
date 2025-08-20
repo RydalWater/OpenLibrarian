@@ -281,6 +281,20 @@ async def prepare_libraries(libEvents: list=None, npub: str=None, read_only: boo
                 if dtag in ids:
                     events.append(evt)
 
+        # Order events by id and created date 
+        events = sorted(events, key=lambda event: (event.tags().identifier(), event.created_at().as_secs()), reverse=True)
+        
+        # Remove duplicates by identifier
+        seen_ids = set()
+        unique_events = []
+        for event in events:
+            identifier = event.tags().identifier()
+            if identifier not in seen_ids:
+                seen_ids.add(identifier)
+                unique_events.append(event)
+        if events != unique_events:
+            print(f"Removed {len(events) - len(unique_events)} duplicate library events.")
+        
         # Build list of parsed libraries
         libraries = []
         async def parse_libraries(event):
@@ -290,7 +304,7 @@ async def prepare_libraries(libEvents: list=None, npub: str=None, read_only: boo
             return library.__dict__()
         tasks = []
 
-        for e in events:
+        for e in unique_events:
             task = asyncio.create_task(parse_libraries(e))
             tasks.append(task)
         libraries = await asyncio.gather(*tasks)
