@@ -1,6 +1,7 @@
 from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Filter, PublicKey, Client
 from utils.Login import check_npub
 from utils.Network import nostr_get
+from utils.General import remove_dups_on_id
 import hashlib, asyncio
 
 class Review:
@@ -199,9 +200,12 @@ async def fetch_reviews(npub: str, relays: dict, isbns: list = None):
 
             return {review_event.isbn: review_event.detailed() for review_event in review_events}
 
+        # Remove duplicates by identifier       
+        unique_events = remove_dups_on_id(events, "review")
+
         # Parse events
         review_events = []
-        for event in events:
+        for event in unique_events:
             if event.tags().identifier() in ids:
                 isbn = id_isbn_map[event.tags().identifier()]
                 review_events.append(Review().parse_event(event,isbn=isbn))

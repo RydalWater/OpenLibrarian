@@ -1,6 +1,7 @@
 from nostr_sdk import Event, Tag, TagKind, EventBuilder, Kind, Client, Filter, PublicKey
 from utils.Login import check_npub
 from utils.Network import nostr_get
+from utils.General import remove_dups_on_id
 import hashlib
 
 
@@ -86,8 +87,11 @@ async def fetch_interests(npub: str, nym_relays: dict):
         if events:
             events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
 
+        # Remove duplicates by identifier       
+        unique_events = remove_dups_on_id(events, "interests")
+
         # Convert events to interests
-        for event in events:
+        for event in unique_events:
             if event.tags().identifier() == event_id:
                 interests = Interests(event=event)
                 event_id = None

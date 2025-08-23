@@ -1,6 +1,7 @@
 from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Filter, PublicKey, Client
 from utils.Login import check_npub
 from utils.Network import nostr_get
+from utils.General import remove_dups_on_id
 import aiohttp, datetime, hashlib, os, asyncio, tenacity
 
 email_address = os.getenv("EMAIL_ADDY")
@@ -383,9 +384,12 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
 
             return {progress_event.isbn: progress_event.detailed() for progress_event in progress_events}
 
+        # Remove duplicates by identifier
+        unique_events = remove_dups_on_id(events, "progress")
+
         # Parse events
         progress_events = []
-        for event in events:
+        for event in unique_events:
             if event.tags().identifier() in ids:
                 isbn = id_isbn_map[event.tags().identifier()]
                 progress_events.append(Progress().parse_event(event,isbn=isbn))
