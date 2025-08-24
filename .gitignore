@@ -9,3 +9,4 @@ package-lock.json
 .coverage
 /htmlcov
 db.*
+/.venv

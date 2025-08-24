@@ -32,7 +32,7 @@ class FetchDataUnitTests(TestCase):
         self.assertEqual(None, profile["banner"])
         self.assertEqual(None, profile["lud06"])
         self.assertEqual(None, profile["lud16"])
-        self.assertEqual({'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None}, relays)
+        self.assertEqual({'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nostr.mom': None}, relays)
         self.assertEqual(True, added_relays)
         empty_libs = TC_LIBRARIES
         for lib in empty_libs:

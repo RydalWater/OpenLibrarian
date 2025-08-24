@@ -1,5 +1,5 @@
 # Default relays used for intial information gathering and new users
-DEFAULT_RELAYS = ["wss://relay.damus.io","wss://relay.primal.net","wss://nos.lol","wss://nostr.mom"]
+DEFAULT_RELAYS = ["wss://relay.damus.io","wss://relay.primal.net","wss://nostr.mom"]
 
 # Default set of tags for nostr notes
 DEFAULT_TAGS = ["Read", "Books", "Reading", "OpenLibrarian", "OpenLibrary", "Bookstr", "Readstr"]

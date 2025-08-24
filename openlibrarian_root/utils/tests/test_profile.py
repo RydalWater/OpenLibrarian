@@ -65,7 +65,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(profile["banner"], None)
         self.assertEqual(profile["lud06"], None)
         self.assertEqual(profile["lud16"], None)
-        self.assertEqual(relays, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
+        self.assertEqual(relays, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nostr.mom': None})
         self.assertEqual(added_relays, True)
     
     async def test_fetch_profile_nowriterelays(self):
@@ -116,7 +116,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(profile["banner"], None)
         self.assertEqual(profile["lud06"], None)
         self.assertEqual(profile["lud16"], None)        
-        self.assertEqual(relays, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
+        self.assertEqual(relays, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nostr.mom': None})
         self.assertEqual(added_relays, True)
         
     async def test_edit_profile(self):
@@ -224,7 +224,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(update, True)
         for relay in default_relays:
             self.assertIn('["r","'+relay,event.as_json())
-        self.assertEqual(new_relays_dict_dict, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nos.lol': None, 'wss://nostr.mom': None})
+        self.assertEqual(new_relays_dict_dict, {'wss://relay.damus.io': None, 'wss://relay.primal.net': None, 'wss://nostr.mom': None})
 
     async def test_edit_relay_list_no_update(self):
         """
