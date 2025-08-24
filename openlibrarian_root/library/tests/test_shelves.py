@@ -366,6 +366,7 @@ class ShelvesUnitTestCase(TestCase):
         self.assertEqual(
             response.context["progress"]["9780718183899"]["default"], "320"
         )
+
         for book in old_lib["b"]:
             self.assertNotEqual("9780718183899", book["i"])
 

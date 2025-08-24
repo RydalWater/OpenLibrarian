@@ -1,5 +1,6 @@
-const { Keys, PublicKey, EventBuilder, Event, nip04Encrypt, loadWasmAsync, Nip07Signer, NostrSigner } = require('@rust-nostr/nostr-sdk');
+const { Keys, PublicKey, EventBuilder, Event, nip04Encrypt, loadWasmAsync, NostrSigner } = require('@rust-nostr/nostr-sdk');
 import { checkLocalStorage } from "./login-utils.js";
+import { waitForNostr } from "./wait-for-window.js";
 
 async function buildSignEvent(event = null, encrypt = null) {
 
@@ -11,8 +12,8 @@ async function buildSignEvent(event = null, encrypt = null) {
     let keys = null;
     let pubKey = null;
     let signer = null;
-    if (nsec == "signer")  {
-        signer = NostrSigner.nip07(new Nip07Signer(window.nostr));
+    if (nsec == "signer-nip07")  {
+        signer = NostrSigner.nip07(await waitForNostr());
     } else {
         signer = NostrSigner.keys(Keys.parse(nsec));
     }
