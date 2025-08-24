@@ -1,8 +1,23 @@
-from nostr_sdk import Event, EventBuilder, Kind, Tag, TagKind, SingleLetterTag, Alphabet, Filter, PublicKey, Client
+from nostr_sdk import (
+    Event,
+    EventBuilder,
+    Kind,
+    Tag,
+    TagKind,
+    SingleLetterTag,
+    Alphabet,
+    Filter,
+    PublicKey,
+)
 from utils.Login import check_npub
 from utils.Network import nostr_get
 from utils.General import remove_dups_on_id
-import aiohttp, datetime, hashlib, os, asyncio, tenacity
+import aiohttp
+import datetime
+import hashlib
+import os
+import asyncio
+import tenacity
 
 email_address = os.getenv("EMAIL_ADDY")
 
@@ -11,6 +26,7 @@ headers = {
 }
 
 alt_api_url = "https://www.googleapis.com/books/v1/volumes"
+
 
 class Progress:
     def __init__(self):
@@ -25,8 +41,8 @@ class Progress:
         self.bevent = None
         self.default_pages = None
         self.progress = None
-    
-    async def new(self, isbn: str=None, default_pages: int=None):
+
+    async def new(self, isbn: str = None, default_pages: int = None):
         """
         Set new progress object with isbn
         input: isbn (str)
@@ -40,7 +56,7 @@ class Progress:
         self.started = "NA"
         self.ended = "NA"
         self.bevent = None
-        if default_pages is not None and int(default_pages) > 0 :
+        if default_pages is not None and int(default_pages) > 0:
             self.default_pages = str(default_pages)
         else:
             await self.get_default_pages()
@@ -48,7 +64,7 @@ class Progress:
         self.progress = "0"
         return self
 
-    def start_book(self, started: str=None):
+    def start_book(self, started: str = None):
         """
         Set started date
         input: started (str) format: "YYYY-MM-DD", optional
@@ -65,7 +81,7 @@ class Progress:
             self.started = datetime.datetime.now().strftime("%Y-%m-%d")
         return self
 
-    def end_book(self, ended: str=None):
+    def end_book(self, ended: str = None):
         """
         Set ended date
         input: ended (str) format: "YYYY-MM-DD", optional
@@ -77,7 +93,7 @@ class Progress:
             self.ended = ended
         else:
             self.ended = datetime.datetime.now().strftime("%Y-%m-%d")
-        
+
         # Set current to max if not set
         if self.unit == "pct":
             self.current = "100"
@@ -88,12 +104,12 @@ class Progress:
             elif self.default_pages not in (None, "NOT AVAILABLE"):
                 self.current = self.default_pages
                 self.max = self.default_pages
-        
+
         self.progress = "100"
 
         return self
 
-    def update_progress(self, current: str=None, max: str=None, unit: str=None):
+    def update_progress(self, current: str = None, max: str = None, unit: str = None):
         """
         Update progress
         input: current (str), max (str)
@@ -117,7 +133,7 @@ class Progress:
         elif self.unit == "pct":
             self.max = "100"
         elif self.unit == "pages":
-            if (changed or self.max in (None, "0")) and max == None:
+            if (changed or self.max in (None, "0")) and max is None:
                 self.max = self.default_pages
 
         # Calculate progress
@@ -126,14 +142,14 @@ class Progress:
         elif self.unit == "pages":
             if int(self.max) < int(self.current):
                 raise ValueError("Current pages cannot be greater than max pages")
-            self.progress = str(round((int(self.current)/int(self.max))*100))
+            self.progress = str(round((int(self.current) / int(self.max)) * 100))
 
         # Reset ended if progress is not 100
         if self.progress != "100":
             self.ended = "NA"
 
         return self
-    
+
     def parse_event(self, event: Event = None, isbn: str = None):
         """
         Parse event and update progress object
@@ -142,7 +158,7 @@ class Progress:
         """
         if event is None:
             return self
-        elif type(event) != Event:
+        elif type(event) is not Event:
             raise ValueError("Invalid event type")
         elif event.kind() != Kind(30250):
             raise ValueError("Invalid event kind")
@@ -164,7 +180,7 @@ class Progress:
                     self.started = tag.as_vec()[1]
                 elif tag.as_vec()[0] == "ended":
                     self.ended = tag.as_vec()[1]
-            
+
             # Populate missing fields
             if self.identifier is None:
                 self.identifier = hashlib.sha256(self.isbn.encode()).hexdigest()
@@ -188,18 +204,20 @@ class Progress:
             # Prevent negative values
             try:
                 int_current = int(self.current)
-            except:
+            except ValueError as e:
+                print(f"Error converting current to int: {e}")
                 int_current = False
             try:
                 int_max = int(self.max)
-            except:
+            except ValueError as e:
+                print(f"Error converting max to int: {e}")
                 int_max = False
 
-            if int_current < 0 or int_current == False:
+            if int_current < 0 or not int_current:
                 self.current = "0"
-            if int_max < 0 or int_max == False:
+            if int_max < 0 or not int_max:
                 self.max = "0"
-            
+
             # Handle progress (pct)
             if self.unit == "pct":
                 self.max = "100"
@@ -218,9 +236,9 @@ class Progress:
                 elif int_current == 0:
                     self.progress = "0"
                 else:
-                    self.progress = str(round((int_current/int_max)*100))
+                    self.progress = str(round((int_current / int_max) * 100))
             return self
-    
+
     # Parse from dictionary
     def parse_dict(self, data: dict = None):
         """
@@ -230,7 +248,7 @@ class Progress:
         """
         if data in (None, {}):
             return self
-        elif type(data) != dict:
+        elif type(data) is not dict:
             raise ValueError("Invalid data type")
         else:
             for isbn, values in data.items():
@@ -246,9 +264,11 @@ class Progress:
                 self.default_pages = values["default"]
                 self.progress = values["progress"]
             return self
-    
+
     # Get default pages for progress
-    @tenacity.retry(wait=tenacity.wait_fixed(3), stop=tenacity.stop_after_attempt(3), reraise=True)
+    @tenacity.retry(
+        wait=tenacity.wait_fixed(3), stop=tenacity.stop_after_attempt(3), reraise=True
+    )
     async def get_default_pages(self):
         """
         Get default pages for progress
@@ -256,33 +276,44 @@ class Progress:
         """
         if self.isbn is None:
             raise ValueError("ISBN not set")
-    
+
         async with aiohttp.ClientSession() as session:
             try:
-                async with session.get(f"https://openlibrary.org/isbn/{self.isbn}.json", headers=headers, timeout=8) as response:
+                async with session.get(
+                    f"https://openlibrary.org/isbn/{self.isbn}.json",
+                    headers=headers,
+                    timeout=8,
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
                         if "number_of_pages" in data:
                             self.default_pages = str(data["number_of_pages"])
                             return self
-    
-            except Exception as e:
+
+            except Exception:
                 pass
-    
+
             try:
-                async with session.get(f"{alt_api_url}", params={"q": "isbn:" + self.isbn}, timeout=8) as response:
+                async with session.get(
+                    f"{alt_api_url}", params={"q": "isbn:" + self.isbn}, timeout=8
+                ) as response:
                     if response.status == 200:
                         data = await response.json()
-                        if "items" in data and "pageCount" in data["items"][0]["volumeInfo"]:
-                            self.default_pages = str(data["items"][0]["volumeInfo"]["pageCount"])
+                        if (
+                            "items" in data
+                            and "pageCount" in data["items"][0]["volumeInfo"]
+                        ):
+                            self.default_pages = str(
+                                data["items"][0]["volumeInfo"]["pageCount"]
+                            )
                             return self
-    
-            except Exception as e:
+
+            except Exception:
                 pass
-    
+
         self.default_pages = "NOT AVAILABLE"
         return self
-    
+
     # Build event
     def build_event(self):
         """
@@ -305,14 +336,16 @@ class Progress:
             raise ValueError("Started not set")
         if self.ended is None:
             raise ValueError("Ended not set")
-                
+
         # Events Kind and Main tags
         kind = Kind(30250)
         tags = [
             Tag.identifier(self.identifier),
-            Tag.custom(TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)),["isbn"]),
+            Tag.custom(
+                TagKind.SINGLE_LETTER(SingleLetterTag.lowercase(Alphabet.K)), ["isbn"]
+            ),
             Tag.custom(TagKind.UNKNOWN("unit"), [self.unit]),
-            Tag.custom(TagKind.UNKNOWN("current"),[self.current]),
+            Tag.custom(TagKind.UNKNOWN("current"), [self.current]),
             Tag.custom(TagKind.UNKNOWN("max"), [self.max]),
             Tag.custom(TagKind.UNKNOWN("started"), [self.started]),
             Tag.custom(TagKind.UNKNOWN("ended"), [self.ended]),
@@ -320,15 +353,12 @@ class Progress:
         content = ""
 
         # Build event
-        builder = EventBuilder(
-            kind = kind,
-            content = content
-        ).tags(tags)
-        
+        builder = EventBuilder(kind=kind, content=content).tags(tags)
+
         self.bevent = builder
 
         return self
-    
+
     def __dict__(self):
         """
         Return progress object as dictionary
@@ -343,7 +373,7 @@ class Progress:
             "st": self.started,
             "en": self.ended,
             "default": self.default_pages,
-            "progress": self.progress
+            "progress": self.progress,
         }
 
     def detailed(self):
@@ -352,6 +382,7 @@ class Progress:
         output: dict
         """
         return self.__dict__()
+
 
 # Fetch progress objects
 async def fetch_progress(npub: str, relays: dict, isbns: list = None):
@@ -363,17 +394,27 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
     # Check inputs are valid
     if isbns == []:
         return {}
-    elif isbns == None:
+    elif isbns is None:
         raise Exception("No ISBNs provided.")
     elif npub in [None, ""] or check_npub(npub) is False:
         raise Exception("No npub provided or invalid npub.")
     else:
-        id_isbn_map = {hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns}
+        id_isbn_map = {
+            hashlib.sha256(isbn.encode()).hexdigest(): isbn for isbn in isbns
+        }
         ids = id_isbn_map.keys()
 
         # Filter and fetch events
-        filter = Filter().author(PublicKey.parse(npub)).kinds([Kind(30250)]).identifiers(ids).limit(2100)
-        fetched = await nostr_get(wait=10, filters={"progress":filter}, relays_dict=relays)
+        filter = (
+            Filter()
+            .author(PublicKey.parse(npub))
+            .kinds([Kind(30250)])
+            .identifiers(ids)
+            .limit(2100)
+        )
+        fetched = await nostr_get(
+            wait=10, filters={"progress": filter}, relays_dict=relays
+        )
         events = fetched.get("progress", None)
 
         if events in [None, []]:
@@ -382,7 +423,10 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
                 new_tasks = [Progress().new(isbn=isbn) for isbn in isbns]
                 progress_events = await asyncio.gather(*new_tasks)
 
-            return {progress_event.isbn: progress_event.detailed() for progress_event in progress_events}
+            return {
+                progress_event.isbn: progress_event.detailed()
+                for progress_event in progress_events
+            }
 
         # Remove duplicates by identifier
         unique_events = remove_dups_on_id(events, "progress")
@@ -392,10 +436,12 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
         for event in unique_events:
             if event.tags().identifier() in ids:
                 isbn = id_isbn_map[event.tags().identifier()]
-                progress_events.append(Progress().parse_event(event,isbn=isbn))
-        
+                progress_events.append(Progress().parse_event(event, isbn=isbn))
+
         # Set up get_default_pages as tasks
-        tasks = [progress_event.get_default_pages() for progress_event in progress_events]
+        tasks = [
+            progress_event.get_default_pages() for progress_event in progress_events
+        ]
 
         # Get new progress objects for all isbns where events are not availabe
         new_isbns = []
@@ -405,9 +451,9 @@ async def fetch_progress(npub: str, relays: dict, isbns: list = None):
 
         # Set up new progress objects as tasks
         new_tasks = [Progress().new(isbn=new) for new in new_isbns]
-        
+
         # Async gather all tasks
         progress_all = await asyncio.gather(*(tasks + new_tasks))
-        
+
         # Convert to dictionaries and return
         return {progress.isbn: progress.detailed() for progress in progress_all}

@@ -1,14 +1,21 @@
 # Various functions to allow for quick maintaince of Nostr Network connections
-from nostr_sdk import Client, EventBuilder, Keys, init_logger, LogLevel
+from nostr_sdk import Client, EventBuilder, Keys
 from datetime import timedelta
-import os, ast, json
+import os
+import ast
+import json
 
-async def nostr_get(filters:dict, wait:int, relays_dict:dict=None, relays_list:list=None):
+
+async def nostr_get(
+    filters: dict, wait: int, relays_dict: dict = None, relays_list: list = None
+):
     """Get events from relays and return"""
     # init_logger(LogLevel.INFO)
 
     # Get relays list
-    fetch_relays = get_event_relays(relays_dict=relays_dict, relays_list=relays_list, rw="READ")
+    fetch_relays = get_event_relays(
+        relays_dict=relays_dict, relays_list=relays_list, rw="READ"
+    )
 
     # Start client
     client = Client(None)
@@ -28,14 +35,15 @@ async def nostr_get(filters:dict, wait:int, relays_dict:dict=None, relays_list:l
         fetched = await client.fetch_events(filter=f, timeout=td)
         if fetched:
             events[key] = fetched.to_vec()
-    
+
     # Disconnect
     await client.disconnect()
 
     # Return
     return events
 
-def nostr_prepare(eventbuilders: list[EventBuilder]=None):
+
+def nostr_prepare(eventbuilders: list[EventBuilder] = None):
     """Post event to relays"""
     # Get test_mode flag
     events_list = []
@@ -53,7 +61,10 @@ def nostr_prepare(eventbuilders: list[EventBuilder]=None):
             events_list.append(builder.sign_with_keys(keys).as_json())
     return json.dumps(events_list)
 
-def get_event_relays(relays_dict: dict=None, relays_list: list=None, rw: str="WRITE"):
+
+def get_event_relays(
+    relays_dict: dict = None, relays_list: list = None, rw: str = "WRITE"
+):
     """Get relays for pushing events return list of relay urls"""
     if relays_dict:
         relays_list = []
@@ -63,5 +74,5 @@ def get_event_relays(relays_dict: dict=None, relays_list: list=None, rw: str="WR
 
     if relays_list in (None, []):
         relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
-    
+
     return json.dumps(relays_list)

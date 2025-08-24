@@ -88,38 +88,18 @@ List IDs include: CR, HR, TRW, TRS
 
 ### Installation and Development
 
-Clone the repository into a suitable local location 
+Clone the repository into a suitable local location. Note that these instructions assume you're using UV for the package management, for more information see the [UV Docs](https://docs.astral.sh/uv/).
 
 ```
 git clone ‘https://github.com/RydalWater/OpenLibrarian.git’
 ```
 
-Navigate to folder and set up virtual env.
+Create the virtual evn and install packages.
 
 ```
 cd OpenLibrarian
 
-python -m venv env
-```
-
-Activate env if Linux/Mac
-
-```
-source ./env/bin/activate
-```
-
-Activate env is Windows
-
-```
-./env/Scripts/activate
-```
-
-Install relevant python libraries.
-
-```
-cd openlibrarian_root
-
-pip install -r requirements.txt
+uv sync
 ```
 
 Rename/modify the .example_env file as follows:
@@ -144,7 +124,7 @@ Note that these parameters are simply for testing/development purposes. Further 
 Start the local server (from the openlibrarian_root folder)
 
 ```
-python manage.py runserver
+uv run openlibarian_root/manage.py runserver
 ```
 
 That is it, you should now see a message similar to the one below in the console. You may get a warning about migrations. Normally for a django project you would rerun the `python manage.py makemigrations && python manage.py migrate` commands, however this project does not use any backend database so this shouldn’t be necessary.
@@ -154,6 +134,30 @@ Django version 5.0.8, using settings ‘openlibrarian.settings’
 Starting development server at http://127.0.0.1:8000/
 Quit the server with CONTROL-C.
 ```
+
+#### Running the Tests
+If you would like to run the tests make sure you have first set up the relevant browser webdrivers [Selenium](https://www.selenium.dev/documentation/webdriver/getting_started/).
+
+Assuming you don't have a server running step into the root folder and run the server.
+
+```
+cd openlibrarian_root
+
+uv run manage.py runserver
+```
+
+Then open a new terminal (leaving the other running) and run the tests using coverage.
+
+```
+uv run coverage run test --verbosity=3
+```
+
+Review the report.
+
+```
+uv run coverage report
+```
+
 
 
 

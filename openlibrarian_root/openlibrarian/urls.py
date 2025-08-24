@@ -14,24 +14,24 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
+
 from django.urls import path, include
 
 urlpatterns = [
     # Langing pages and login/logout
-    path('', include('circulation_desk.urls')),
+    path("", include("circulation_desk.urls")),
     # User profile
-    path('almanac/', include('almanac.urls')),
+    path("almanac/", include("almanac.urls")),
     # Catalogue
-    path('catalogue/', include('catalogue.urls')),
+    path("catalogue/", include("catalogue.urls")),
     # Library
-    path('library/', include('library.urls')),
+    path("library/", include("library.urls")),
     # Library Card
-    path('card/', include('library_card.urls')),
+    path("card/", include("library_card.urls")),
     # Archives
-    path('archives/', include('archives.urls')),
+    path("archives/", include("archives.urls")),
     # Transfers
-    path('transfers/', include('transfers.urls')),
+    path("transfers/", include("transfers.urls")),
 ]
 
 handler404 = "archives.views.page_not_found_view"

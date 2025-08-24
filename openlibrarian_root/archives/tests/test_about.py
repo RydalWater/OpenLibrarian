@@ -7,13 +7,14 @@ class AboutFunctionalTestCase(BaseFunctionalTest):
     """
     Functional Tests for the about page
     """
+
     def setUp(self):
         """
         Set Up and instantiate driver
         """
         self.url = "/archives/"
         self.driver = webdriver.Firefox()
-        
+
     def test_back(self):
         """
         Test back button
@@ -21,7 +22,7 @@ class AboutFunctionalTestCase(BaseFunctionalTest):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
         self.assertIn("/", self.driver.current_url)
-    
+
     def test_update(self):
         """
         Test updates button
@@ -29,7 +30,7 @@ class AboutFunctionalTestCase(BaseFunctionalTest):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="updates").click()
         self.assertIn("/archives/updates/", self.driver.current_url)
-    
+
     def test_privacy(self):
         """
         Test privacy button
@@ -44,10 +45,12 @@ class AboutFunctionalTestCase(BaseFunctionalTest):
         """
         self.driver.close()
 
+
 class AboutUnitTestCase(BaseUnitTests):
     """
     Unit Tests for the about page
     """
+
     def setUp(self):
         self.url = "/archives/"
         self.template = "archives/about.html"

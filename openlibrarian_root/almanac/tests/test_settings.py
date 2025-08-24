@@ -4,17 +4,19 @@ from selenium.webdriver.common.by import By
 from time import sleep
 from circulation_desk.tests.test_index import TC_NPUB, TC_NSEC
 
+
 class SettingsFunctionalTestCase(TestCase):
     """
     Functional Tests for the settings page
     """
+
     def setUp(self):
         """
         Set Up and instantiate driver
         """
         self.url = "/almanac/"
         self.driver = webdriver.Firefox()
-        self.driver.get(f"http://127.0.0.1:8000/login-npub/")
+        self.driver.get("http://127.0.0.1:8000/login-npub/")
         self.driver.find_element(by=By.ID, value="npub").send_keys(TC_NPUB)
         self.driver.find_element(by=By.ID, value="login").click()
 
@@ -26,7 +28,7 @@ class SettingsFunctionalTestCase(TestCase):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="profile").click()
         self.assertIn("/profile/", self.driver.current_url)
-    
+
     def test_almanac_relays(self):
         """
         Test Almanac Relays Button
@@ -36,7 +38,7 @@ class SettingsFunctionalTestCase(TestCase):
         sleep(1)
         self.driver.find_element(by=By.ID, value="relays").click()
         self.assertIn("/relays/", self.driver.current_url)
-    
+
     def test_almanac_friends(self):
         """
         Test Almanac Friends Button
@@ -46,7 +48,7 @@ class SettingsFunctionalTestCase(TestCase):
         sleep(1)
         self.driver.find_element(by=By.ID, value="friends").click()
         self.assertIn("/friends/", self.driver.current_url)
-    
+
     def test_almanac_export_import(self):
         """
         Test Almanac Export/Import Button
@@ -63,18 +65,26 @@ class SettingsFunctionalTestCase(TestCase):
         """
         self.driver.close()
 
+
 class SettingsUnitTestCase(TestCase):
     """
     Unit Tests for the settings page
     """
+
     def setUp(self):
         self.url = "/almanac/"
         self.template = "almanac/user_setting.html"
-        self.content = ["Almanac", "Profile", "Relays", "Friends", "Export/Import", "Advanced"]
+        self.content = [
+            "Almanac",
+            "Profile",
+            "Relays",
+            "Friends",
+            "Export/Import",
+            "Advanced",
+        ]
         self.client = Client()
         self.readonly = False
 
-    
     # Test page returns a 200 response
     def test_page_returns_200(self):
         """
@@ -98,7 +108,7 @@ class SettingsUnitTestCase(TestCase):
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-    
+
     # Test template is correct
     def test_page_template(self):
         """
@@ -135,7 +145,7 @@ class SettingsUnitTestCase(TestCase):
         response = self.client.get(self.url)
         for item in self.content:
             self.assertIn(item.encode(), response.content)
-        
+
         # Clear session and test login with just NPUB
         session.clear()
         session.save()
@@ -150,7 +160,7 @@ class SettingsUnitTestCase(TestCase):
         else:
             for item in self.content:
                 self.assertIn(item.encode(), response.content)
-    
+
     # Test page redirects when not logged in
     def test_page_redirects(self):
         """

@@ -1,6 +1,7 @@
 from nostr_sdk import PublicKey, Keys
 from mnemonic import Mnemonic
 
+
 def check_npub(npub: str) -> bool:
     """Check if public key is valid."""
     try:
@@ -9,6 +10,7 @@ def check_npub(npub: str) -> bool:
     except:
         return False
 
+
 def check_nsec(nsec: str) -> bool:
     """Check if private key is valid."""
     try:
@@ -16,6 +18,7 @@ def check_nsec(nsec: str) -> bool:
         return True
     except:
         return False
+
 
 def check_npub_of_nsec(npub: str, nsec: str) -> bool:
     """Check if public is valid for private key."""
@@ -29,9 +32,10 @@ def check_npub_of_nsec(npub: str, nsec: str) -> bool:
     except:
         return False
 
+
 def check_mnemonic(mnemonic: str) -> bool:
     """Check if mnemonic is valid."""
     if len(mnemonic.split(" ")) != 12:
         return False
 
-    return Mnemonic('english').check(mnemonic)
+    return Mnemonic("english").check(mnemonic)
