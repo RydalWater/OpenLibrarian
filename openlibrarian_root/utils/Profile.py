@@ -1,10 +1,19 @@
-from nostr_sdk import Client, Filter, Kind, KindStandard, Metadata, PublicKey, RelayMetadata, EventBuilder
+from nostr_sdk import (
+    Filter,
+    Kind,
+    KindStandard,
+    Metadata,
+    PublicKey,
+    RelayMetadata,
+    EventBuilder,
+)
 from utils.Network import nostr_get
 from utils.Login import check_npub
-import os, ast
-from datetime import timedelta
+import os
+import ast
 
-async def fetch_profile_info(relays:list|dict = None, npub: str = None):
+
+async def fetch_profile_info(relays: list | dict = None, npub: str = None):
     """Fetches the profile information from Nostr Default Relay."""
     # Check if npub is valid
     if npub in [None, ""]:
@@ -15,7 +24,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     # Check if relays is a dict
     drelays = None
     if relays:
-        if type(relays) == dict:
+        if type(relays) is dict:
             drelays = relays
 
     # Get public key
@@ -24,8 +33,10 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
     # Filter and fetch events
     f_meta = Filter().kind(Kind(0)).author(author).limit(1)
     f_relays = Filter().kind(Kind.from_std(KindStandard.RELAY_LIST)).author(author)
-    fetched = await nostr_get(relays_dict=drelays, filters={"metadata":f_meta,"relays":f_relays}, wait=15)
-    
+    fetched = await nostr_get(
+        relays_dict=drelays, filters={"metadata": f_meta, "relays": f_relays}, wait=15
+    )
+
     # If metadata is available extract relevant information
     metaevent = fetched.get("metadata", None)
     if metaevent:
@@ -39,7 +50,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             "website": metadata.get_website(),
             "banner": metadata.get_banner(),
             "lud06": metadata.get_lud06(),
-            "lud16": metadata.get_lud16()
+            "lud16": metadata.get_lud16(),
         }
     else:
         nym_profile = {
@@ -51,7 +62,7 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             "website": None,
             "banner": None,
             "lud06": None,
-            "lud16": None
+            "lud16": None,
         }
 
     # If relays data is available extract relevant otherwise, use input or default relays.
@@ -71,15 +82,15 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
             nym_relays[url] = rw
     else:
         if relays:
-            if type(relays) == list:
+            if type(relays) is list:
                 nym_relays = {relay: None for relay in relays}
-            elif type(relays) == dict:
+            elif type(relays) is dict:
                 nym_relays = relays
             else:
                 nym_relays = None
         else:
             nym_relays = None
-    
+
     # Make sure there is at least one read and one write relay if not add default relays
     has_read = False
     has_write = False
@@ -94,10 +105,10 @@ async def fetch_profile_info(relays:list|dict = None, npub: str = None):
                 if nym_relays[each] in ["WRITE"]:
                     has_write = True
 
-    if nym_relays == None or has_read is False or has_write is False:
+    if nym_relays is None or has_read is False or has_write is False:
         relays_list = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
         added_relays = True
-        if nym_relays == None:
+        if nym_relays is None:
             nym_relays = {relay: None for relay in relays_list}
         else:
             for relay in relays_list:
@@ -115,13 +126,13 @@ async def edit_profile_info(nym_profile: dict):
 
     # Create profile event
     profile_meta = Metadata()
-    if nym_profile["nym"] != None:
+    if nym_profile["nym"] is not None:
         profile_meta = profile_meta.set_name(nym_profile["nym"])
-    if nym_profile["nip05"] != None:
+    if nym_profile["nip05"] is not None:
         profile_meta = profile_meta.set_nip05(nym_profile["nip05"])
-    if nym_profile["displayname"] != None:
+    if nym_profile["displayname"] is not None:
         profile_meta = profile_meta.set_display_name(nym_profile["displayname"])
-    if nym_profile["about"] != None:
+    if nym_profile["about"] is not None:
         profile_meta = profile_meta.set_about(nym_profile["about"])
     if nym_profile["picture"] not in (None, ""):
         profile_meta = profile_meta.set_picture(nym_profile["picture"])
@@ -129,9 +140,9 @@ async def edit_profile_info(nym_profile: dict):
         profile_meta = profile_meta.set_website(nym_profile["website"])
     if nym_profile["banner"] not in (None, ""):
         profile_meta = profile_meta.set_banner(nym_profile["banner"])
-    if nym_profile["lud06"] != None:
+    if nym_profile["lud06"] is not None:
         profile_meta = profile_meta.set_lud06(nym_profile["lud06"])
-    if nym_profile["lud16"] != None:
+    if nym_profile["lud16"] is not None:
         profile_meta = profile_meta.set_lud16(nym_profile["lud16"])
 
     build = EventBuilder.metadata(profile_meta)
@@ -145,9 +156,9 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict):
     builder = None
 
     # Handle None
-    if session_relays == None:
+    if session_relays is None:
         session_relays = {}
-    if mod_relays == None:
+    if mod_relays is None:
         # Set default session relays
         default_relays = ast.literal_eval(os.getenv("DEFAULT_RELAYS"))
         mod_relays = {}
@@ -159,7 +170,10 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict):
         update = True
     else:
         for relay in mod_relays:
-            if relay not in session_relays.keys() or session_relays[relay] != mod_relays[relay]:
+            if (
+                relay not in session_relays.keys()
+                or session_relays[relay] != mod_relays[relay]
+            ):
                 update = True
                 break
 
@@ -169,12 +183,18 @@ async def edit_relay_list(session_relays: dict, mod_relays: dict):
     if update:
         for relay in mod_relays:
             if mod_relays[relay] in ("READ", "WRITE", None):
-                if mod_relays[relay] == None:
+                if mod_relays[relay] is None:
                     new_relays[relay] = None
                     new_relays_dict[relay] = None
                 else:
-                    new_relays[relay] = RelayMetadata.READ if mod_relays[relay] == "READ" else RelayMetadata.WRITE
-                    new_relays_dict[relay] = "READ" if mod_relays[relay] == "READ" else "WRITE"
+                    new_relays[relay] = (
+                        RelayMetadata.READ
+                        if mod_relays[relay] == "READ"
+                        else RelayMetadata.WRITE
+                    )
+                    new_relays_dict[relay] = (
+                        "READ" if mod_relays[relay] == "READ" else "WRITE"
+                    )
 
         # Builder
         builder = EventBuilder.relay_list(new_relays)

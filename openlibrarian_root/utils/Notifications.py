@@ -1,9 +1,12 @@
 from nostr_sdk import EventBuilder, Tag
-import os, ast
+import os
+import ast
 
 
 # Notification function
-async def build_notification(book: dict, note_type: str, text: str=None, tags: list=None, score: float=None):
+async def build_notification(
+    book: dict, note_type: str, text: str = None, tags: list = None, score: float = None
+):
     """Send notification to relays"""
     if note_type.lower() not in ["st", "en", "rv"]:
         raise Exception("Invalid note type.")
@@ -29,9 +32,9 @@ async def build_notification(book: dict, note_type: str, text: str=None, tags: l
             elif note_type == "rv":
                 text = f"I just reviewed '{title}' by {author} and gave it {score} out of 5 stars! \n\n I am tracking my ratings on www.OpenLibrarian.com \n"
         elif text:
-            # TODO: Add ability for users to change their notification message text. 
+            # TODO: Add ability for users to change their notification message text.
             pass
-            
+
         # Tags
         h_tags = []
         if tags:

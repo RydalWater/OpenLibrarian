@@ -1,19 +1,17 @@
 from circulation_desk.tests.test_index import BaseFunctionalTest
-from circulation_desk.forms import SeedForm
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from django.test import TestCase, Client
-from mnemonic import Mnemonic
-from nostr_sdk import Keys
-import io, sys
 from circulation_desk.tests.test_index import TC_NPUB
 
 TC_NSEC = "Y"
+
 
 class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
     """
     Functional Tests for the create account page
     """
+
     def setUp(self):
         """
         Set Up and instantiate driver
@@ -21,7 +19,7 @@ class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
         self.url = "/create-account-confirm/"
         self.driver = webdriver.Firefox()
         self.redirect = True
-    
+
     def test_back(self):
         """
         Test Back Button
@@ -31,7 +29,7 @@ class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="save-seed").click()
         self.driver.find_element(by=By.ID, value="back").click()
         self.assertIn("Circulation Desk", self.driver.page_source)
-    
+
     def test_correct_seed(self):
         """
         Signup with correct seed
@@ -40,12 +38,20 @@ class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="seed-gen").click()
         twords = []
         for i in range(12):
-            twords.append(self.driver.find_element(by=By.ID, value=f"tword{i+1}").get_attribute("value"))
+            twords.append(
+                self.driver.find_element(by=By.ID, value=f"tword{i + 1}").get_attribute(
+                    "value"
+                )
+            )
         self.driver.find_element(by=By.ID, value="save-seed").click()
         for i in range(12):
-            self.driver.find_element(by=By.ID, value=f"word{i+1}").send_keys(twords[i])
+            self.driver.find_element(by=By.ID, value=f"word{i + 1}").send_keys(
+                twords[i]
+            )
         self.driver.find_element(by=By.ID, value="conf-seed").click()
-        self.assertIn("Success! Your account has been created.", self.driver.page_source)
+        self.assertIn(
+            "Success! Your account has been created.", self.driver.page_source
+        )
 
     def test_incorrect_seed(self):
         """
@@ -53,29 +59,63 @@ class CreateAccountConfirmFunctionalTestCase(BaseFunctionalTest):
         """
         self.driver.get("http://127.0.0.1:8000/create-account/")
         self.driver.find_element(by=By.ID, value="seed-gen").click()
-        twords = ["apple", "banana", "cherry", "date", "egg", "fig", "grape", "honey", "ice", "juice", "kiwi", "lemon"]
+        twords = [
+            "apple",
+            "banana",
+            "cherry",
+            "date",
+            "egg",
+            "fig",
+            "grape",
+            "honey",
+            "ice",
+            "juice",
+            "kiwi",
+            "lemon",
+        ]
         self.driver.find_element(by=By.ID, value="save-seed").click()
         for i in range(12):
-            self.driver.find_element(by=By.ID, value=f"word{i+1}").send_keys(twords[i])
+            self.driver.find_element(by=By.ID, value=f"word{i + 1}").send_keys(
+                twords[i]
+            )
         self.driver.find_element(by=By.ID, value="conf-seed").click()
-        self.assertIn("Invalid seed. Please try again.", self.driver.page_source)   
-        self.assertIn(self.url, self.driver.current_url)       
-            
+        self.assertIn("Invalid seed. Please try again.", self.driver.page_source)
+        self.assertIn(self.url, self.driver.current_url)
+
     def tearDown(self):
         """
         Tear Down function to close driver
         """
         self.driver.close()
 
+
 class CreateAccountConfirmUnitTestCase(TestCase):
     """
     Unit Tests for the Create Account page
     """
+
     def setUp(self):
         self.client = Client()
         self.url = "/create-account-confirm/"
         self.template = "circulation_desk/create_account_confirm.html"
-        self.content = ["Sign-up", "NPUB", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "Check", "Back"]
+        self.content = [
+            "Sign-up",
+            "NPUB",
+            "1",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9",
+            "10",
+            "11",
+            "12",
+            "Check",
+            "Back",
+        ]
 
     def test_page_returns_200(self):
         """
@@ -87,7 +127,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         session.save()
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-    
+
     # Test template is correct
     def test_page_template(self):
         """
@@ -113,7 +153,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         response = self.client.get(self.url)
         for item in self.content:
             self.assertIn(item.encode(), response.content)
-    
+
     def test_logged_redirect(self):
         """
         Test the redirect response when logged in
@@ -124,7 +164,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 302)
 
-    
+
 #     def test_post_valid_mnemonic_fail_npub(self):
 #         """
 #         Post with valid mnemonic not matching npub
@@ -142,7 +182,7 @@ class CreateAccountConfirmUnitTestCase(TestCase):
 #         self.assertEqual(response.context["tnpub"], session["tnpub"])
 #         self.assertEqual(response.context["private_key_confirmed"],"Mnemonic does not match NPUB")
 #         self.assertEqual(response.status_code, 200)
-    
+
 #     def test_post_success(self):
 #         """
 #         Post with valid mnemonic matching npub (success)
@@ -175,4 +215,3 @@ class CreateAccountConfirmUnitTestCase(TestCase):
 #         self.assertIn("libraries", session.keys())
 #         self.assertIn("interests", session.keys())
 #         self.assertIn("relays", session.keys())
-        

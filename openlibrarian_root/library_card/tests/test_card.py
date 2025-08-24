@@ -2,12 +2,14 @@ from django.test import TestCase
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
-from circulation_desk.tests.test_index import TC_NPUB, TC_NSEC, TC_RELAYS, TC_LIBRARIES, TC_PROGRESS
+from circulation_desk.tests.test_index import TC_NPUB, TC_NSEC
+
 
 class CardFunctionalTestCase(TestCase):
     """
     Functional Tests for the Library Card page
     """
+
     def setUp(self):
         """
         Set Up and instantiate driver
@@ -39,7 +41,7 @@ class CardFunctionalTestCase(TestCase):
         """
         Test home button (when logged in)
         """
-        self.driver.get(f"http://127.0.0.1:8000/login-nsec/")
+        self.driver.get("http://127.0.0.1:8000/login-nsec/")
         self.driver.find_element(by=By.ID, value="nsec").send_keys(TC_NSEC)
         self.driver.find_element(by=By.ID, value="login").click()
         sleep(5)
@@ -58,15 +60,17 @@ class CardFunctionalTestCase(TestCase):
         """
         self.driver.close()
 
+
 class CardUnitTests(TestCase):
     """
     Unit Tests for the Library Card page
     """
+
     def setUp(self):
         self.url = f"/card/{TC_NPUB}/"
         self.template = "library_card/card.html"
         self.content = ["Library Card", "Reading", "Interests"]
-    
+
     # Test page returns a 200 response
     def test_page_returns_200(self):
         """
@@ -74,7 +78,7 @@ class CardUnitTests(TestCase):
         """
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, 200)
-    
+
     # Test template is correct
     def test_page_template(self):
         """
@@ -92,4 +96,3 @@ class CardUnitTests(TestCase):
         response = self.client.get(self.url)
         for item in self.content:
             self.assertIn(item.encode(), response.content)
-    

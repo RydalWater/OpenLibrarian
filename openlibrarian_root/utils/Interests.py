@@ -1,4 +1,4 @@
-from nostr_sdk import Event, Tag, TagKind, EventBuilder, Kind, Client, Filter, PublicKey
+from nostr_sdk import Event, Tag, TagKind, EventBuilder, Kind, Filter, PublicKey
 from utils.Login import check_npub
 from utils.Network import nostr_get
 from utils.General import remove_dups_on_id
@@ -9,24 +9,25 @@ class Interests:
     """
     Interests Class. Allows for easy creation and access of list of interests.
     """
+
     def __init__(self, **kwargs):
         if "list" in kwargs.keys():
-            if type(kwargs["list"]) != list:
+            if type(kwargs["list"]) is not list:
                 raise ValueError("List of interests must be of type list.")
             self.interests = kwargs["list"]
         elif "event" in kwargs.keys():
-            if type(kwargs["event"]) != Event:
+            if type(kwargs["event"]) is not Event:
                 raise ValueError("Event object must be of type nostr_sdk.Event.")
             event = kwargs["event"]
             interests = []
             for tag in event.tags().to_vec():
                 if tag.as_vec()[0] == "t":
-                    interests.append(tag.as_vec()[1]) 
+                    interests.append(tag.as_vec()[1])
             self.interests = interests
         else:
             self.interests = []
         self.bevent = None
-    
+
     def compare_interests(self, interests: list):
         """Compare list of interests with list of interests"""
         if self.interests.sort() == interests.sort():
@@ -36,7 +37,6 @@ class Interests:
             self.interests = interests
             return False
 
-
     def build_event(self, npub: str = None):
         """Build event from library object"""
         # Events Kind and tags
@@ -45,20 +45,17 @@ class Interests:
         sha1.update(f"{npub}OLInterests".encode("utf-8"))
         tags = [
             Tag.identifier(sha1.hexdigest()),
-            Tag.custom(TagKind.TITLE(),["OL Interests"]),
-            Tag.custom(TagKind.DESCRIPTION(),["List of interests"]),
-        ] 
+            Tag.custom(TagKind.TITLE(), ["OL Interests"]),
+            Tag.custom(TagKind.DESCRIPTION(), ["List of interests"]),
+        ]
         for interest in self.interests:
             tags.append(Tag.hashtag(interest))
 
         # Event content
         content = ""
-        
+
         # Build event
-        builder = EventBuilder(
-            kind = kind,
-            content = content
-        ).tags(tags)
+        builder = EventBuilder(kind=kind, content=content).tags(tags)
 
         self.bevent = builder
 
@@ -66,7 +63,8 @@ class Interests:
 
     def __dict__(self):
         return self.interests
-    
+
+
 async def fetch_interests(npub: str, nym_relays: dict):
     """Fetch interests from relays"""
     # Check if npub is valid
@@ -79,15 +77,25 @@ async def fetch_interests(npub: str, nym_relays: dict):
         event_id = event_id.hexdigest()
 
         # Filter and fetch events
-        filter = Filter().author(PublicKey.parse(npub)).kind(Kind(30015)).identifier(event_id).limit(10)
-        fetched = await nostr_get(wait=10, filters={"interests":filter}, relays_dict=nym_relays)
+        filter = (
+            Filter()
+            .author(PublicKey.parse(npub))
+            .kind(Kind(30015))
+            .identifier(event_id)
+            .limit(10)
+        )
+        fetched = await nostr_get(
+            wait=10, filters={"interests": filter}, relays_dict=nym_relays
+        )
         events = fetched.get("interests", None)
 
         # Sort and take the latest
         if events:
-            events = sorted(events, key=lambda event: event.created_at().as_secs(), reverse=True)
+            events = sorted(
+                events, key=lambda event: event.created_at().as_secs(), reverse=True
+            )
 
-        # Remove duplicates by identifier       
+        # Remove duplicates by identifier
         unique_events = remove_dups_on_id(events, "interests")
 
         # Convert events to interests

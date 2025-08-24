@@ -1,5 +1,5 @@
 [project]
-name = "Open Librarian"
+name = "openlibrarian"
 version = "0.1.7"
 description = "Open Librarian is a Nostr book tracking client."
 readme = "README.md"

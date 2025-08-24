@@ -2,12 +2,13 @@ from circulation_desk.tests.test_index import BaseFunctionalTest, BaseUnitTests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from time import sleep
-from circulation_desk.tests.test_index import TC_NPUB
+
 
 class LoginSeedFunctionalTestCase(BaseFunctionalTest):
     """
     Functional Tests for the login page
     """
+
     def setUp(self):
         """
         Set Up and instantiate driver
@@ -15,7 +16,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.url = "/login-seed/"
         self.driver = webdriver.Firefox()
         self.redirect = True
-    
+
     def test_invalid_seed(self):
         """
         Test Invalid Seed Words
@@ -36,7 +37,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="login").click()
         self.assertIn("/login-seed/", self.driver.current_url)
         self.assertIn("Invalid Seed", self.driver.page_source)
-    
+
     def test_valid_seed(self):
         """
         Test Valid Seed Words
@@ -57,7 +58,7 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.driver.find_element(by=By.ID, value="login").click()
         sleep(15)
         self.assertNotIn("/login-seed/", self.driver.current_url)
-    
+
     def test_back(self):
         """
         Login with Back Button
@@ -65,23 +66,25 @@ class LoginSeedFunctionalTestCase(BaseFunctionalTest):
         self.driver.get(f"http://127.0.0.1:8000{self.url}")
         self.driver.find_element(by=By.ID, value="back").click()
         self.assertIn("/login/", self.driver.current_url)
-    
+
     def tearDown(self):
         """
         Tear Down function to close driver
         """
         self.driver.close()
 
+
 class LoginSeedUnitTestCase(BaseUnitTests):
     """
     Unit Tests for the login page (Seed)
     """
+
     def setUp(self):
         self.url = "/login-seed/"
         self.template = "circulation_desk/login_seed.html"
         self.content = ["Log-in", "Seed Words (read/write)", "Back"]
         self.redirect = True
-    
+
     # def test_login_session_data(self):
     #     """
     #     Test Session Data after Login (Seed)
@@ -114,7 +117,7 @@ class LoginSeedUnitTestCase(BaseUnitTests):
     #     response = client.post('/login-seed/', data)
     #     self.assertEqual(response.status_code, 200)
     #     self.assertIn('form', response.context)
-    
+
     # def test_post_form_invalid_seed(self):
     #     """
     #     Test invalid form (value)
