@@ -106,9 +106,9 @@ async def search(request):
                             # Prepare rough signed events
                             events = nostr_prepare(event_list)
                             event_relays = get_event_relays(
-                                relays_list=session["relays"]
+                                relays_dict=session["relays"]
                             )
-
+                            
                             # Update session
                             await async_set_session_info(
                                 request,
