@@ -11,6 +11,7 @@ django==5.1.12
 django-mathfilters==1.0.0
 dotenv==0.9.9
 frozenlist==1.7.0
+gunicorn==23.0.0
 h11==0.16.0
 idna==3.10
 iniconfig==2.1.0
