@@ -14,7 +14,7 @@ async def nostr_get(
 
     # Get relays list
     fetch_relays = get_event_relays(
-        relays_dict=relays_dict, relays_list=relays_list, rw="READ"
+        relays_dict=relays_dict, relays_list=relays_list, rw="WRITE"
     )
 
     # Start client
