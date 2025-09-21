@@ -39,8 +39,8 @@ async def library_shelves(request):
         if request.method == "POST":
             try:
                 data = json.loads(request.body)
-            except json.JSONDecodeError as e:
-                print(f"JSON Decode Error: {e}")
+            except json.JSONDecodeError:
+                # print(f"JSON Decode Error: {e}")
                 data = {}
 
         if (
@@ -109,6 +109,7 @@ async def library_shelves(request):
             enDt = request.POST.get("enDt", None)
             unitRadio = request.POST.get("unitRadio", None)
             rating = request.POST.get("rating", None)
+            social = request.POST.get("social", None)
 
             # Get post type
             if request.POST.get("remove_book"):
@@ -278,13 +279,17 @@ async def library_shelves(request):
 
                                 # Send notification (if moving from current reading shelve)
                                 if from_shelf == "CR":
-                                    notify = await build_notification(
-                                        book=book_moving, note_type="en", score=rating
-                                    )
+                                    if social == "on":
+                                        notify = await build_notification(
+                                            book=book_moving,
+                                            note_type="en",
+                                            score=rating,
+                                        )
+                                        event_list.append(notify)
+
                                     review = await Review().review(
                                         isbn=book_moving["i"], rating=rating
                                     )
-                                    event_list.append(notify)
                                     event_list.append(review.build_event().bevent)
                                     reviews[book_id] = review.detailed()
 
@@ -363,8 +368,11 @@ async def reviews(request):
         if request.method == "POST" and "refresh" not in request.POST:
             # Get general post data
             book_info = request.POST.get("book_info").split("-")
+            shelf_id = book_info[0]
             book_id = book_info[1]
             comments = request.POST.get("comments")
+            social = request.POST.get("social", None)
+
             try:
                 rating = float(request.POST.get("rating")) / 2
                 review = await Review().review(
@@ -373,6 +381,18 @@ async def reviews(request):
                 event_list.append(review.build_event().bevent)
                 session["reviews"][book_id] = review.detailed()
                 await async_set_session_info(request, reviews=session["reviews"])
+
+                if social == "on":
+                    for library in session["libraries"]:
+                        if library["i"] == shelf_id:
+                            for book in library["b"]:
+                                if book["i"] == book_id:
+                                    book_reviewing = book
+                                    break
+                    notify = await build_notification(
+                        book=book_reviewing, note_type="rv", score=rating, text=comments
+                    )
+                    event_list.append(notify)
             except Exception as e:
                 print(e)
                 noted = "false:Error rating book, please refresh and try again."
@@ -392,7 +412,6 @@ async def reviews(request):
                             isbns.append(book["i"])
             reviews = await fetch_reviews(npub=npub, relays=relays, isbns=isbns)
             session["reviews"] = reviews
-            print(session["reviews"])
             await async_set_session_info(request, reviews=reviews)
 
         # Determine if there are any eligible items for review

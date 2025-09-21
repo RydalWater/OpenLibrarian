@@ -108,7 +108,7 @@ async def search(request):
                             event_relays = get_event_relays(
                                 relays_dict=session["relays"]
                             )
-                            
+
                             # Update session
                             await async_set_session_info(
                                 request,

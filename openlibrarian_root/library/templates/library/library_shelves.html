@@ -273,30 +273,38 @@
                                                 </div>
                                                 <div class="tab-pane fade" id="move-form-{{ forloop.counter }}{{ library.i }}" role="tabpanel" aria-labelledby="move-form-tab">
                                                     {% if library.s != "CR" %}
-                                                        <form method="post" class="d-inline-flex gap-1">
+                                                        <form method="post">
                                                             {% csrf_token %}
                                                             <input type="hidden" name="book_info" value="{{ library.i }}-{{ book.i }}">
-                                                            <div class="form-group mt-2">
-                                                                    <select name="status" id="status" class="form-select">
-                                                                            <option value="">--- Select a shelf ---</option>
-                                                                        {% if library.s == "HR" %}
-                                                                            <option value="CR">Reading</option>
-                                                                            <option value="TRW">To Read (want)</option>
-                                                                            <option value="TRS">To Read (on the shelf)</option>
-                                                                        {% elif library.s == "TRW" %}
-                                                                            <option value="HR">Have read</option>
-                                                                            <option value="CR">Reading</option>
-                                                                            <option value="TRS">To Read (on the shelf)</option>
-                                                                        {% elif library.s == "TRS" %}
-                                                                            <option value="HR">Have read</option>
-                                                                            <option value="CR">Reading</option>
-                                                                            <option value="TRW">To Read (want)</option>
-                                                                        {% endif %}
-                                                                    </select>
+                                                            <div class="d-inline-flex gap-1">
+                                                                <div class="form-group mt-2">
+                                                                        <select name="status" id="status" class="form-select">
+                                                                                <option value="">--- Select a shelf ---</option>
+                                                                            {% if library.s == "HR" %}
+                                                                                <option value="CR">Reading</option>
+                                                                                <option value="TRW">To Read (want)</option>
+                                                                                <option value="TRS">To Read (on the shelf)</option>
+                                                                            {% elif library.s == "TRW" %}
+                                                                                <option value="HR">Have read</option>
+                                                                                <option value="CR">Reading</option>
+                                                                                <option value="TRS">To Read (on the shelf)</option>
+                                                                            {% elif library.s == "TRS" %}
+                                                                                <option value="HR">Have read</option>
+                                                                                <option value="CR">Reading</option>
+                                                                                <option value="TRW">To Read (want)</option>
+                                                                            {% endif %}
+                                                                        </select>
+                                                                </div>
+                                                                <button type="submit" name="moved" value="true" class="btn btn-sm btn-primary mt-2">
+                                                                    Move
+                                                                </button>
                                                             </div>
-                                                            <button type="submit" name="moved" value="true" class="btn btn-sm btn-primary mt-2">
-                                                                Move
-                                                            </button>
+                                                            <div id="socialBox-moved" class="mt-2">
+                                                                <div class="form-check form-switch d-flex gap-1">
+                                                                    <input class="form-check-input" type="checkbox" role="switch" name="social" id="social{{ forloop.counter }}{{ library.i }}">
+                                                                    <label class="form-check-label" for="switchCheckDefault">Post social event.</label>
+                                                                </div>
+                                                            </div>
                                                         </form>
                                                     {% else %}
                                                         <form method="post">
@@ -323,9 +331,16 @@
                                                                     style="width: 75%;"
                                                                     oninput="updateStars(this.value, '{{ forloop.counter }}', '{{ library.i }}')">
                                                                 </div>
+
                                                                 <button type="submit" name="finished" value="true" id="finished{{ forloop.counter }}{{ library.i }}" class="btn btn-sm btn-primary mt-2" disabled>
                                                                     Finished
                                                                 </button>
+                                                            </div>
+                                                            <div id="socialBox-finished" class="mt-2">
+                                                                <div class="form-check form-switch d-flex gap-1">
+                                                                    <input class="form-check-input" type="checkbox" role="switch" name="social" id="social{{ forloop.counter }}{{ library.i }}">
+                                                                    <label class="form-check-label" for="switchCheckDefault">Post social event.</label>
+                                                                </div>
                                                             </div>
                                                         </form>
                                                     {% endif %}
@@ -443,6 +458,27 @@
         // Activate finished button if rating is 5
         finishedButton.disabled = false;
     }
+
+    // Get all select elements with the name "status"
+    const selects = document.querySelectorAll('select[name="status"]');
+    selects.forEach(function(select) {
+        const form = select.closest('form');
+        const socialBox = form.querySelector('#socialBox-moved');
+
+        // Initially hide the socialBox
+        if (socialBox) {
+            socialBox.style.display = 'none';
+        }
+
+        // Add event listener for change
+        select.addEventListener('change', function () {
+            if (select.value === 'CR') {
+                socialBox.style.display = 'block';
+            } else {
+                socialBox.style.display = 'none';
+            }
+        });
+    });
 </script>
 
 {% endblock content %}
