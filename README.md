@@ -149,7 +149,19 @@ uv run manage.py runserver
 Then open a new terminal (leaving the other running) and run the tests using coverage.
 
 ```
-uv run coverage run test --verbosity=3
+cd openlibrarian_root
+```
+
+Run all tests 
+
+```
+uv run coverage run manage.py test --verbosity=3
+```
+
+Run specific tests
+
+```
+uv run coverage run manage.py test almanac.tests.test_settings --verbosity=3
 ```
 
 Review the report.
