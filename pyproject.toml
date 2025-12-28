@@ -7,7 +7,7 @@ requires-python = ">=3.12"
 dependencies = [
     "aiohttp==3.12.15",
     "aioresponses>=0.7.8",
-    "django==5.1.12",
+    "django==5.1.15",
     "django-mathfilters==1.0.0",
     "dotenv>=0.9.9",
     "gunicorn>=23.0.0",
