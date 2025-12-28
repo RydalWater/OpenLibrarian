@@ -319,10 +319,11 @@ async def library_shelves(request):
                                 await async_set_session_info(request, progress=progress)
 
                                 # Send notification
-                                notify = await build_notification(
-                                    book=book_moving, note_type="st"
-                                )
-                                event_list.append(notify)
+                                if social == "on":
+                                    notify = await build_notification(
+                                        book=book_moving, note_type="st"
+                                    )
+                                    event_list.append(notify)
                             break
 
                     if inlib and outlib:
