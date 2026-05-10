@@ -1,10 +1,12 @@
 import aiohttp
 import asyncio
 import os
+from typing import Optional
 
+BULK_API_URL = "https://openlibrary.org/api/books"
 alt_api_url = "https://www.googleapis.com/books/v1/volumes"
 
-email_address = os.getenv("EMAIL_ADDY")
+email_address = os.getenv("EMAIL_ADDY", "")
 
 headers = {
     "User-Agent": f"Open Librarian (A FOSS book tracker powered by Nostr) - {email_address}",
@@ -12,33 +14,84 @@ headers = {
 
 
 async def get_cover(session: aiohttp.ClientSession, isbn: str, size: str):
-    """Get cover image from Open Library API"""
-    image = f"https://covers.openlibrary.org/b/isbn/{isbn}-{size}.jpg"
-    try:
-        async with session.get(image) as response:
-            if response.status == 200 and "content-type" in response.headers:
-                return image
-    except Exception:
-        pass
+    """
+    Backwards-compatible cover helper.
+    Returns the deterministic Open Library cover URL without making HTTP requests.
+    (OpenLibrary.py still imports this; update it later to skip the await.)
+    """
+    if not isbn or isbn == "N" or "Hidden" in isbn:
+        return "N"
+    return f"https://covers.openlibrary.org/b/isbn/{isbn}-{size}.jpg"
+
+
+async def fetch_bulk_books(
+    isbns: list[str],
+    session: Optional[aiohttp.ClientSession] = None,
+    chunk_size: int = 50,
+) -> dict[str, dict]:
+    """
+    Fetch multiple books from Open Library bulk API.
+    Returns {normalized_isbn: book_data}
+    """
+    if not isbns:
+        return {}
+
+    seen = set()
+    unique_isbns = []
+    for raw in isbns:
+        norm = "".join(raw.split("-"))
+        if norm not in seen and "Hidden" not in norm:
+            seen.add(norm)
+            unique_isbns.append(norm)
+
+    results = {}
+    owned_session = session is None
+    if owned_session:
+        timeout = aiohttp.ClientTimeout(total=20)
+        session = aiohttp.ClientSession(headers=headers, timeout=timeout)
 
     try:
-        response = await session.get(
-            alt_api_url, params={"q": "isbn:" + isbn}, timeout=10
-        )
-        if response.status == 200:
+        for i in range(0, len(unique_isbns), chunk_size):
+            chunk = unique_isbns[i : i + chunk_size]
+            bibkeys = ",".join(f"ISBN:{isbn}" for isbn in chunk)
+            url = f"{BULK_API_URL}?bibkeys={bibkeys}&format=json&jscmd=data"
+            
+            try:
+                async with session.get(url) as response:
+                    if response.status == 200:
+                        data = await response.json()
+                        for key, book_data in data.items():
+                            isbn = key.replace("ISBN:", "")
+                            results[isbn] = book_data
+                        await asyncio.sleep(0.35)  # Be nice to the API and avoid hitting rate limits
+            except (aiohttp.ClientError, asyncio.TimeoutError):
+                continue
+    finally:
+        if owned_session:
+            await session.close()
+
+    return results
+
+async def fetch_fallback_book(isbn: str, session: aiohttp.ClientSession) -> Optional[dict]:
+    """Fallback to Google Books API for a single ISBN."""
+    try:
+        async with session.get(
+            alt_api_url, params={"q": f"isbn:{isbn}"}, timeout=10
+        ) as response:
+            if response.status != 200:
+                return None
             data = await response.json()
-            if "items" in data and "imageLinks" in data["items"][0]["volumeInfo"]:
-                image = data["items"][0]["volumeInfo"]["imageLinks"]["thumbnail"]
-                try:
-                    async with session.get(image) as response:
-                        if "content-type" in response.headers:
-                            return image
-                except Exception:
-                    pass
-    except Exception:
-        pass
-
-    return "N"
+            items = data.get("items", [])
+            if not items:
+                return None
+            info = items[0].get("volumeInfo", {})
+            return {
+                "title": info.get("title"),
+                "authors": info.get("authors", []),
+                "cover": info.get("imageLinks", {}).get("thumbnail", "N"),
+            }
+    except (aiohttp.ClientError, asyncio.TimeoutError):
+        return None
 
 
 class Book:
@@ -48,147 +101,79 @@ class Book:
 
     def __init__(self, **kwargs):
         """Initialize book object"""
-        if "dict" in kwargs.keys():
-            self.isbn = kwargs["dict"]["i"]
+        if "dict" in kwargs:
+            d = kwargs["dict"]
+            self.isbn = d["i"]
             self.url = f"https://openlibrary.org/isbn/{self.isbn}.json"
-            self.title = kwargs["dict"]["t"]
-            self.author = kwargs["dict"]["a"]
-            self.cover = kwargs["dict"]["c"]
-            self.hidden = kwargs["dict"]["h"]
-        else:
-            if "isbn" in kwargs.keys():
-                self.isbn = "".join(kwargs["isbn"].split("-"))
-                if "Hidden" in self.isbn:
-                    self.url = ""
-                else:
-                    self.url = f"https://openlibrary.org/isbn/{self.isbn}.json"
-            elif "url" in kwargs.keys():
-                self.isbn = kwargs["url"].split("/")[4].split(".")[0]
-                self.url = kwargs["url"]
+            self.title = d["t"]
+            self.author = d["a"]
+            self.cover = d["c"]
+            self.hidden = d["h"]
+            return
+
+        if "isbn" in kwargs:
+            self.isbn = "".join(kwargs["isbn"].split("-"))
             if "Hidden" in self.isbn:
-                self.title = "Mysterious Book"
-                self.author = "Unknown Author"
-                self.cover = "M"
+                self.url = ""
             else:
-                self.title = None
-                self.author = None
-                self.cover = None
-            if "hidden" in kwargs.keys():
-                self.hidden = kwargs["hidden"]
-            else:
-                self.hidden = "N"
-
-    async def get_book(self):
-        """Get book information from Open Library API using ISBN endpoint (falling back to google books API)"""
-        if self.url != "":
-            alt_api = False
-            alt_url = ""
-            async with aiohttp.ClientSession() as session:
-                if self.author is None:
-                    # Trying the first connection
-                    try:
-                        async with session.get(self.url, headers=headers) as response:
-                            if response.status == 200:
-                                response_json = await response.json()
-                                self.title = response_json["title"]
-                                if self.title is None:
-                                    raise Exception(
-                                        "Cannot find title, trying google books API"
-                                    )
-
-                                if "authors" in response_json:
-                                    author_urls = [
-                                        f"https://openlibrary.org{author['key']}.json"
-                                        for author in response_json["authors"]
-                                        if author.get("key")
-                                    ]
-                                    author_responses = await asyncio.gather(
-                                        *[
-                                            self.fetch_author(session, url)
-                                            for url in author_urls
-                                        ]
-                                    )
-
-                                    authors = [
-                                        author["name"]
-                                        for author in author_responses
-                                        if author
-                                    ]
-                                    self.author = ", ".join(authors)
-                                if self.author is None:
-                                    self.author = "Unknown Author"
-                            else:
-                                alt_api = True
-                                alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
-                    except Exception:
-                        alt_api = True
-                        alt_url = f"{alt_api_url}?q=isbn:{self.isbn}"
-
-                    # Trying the second connection if the first failed (without exception)
-                    try:
-                        if alt_api:
-                            async with session.get(
-                                alt_url, headers=headers
-                            ) as response:
-                                if response.status == 200:
-                                    response_json = await response.json()
-                                    # Check for title in response
-                                    if (
-                                        "items" in response_json
-                                        and "volumeInfo" in response_json["items"][0]
-                                        and "title"
-                                        in response_json["items"][0]["volumeInfo"]
-                                    ):
-                                        self.title = response_json["items"][0][
-                                            "volumeInfo"
-                                        ]["title"]
-
-                                    # Check for authors in response
-                                    if (
-                                        "items" in response_json
-                                        and "volumeInfo" in response_json["items"][0]
-                                        and "authors"
-                                        in response_json["items"][0]["volumeInfo"]
-                                    ):
-                                        authors = [
-                                            author
-                                            for author in response_json["items"][0][
-                                                "volumeInfo"
-                                            ]["authors"]
-                                        ]
-                                        self.author = ", ".join(authors)
-
-                                    if self.title is None:
-                                        self.title = "Cannot find title"
-                                    if self.author is None:
-                                        self.author = "Cannot find author"
-
-                                else:
-                                    self.title = "Cannot find title (API Down)"
-                                    self.author = "Cannot find author (API Down)"
-                                    return self
-
-                    except Exception:
-                        self.title = "Cannot find title (API Down)"
-                        self.author = "Cannot find author (API Down)"
-                        return self
-
-                # Get Covers
-                self.cover = await get_cover(session, self.isbn, "M")
-            return self
+                self.url = f"https://openlibrary.org/isbn/{self.isbn}.json"
+        elif "url" in kwargs:
+            self.isbn = kwargs["url"].split("/")[4].split(".")[0]
+            self.url = kwargs["url"]
         else:
-            return self
+            self.isbn = ""
+            self.url = ""
 
-    async def fetch_author(self, session: aiohttp.ClientSession, url: str):
-        """Fetch author information from Open Library API"""
-        try:
-            async with session.get(url, headers=headers) as response:
-                if response.status != 200:
-                    return None
-                response_json = await response.json()
-                return response_json
-        except Exception:
-            return None
+        self.hidden = kwargs.get("hidden", "N")
+
+        if "Hidden" in self.isbn:
+            self.title = "Mysterious Book"
+            self.author = "Unknown Author"
+            self.cover = "M"
+        else:
+            self.title = kwargs.get("title")
+            self.author = kwargs.get("author")
+            self.cover = kwargs.get("cover")
+
+    @classmethod
+    def from_bulk_data(cls, isbn: str, data: dict, hidden: str = "N") -> "Book":
+        """
+        Create a Book from Open Library bulk API data.
+        """
+        authors = data.get("authors", [])
+        author_names = [a["name"] for a in authors if a.get("name")]
+        author_str = ", ".join(author_names) if author_names else "Unknown Author"
+
+        cover_data = data.get("cover")
+        if isinstance(cover_data, dict):
+            cover = (
+                cover_data.get("medium")
+                or cover_data.get("large")
+                or cover_data.get("small", "N")
+            )
+        else:
+            cover = "N"
+
+        instance = cls(
+            isbn=isbn,
+            title=data.get("title"),
+            author=author_str,
+            cover=cover,
+            hidden=hidden,
+        )
+        instance.url = data.get("url") or f"https://openlibrary.org/isbn/{isbn}.json"
+        return instance
+
+    @classmethod
+    def placeholder(cls, isbn: str, hidden: str = "N") -> "Book":
+        """Return a book with fallback/error text."""
+        return cls(
+            isbn=isbn,
+            title="Cannot find title",
+            author="Cannot find author",
+            cover="N",
+            hidden=hidden,
+        )
 
     def __dict__(self):
         """Convert book object to dictionary"""
@@ -204,5 +189,4 @@ class Book:
         return self.__dict__()
 
     def concise(self):
-        concise = {"i": self.isbn, "h": self.hidden}
-        return concise
+        return {"i": self.isbn, "h": self.hidden}

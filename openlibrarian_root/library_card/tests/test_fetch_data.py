@@ -40,6 +40,7 @@ class FetchDataUnitTests(TestCase):
         self.assertEqual(None, profile["lud16"])
         self.assertEqual(
             {
+                "wss://relay.openlibrarian.com": None,
                 "wss://relay.damus.io": None,
                 "wss://relay.primal.net": None,
                 "wss://nostr.mom": None,

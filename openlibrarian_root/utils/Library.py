@@ -9,13 +9,20 @@ from nostr_sdk import (
     PublicKey,
     Event,
 )
-from utils.Book import Book
+from utils.Book import Book, fetch_bulk_books, fetch_fallback_book
 from utils.Login import check_npub
 from utils.Network import nostr_get
 from utils.General import remove_dups_on_id
 import hashlib
 import ast
 import asyncio
+import aiohttp
+import os
+
+email_address = os.getenv("EMAIL_ADDY", "")
+headers = {
+    "User-Agent": f"Open Librarian (A FOSS book tracker powered by Nostr) - {email_address}",
+}
 
 section_title_map = {
     "TRS": "To Read (S)",
@@ -131,17 +138,74 @@ class Library:
                         self.bevent = event
 
     async def get_book_details(self):
-        tasks = []
+        """
+        Populate self.books using the Open Library bulk API.
+        Expects self.books as [{"i": isbn, "h": hidden}, ...]
+        """
+        if not self.books:
+            return self
+
+        hidden_books = []
+        to_fetch = []
+
         for book in self.books:
-            task = asyncio.create_task(
-                Book(isbn=book["i"], hidden=book["h"]).get_book()
-            )
-            tasks.append(task)
-        results = await asyncio.gather(*tasks, return_exceptions=True)
-        self.books = [
-            book.detailed() for book in results if not isinstance(book, Exception)
-        ]
+            if "Hidden" in book.get("i", ""):
+                hidden_books.append(book)
+            else:
+                to_fetch.append(book)
+
+        results = []
+
+        # Hidden books need no network
+        for book in hidden_books:
+            results.append(Book(isbn=book["i"], hidden=book["h"]).detailed())
+
+        if to_fetch:
+            isbns = [b["i"] for b in to_fetch]
+            timeout = aiohttp.ClientTimeout(total=20)
+
+            async with aiohttp.ClientSession(headers=headers, timeout=timeout) as session:
+                bulk_data = await fetch_bulk_books(isbns, session=session)
+
+                missing = []
+                for book in to_fetch:
+                    isbn = "".join(book["i"].split("-"))
+                    if isbn in bulk_data:
+                        b = Book.from_bulk_data(isbn, bulk_data[isbn], hidden=book["h"])
+                        results.append(b.detailed())
+                    else:
+                        missing.append((isbn, book))
+
+                # Optional lightweight fallback for missing ISBNs
+                if missing:
+                    fallback_tasks = [
+                        asyncio.create_task(fetch_fallback_book(isbn, session))
+                        for isbn, _ in missing
+                    ]
+                    fallback_results = await asyncio.gather(
+                        *fallback_tasks, return_exceptions=True
+                    )
+
+                    for (isbn, original), fb in zip(missing, fallback_results):
+                        if isinstance(fb, Exception) or fb is None:
+                            results.append(
+                                Book.placeholder(isbn, hidden=original["h"]).detailed()
+                            )
+                        else:
+                            b = Book(
+                                isbn=isbn,
+                                title=fb.get("title", "Cannot find title"),
+                                author=", ".join(fb["authors"])
+                                if fb.get("authors")
+                                else "Cannot find author",
+                                cover=fb.get("cover", "N"),
+                                hidden=original["h"],
+                            )
+                            results.append(b.detailed())
+
+        self.books = results
         return self
+
 
     # Add book to library
     async def add_book(self, **kwargs):

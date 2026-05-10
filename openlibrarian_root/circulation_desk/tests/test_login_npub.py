@@ -77,6 +77,7 @@ class LoginNpubUnitTestCase(BaseUnitTests):
         self.assertEqual(
             client.session["relays"],
             {
+                "wss://relay.openlibrarian.com": None,
                 "wss://relay.damus.io": None,
                 "wss://relay.primal.net": None,
                 "wss://nostr.mom": None,

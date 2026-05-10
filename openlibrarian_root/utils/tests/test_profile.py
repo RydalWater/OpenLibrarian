@@ -84,6 +84,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(
             relays,
             {
+                "wss://relay.openlibrarian.com": None,
                 "wss://relay.damus.io": None,
                 "wss://relay.primal.net": None,
                 "wss://nostr.mom": None,
@@ -110,6 +111,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(
             relays,
             {
+                "wss://relay.openlibrarian.com": None,
                 "wss://nos.lol": "READ",
                 "wss://relay.damus.io": None,
                 "wss://relay.primal.net": None,
@@ -156,6 +158,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(
             relays,
             {
+                "wss://relay.openlibrarian.com": None,
                 "wss://relay.damus.io": None,
                 "wss://relay.primal.net": None,
                 "wss://nostr.mom": None,
@@ -282,6 +285,7 @@ class ProfileUnitTests(TestCase):
         self.assertEqual(
             new_relays_dict_dict,
             {
+                "wss://relay.openlibrarian.com": None,
                 "wss://relay.damus.io": None,
                 "wss://relay.primal.net": None,
                 "wss://nostr.mom": None,

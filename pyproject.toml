@@ -5,16 +5,16 @@ description = "Open Librarian is a Nostr book tracking client."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "aiohttp==3.12.15",
+    "aiohttp==3.13.4",
     "aioresponses>=0.7.8",
     "django==5.1.15",
     "django-mathfilters==1.0.0",
-    "dotenv>=0.9.9",
+    "python-dotenv>=1.2.2",
     "gunicorn>=23.0.0",
-    "markdown==3.7",
+    "markdown==3.8.1",
     "mnemonic==0.21",
     "nostr-sdk==0.39.0",
-    "requests>=2.32.5",
+    "requests>=2.33.0",
     "tenacity==9.0.0",
     "whitenoise==6.7.0",
 ]
@@ -22,6 +22,6 @@ dependencies = [
 [dependency-groups]
 dev = [
     "coverage==7.6.7",
-    "pytest>=8.4.1",
+    "pytest>=9.0.3",
     "selenium==4.35.0",
 ]
