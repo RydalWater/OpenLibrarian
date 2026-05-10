@@ -198,3 +198,23 @@ LOGGING = {
         },
     },
 }
+
+# Prod updates
+# --- Trust the reverse proxy (NGINX / SISH) ---
+# SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+# USE_X_FORWARDED_HOST = True
+
+# --- HTTPS hardening ---
+# SECURE_SSL_REDIRECT = True
+# SECURE_HSTS_SECONDS = 31536000
+# SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+# SECURE_HSTS_PRELOAD = True
+
+# --- Secure cookies ---
+# SESSION_COOKIE_SECURE = True
+# CSRF_COOKIE_SECURE = True
+
+# --- CSRF behind proxy ---
+# CSRF_TRUSTED_ORIGINS = [
+#     origin for origin in os.getenv("CSRF_TRUSTED_ORIGINS", "").split() if origin
+# ]

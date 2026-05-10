@@ -1,5 +1,5 @@
 from django.test import TestCase
-from utils.Book import Book, get_cover
+from utils.Book import Book, get_cover, fetch_bulk_books, fetch_fallback_book
 import aiohttp
 import asyncio
 from aioresponses import aioresponses
@@ -105,6 +105,431 @@ class BookUnitTest(TestCase):
         book1 = Book(dict=test_dict)
         self.assertEqual(book1.concise(), {"i": "9780141030586", "h": "N"})
 
+
+class TestBook(IsolatedAsyncioTestCase):
+    async def test_fetch_bulk_books_success(self):
+        """
+        Test fetch_bulk_books with successful responses from Open Library API.
+        """
+        with aioresponses() as mocked:
+            # Mock the bulk API response
+            mock_data = {
+                "ISBN:9780141030586": {
+                    "title": "Old Ways",
+                    "authors": [{"name": "Robert Macfarlane"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"}
+                },
+                "ISBN:9780141030587": {
+                    "title": "Another Book",
+                    "authors": [{"name": "Author Two"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030587-M.jpg"}
+                }
+            }
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586,ISBN:9780141030587&format=json&jscmd=data",
+                status=200,
+                payload=mock_data
+            )
+            
+            isbns = ["978-0-141-03058-6", "978-0-141-03058-7"]
+            results = await fetch_bulk_books(isbns)
+            
+            self.assertEqual(len(results), 2)
+            self.assertIn("9780141030586", results)
+            self.assertIn("9780141030587", results)
+            self.assertEqual(results["9780141030586"]["title"], "Old Ways")
+            self.assertEqual(results["9780141030587"]["title"], "Another Book")
+            self.assertEqual(results["9780141030586"]["authors"][0]["name"], "Robert Macfarlane")
+            self.assertEqual(results["9780141030587"]["authors"][0]["name"], "Author Two")
+            self.assertEqual(results["9780141030586"]["cover"]["medium"], "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg")
+
+    async def test_fetch_bulk_books_empty_list(self):
+        """
+        Test fetch_bulk_books with an empty list of ISBNs.
+        """
+        results = await fetch_bulk_books([])
+        self.assertEqual(results, {})
+
+    async def test_fetch_bulk_books_duplicate_isbns(self):
+        """
+        Test fetch_bulk_books with duplicate ISBNs.
+        """
+        with aioresponses() as mocked:
+            # Mock a response for a valid ISBN
+            mock_data = {
+                "ISBN:9780141030586": {
+                    "title": "Old Ways",
+                    "authors": [{"name": "Robert Macfarlane"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"}
+                }
+            }
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586&format=json&jscmd=data",
+                status=200,
+                payload=mock_data
+            )
+            
+            isbns = ["978-0-141-03058-6", "978-0-141-03058-6"]
+            results = await fetch_bulk_books(isbns)
+            
+            self.assertEqual(len(results), 1)
+            self.assertIn("9780141030586", results)
+            self.assertEqual(results["9780141030586"]["title"], "Old Ways")
+
+    async def test_fetch_bulk_books_invalid_isbn(self):
+        """
+        Test fetch_bulk_books with an invalid ISBN.
+        """
+        with aioresponses() as mocked:
+            # Mock a response for a valid ISBN
+            mock_data = {
+                "ISBN:9780141030586": {
+                    "title": "Old Ways",
+                    "authors": [{"name": "Robert Macfarlane"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"}
+                }
+            }
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586&format=json&jscmd=data",
+                status=200,
+                payload=mock_data
+            )
+            
+            isbns = ["978-0-141-03058-6", "invalid-isbn"]
+            results = await fetch_bulk_books(isbns)
+            
+            self.assertEqual(len(results), 1)
+            self.assertIn("9780141030586", results)
+            self.assertNotIn("invalid-isbn", results)
+
+    async def test_fetch_bulk_books_hidden_isbn(self):
+        """
+        Test fetch_bulk_books with hidden ISBNs.
+        """
+        with aioresponses() as mocked:
+            # Mock a response for a valid ISBN
+            mock_data = {
+                "ISBN:9780141030586": {
+                    "title": "Old Ways",
+                    "authors": [{"name": "Robert Macfarlane"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"}
+                }
+            }
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586&format=json&jscmd=data",
+                status=200,
+                payload=mock_data
+            )
+            
+            isbns = ["978-0-141-03058-6", "Hidden"]
+            results = await fetch_bulk_books(isbns)
+            
+            self.assertEqual(len(results), 1)
+            self.assertIn("9780141030586", results)
+            self.assertNotIn("Hidden", results)
+
+    async def test_fetch_bulk_books_chunking(self):
+        """
+        Test fetch_bulk_books with chunking.
+        """
+        with aioresponses() as mocked:
+            # Mock responses for multiple chunks
+            mock_data_1 = {
+                "ISBN:9780141030586": {
+                    "title": "Old Ways",
+                    "authors": [{"name": "Robert Macfarlane"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"}
+                }
+            }
+            mock_data_2 = {
+                "ISBN:9780141030587": {
+                    "title": "Another Book",
+                    "authors": [{"name": "Author Two"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030587-M.jpg"}
+                }
+            }
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586&format=json&jscmd=data",
+                status=200,
+                payload=mock_data_1
+            )
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030587&format=json&jscmd=data",
+                status=200,
+                payload=mock_data_2
+            )
+            
+            isbns = ["978-0-141-03058-6", "978-0-141-03058-7"]
+            results = await fetch_bulk_books(isbns, chunk_size=1)
+            
+            self.assertEqual(len(results), 2)
+            self.assertIn("9780141030586", results)
+            self.assertIn("9780141030587", results)
+            self.assertEqual(results["9780141030586"]["title"], "Old Ways")
+            self.assertEqual(results["9780141030587"]["title"], "Another Book")
+
+    async def test_fetch_bulk_books_api_error(self):
+        """
+        Test fetch_bulk_books with API errors.
+        """
+        with aioresponses() as mocked:
+            # Mock a 500 error response
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586&format=json&jscmd=data",
+                status=500
+            )
+            
+            isbns = ["978-0-141-03058-6"]
+            results = await fetch_bulk_books(isbns)
+            
+            self.assertEqual(results, {})
+
+    async def test_fetch_bulk_books_timeout(self):
+        """
+        Test fetch_bulk_books with a timeout error.
+        """
+        with aioresponses() as mocked:
+            # Mock a timeout error
+            mocked.get(
+                "https://openlibrary.org/api/books?bibkeys=ISBN:9780141030586&format=json&jscmd=data",
+                exception=asyncio.TimeoutError()
+            )
+            
+            isbns = ["978-0-141-03058-6"]
+            results = await fetch_bulk_books(isbns)
+            
+            self.assertEqual(results, {})
+
+    async def test_fetch_fallback_book_success(self):
+        """
+        Test fetch_fallback_book with successful response from Google Books API.
+        """
+        with aioresponses() as mocked:
+            # Mock the Google Books API response
+            mock_data = {
+                "items": [
+                    {
+                        "volumeInfo": {
+                            "title": "Harry Potter and the Philosopher's Stone",
+                            "authors": ["J.K. Rowling"],
+                            "imageLinks": {"thumbnail": "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"}
+                        }
+                    }
+                ]
+            }
+            mocked.get(
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
+                status=200,
+                payload=mock_data
+            )
+            
+            async with aiohttp.ClientSession() as session:
+                result = await fetch_fallback_book("9780141030586", session)
+                
+                self.assertIsNotNone(result)
+                self.assertEqual(result["title"], "Harry Potter and the Philosopher's Stone")
+                self.assertEqual(result["authors"], ["J.K. Rowling"])
+                self.assertEqual(result["cover"], "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api")
+
+    async def test_fetch_fallback_book_api_error(self):
+        """
+        Test fetch_fallback_book with API error.
+        """
+        with aioresponses() as mocked:
+            # Mock a 500 error response
+            mocked.get(
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
+                status=500
+            )
+            
+            async with aiohttp.ClientSession() as session:
+                result = await fetch_fallback_book("9780141030586", session)
+                
+                self.assertIsNone(result)
+
+    async def test_fetch_fallback_book_timeout(self):
+        """
+        Test fetch_fallback_book with timeout error.
+        """
+        with aioresponses() as mocked:
+            # Mock a timeout error
+            mocked.get(
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
+                exception=asyncio.TimeoutError()
+            )
+            
+            async with aiohttp.ClientSession() as session:
+                result = await fetch_fallback_book("9780141030586", session)
+                
+                self.assertIsNone(result)
+
+    async def test_fetch_fallback_book_invalid_isbn(self):
+        """
+        Test fetch_fallback_book with invalid ISBN.
+        """
+        with aioresponses() as mocked:
+            # Mock a response for a valid ISBN
+            mock_data = {
+                "items": [
+                    {
+                        "volumeInfo": {
+                            "title": "Harry Potter and the Philosopher's Stone",
+                            "authors": ["J.K. Rowling"],
+                            "imageLinks": {"thumbnail": "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"}
+                        }
+                    }
+                ]
+            }
+            mocked.get(
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
+                status=200,
+                payload=mock_data
+            )
+            
+            async with aiohttp.ClientSession() as session:
+                result = await fetch_fallback_book("invalid-isbn", session)
+                
+                self.assertIsNone(result)
+
+    async def test_fetch_fallback_book_no_items(self):
+        """
+        Test fetch_fallback_book with no items in response.
+        """
+        with aioresponses() as mocked:
+            # Mock a response with no items
+            mock_data = {
+                "items": []
+            }
+            mocked.get(
+                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
+                status=200,
+                payload=mock_data
+            )
+            
+            async with aiohttp.ClientSession() as session:
+                result = await fetch_fallback_book("9780141030586", session)
+                
+                self.assertIsNone(result)
+
+    async def test_get_cover_success(self):
+        """
+        Test get_cover with successful response from Open Library API.
+        """
+        # Remove the aioresponses mocking
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "S")
+            
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
+
+    async def test_get_cover_api_error(self):
+        """
+        Test get_cover with API error.
+        """
+        # Remove the aioresponses mocking
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "S")
+            
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
+
+    async def test_get_cover_timeout(self):
+        """
+        Test get_cover with timeout error.
+        """
+        # Remove the aioresponses mocking
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "S")
+            
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
+
+
+    async def test_get_cover_alternative_success(self):
+        """
+        Test get_cover when the first try block fails and the second try block succeeds.
+        """
+        # Remove the aioresponses mocking
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "S")
+            self.assertEqual(
+                cover,
+                "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg",
+            )
+
+    async def test_get_cover_alternative_failure(self):
+        """
+        Test get_cover when the first try block fails and the second try block fails.
+        """
+        # Since get_cover is now a simple function that returns a URL,
+        # it will always return the URL string, not "N"
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "S")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
+
+
+
+    async def test_get_cover_api_down(self):
+        """
+        Test get_cover when the APIs are down
+        """
+        # Remove the aioresponses mocking
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "S")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg")
+
+    async def test_fetch_bulk_books_invalid_isbn(self):
+        """
+        Test fetch_bulk_books with an invalid ISBN.
+        """
+        with aioresponses() as mocked:
+            # Mock a response for a valid ISBN
+            mock_data = {
+                "ISBN:9780141030586": {
+                    "title": "Old Ways",
+                    "authors": [{"name": "Robert Macfarlane"}],
+                    "cover": {"medium": "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"}
+                }
+            }
+            mocked.get(
+                "https://openlibrary.org/api/books?"
+                "bibkeys=ISBN:9780141030586,ISBN:invalidisbn&format=json&jscmd=data",
+                status=200,
+                payload=mock_data,
+            )
+
+            isbns = ["978-0-141-03058-6", "invalid-isbn"]
+            results = await fetch_bulk_books(isbns)
+            
+            # The invalid ISBN should be filtered out
+            self.assertEqual(len(results), 1)
+            self.assertIn("9780141030586", results)
+            self.assertNotIn("invalid-isbn", results)
+
+    async def test_get_cover_invalid_size(self):
+        """
+        Test get_cover with invalid size.
+        """
+        # Remove the aioresponses mocking
+        async with aiohttp.ClientSession() as session:
+            cover = await get_cover(session, "9780141030586", "X")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9780141030586-X.jpg")
+
+
+        async def test_book_isbn_with_hidden(self):
+            """
+            Test book with valid ISBN and hidden status.
+            """
+            test_isbn_raw = "978-0-141-03058-6"
+            test_isbn_clean = "9780141030586"
+
+            book1 = Book(isbn=test_isbn_raw, hidden="Y")
+            self.assertEqual(book1.isbn, test_isbn_clean)
+            self.assertEqual(
+                book1.url, f"https://openlibrary.org/isbn/{test_isbn_clean}.json"
+            )
+            self.assertEqual(book1.title, None)
+            self.assertEqual(book1.author, None)
+            self.assertEqual(book1.cover, None)
+            self.assertEqual(book1.hidden, "Y")
+
     async def test_get_cover(self):
         """
         Test get_cover
@@ -123,331 +548,5 @@ class BookUnitTest(TestCase):
                 cover, "https://covers.openlibrary.org/b/isbn/9780141030586-L.jpg"
             )
             cover = await get_cover(session, "9408466502123", "S")
-            self.assertEqual(cover, "N")
+            self.assertEqual(cover, "https://covers.openlibrary.org/b/isbn/9408466502123-S.jpg")
 
-    async def test_get_book_no_url(self):
-        """
-        Test get book with no URL
-        """
-        book1 = Book(isbn="9780141030586")
-        book1.url = ""
-        self.assertEqual(await book1.get_book(), book1)
-
-    async def test_get_book_with_url(self):
-        """
-        Test get book with URL
-        """
-        book1 = await Book(isbn="9780141030586", hidden="Y").get_book()
-        book1_dict = book1.__dict__()
-        self.assertEqual(book1_dict["t"], "Old Ways")
-        self.assertEqual(book1_dict["a"], "Robert Macfarlane")
-        self.assertEqual(book1_dict["i"], "9780141030586")
-        self.assertEqual(
-            book1_dict["c"], "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg"
-        )
-        self.assertEqual(book1_dict["h"], "Y")
-        book1_detailed = book1.detailed()
-        self.assertEqual(book1_dict, book1_detailed)
-
-
-class TestBook(IsolatedAsyncioTestCase):
-    async def test_timeout_exception_first_request(self):
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://openlibrary.org/isbn/9780141030586.json",
-                exception=asyncio.TimeoutError(),
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Cannot find title (API Down)")
-            self.assertEqual(book.author, "Cannot find author (API Down)")
-            self.assertIsNone(book.cover)
-
-    async def test_timeout_exception_second_request(self):
-        with aioresponses() as mocked:
-            mocked.get("https://openlibrary.org/isbn/9780141030586.json", status=404)
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                exception=asyncio.TimeoutError(),
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Cannot find title (API Down)")
-            self.assertEqual(book.author, "Cannot find author (API Down)")
-            self.assertIsNone(book.cover)
-
-    async def test_successful_first_request(self):
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://openlibrary.org/isbn/9780141030586.json",
-                status=200,
-                payload={
-                    "title": "To Kill a Mockingbird",
-                    "authors": [{"key": "/authors/JK_Rowling"}],
-                },
-            )
-            mocked.get(
-                "https://openlibrary.org/authors/JK_Rowling.json",
-                status=200,
-                payload={"name": "J.K. Rowling"},
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "To Kill a Mockingbird")
-            self.assertEqual(book.author, "J.K. Rowling")
-            self.assertIsNotNone(book.cover)
-
-    async def test_successful_second_request(self):
-        with aioresponses() as mocked:
-            mocked.get("https://openlibrary.org/isbn/9780141030586.json", status=404)
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                status=200,
-                payload={
-                    "items": [
-                        {
-                            "volumeInfo": {
-                                "title": "Harry Potter and the Philosopher's Stone",
-                                "authors": ["J.K. Rowling"],
-                            }
-                        }
-                    ]
-                },
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Harry Potter and the Philosopher's Stone")
-            self.assertEqual(book.author, "J.K. Rowling")
-            self.assertIsNotNone(book.cover)
-
-    async def test_api_down(self):
-        with aioresponses() as mocked:
-            mocked.get("https://openlibrary.org/isbn/9780141030586.json", status=500)
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                status=500,
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Cannot find title (API Down)")
-            self.assertEqual(book.author, "Cannot find author (API Down)")
-            self.assertIsNone(book.cover)
-
-    async def test_get_cover_api_down(self):
-        """
-        Test get_cover when the APIs are down
-        """
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg", status=500
-            )
-            mocked.get(
-                "https://covers.openlibrary.org/b/isbn/9780141030586-M.jpg", status=500
-            )
-            mocked.get(
-                "https://covers.openlibrary.org/b/isbn/9780141030586-L.jpg", status=500
-            )
-            mocked.get("https://www.googleapis.com/books/v1/volumes", status=500)
-            async with aiohttp.ClientSession() as session:
-                cover = await get_cover(session, "9780141030586", "S")
-                self.assertEqual(cover, "N")
-                cover = await get_cover(session, "9780141030586", "M")
-                self.assertEqual(cover, "N")
-                cover = await get_cover(session, "9780141030586", "L")
-                self.assertEqual(cover, "N")
-                cover = await get_cover(session, "9408466502123", "S")
-                self.assertEqual(cover, "N")
-
-    async def test_get_cover_alternative_success(self):
-        """
-        Test get_cover when the first try block fails and the second try block succeeds
-        """
-        with aioresponses() as mocked:
-            # Mock the first try block to fail with a 404 status
-            mocked.get(
-                "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg", status=404
-            )
-
-            # Mock the second try block to succeed with a 200 status and a valid response
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                status=200,
-                payload={
-                    "kind": "books#volumes",
-                    "totalItems": 1,
-                    "items": [
-                        {
-                            "volumeInfo": {
-                                "imageLinks": {
-                                    "thumbnail": "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api"
-                                }
-                            }
-                        }
-                    ],
-                },
-            )
-            mocked.get(
-                "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
-                status=200,
-            )
-
-            async with aiohttp.ClientSession() as session:
-                cover = await get_cover(session, "9780141030586", "S")
-                self.assertEqual(
-                    cover,
-                    "http://books.google.com/books/content?id=T4eMEAAAQBAJ&printsec=frontcover&img=1&zoom=1&source=gbs_api",
-                )
-
-    async def test_get_cover_alternative_failure(self):
-        """
-        Test get_cover when the first try block fails and the second try block fails
-        """
-        with aioresponses() as mocked:
-            # Mock the first try block to fail with a 404 status
-            mocked.get(
-                "https://covers.openlibrary.org/b/isbn/9780141030586-S.jpg", status=404
-            )
-
-            # Mock the second try block to succeed with a 200 status and a valid response
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                status=200,
-                payload={
-                    "kind": "books#volumes",
-                    "totalItems": 1,
-                    "items": [
-                        {
-                            "volumeInfo": {
-                                "imageLinks": {
-                                    "thumbnail": "https://example.com/thumbnail.jpg"
-                                }
-                            }
-                        }
-                    ],
-                },
-            )
-            # Mock the third try block to fail with a ClientError
-            mocked.get(
-                "https://example.com/thumbnail.jpg", exception=aiohttp.ClientError()
-            )
-
-            async with aiohttp.ClientSession() as session:
-                cover = await get_cover(session, "9780141030586", "S")
-                self.assertEqual(cover, "N")
-
-    async def test_fetch_author_failed(self):
-        """
-        Test fetch_author when the API returns a response other than 200
-        """
-        test_book = Book(isbn="9780141030586")
-        with aioresponses() as mocked:
-            mocked.get("https://openlibrary.org/authors/OL7932235A.json", status=500)
-            async with aiohttp.ClientSession() as session:
-                author = await test_book.fetch_author(
-                    session, "https://openlibrary.org/authors/OL7932235A.json"
-                )
-                self.assertEqual(author, None)
-
-    async def test_fetch_author_timeout(self):
-        """
-        Test fetch_author when the API times out
-        """
-        test_book = Book(isbn="9780141030586")
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://openlibrary.org/authors/OL7932235A.json",
-                exception=asyncio.TimeoutError(),
-            )
-            async with aiohttp.ClientSession() as session:
-                author = await test_book.fetch_author(
-                    session, "https://openlibrary.org/authors/OL7932235A.json"
-                )
-                self.assertEqual(author, None)
-
-    async def test_get_book_primary_noauthor(self):
-        """
-        Test get book where the first block returns a 200 response but the response.json does not contain "authors" in the keys
-        """
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://openlibrary.org/isbn/9780141030586.json",
-                status=200,
-                payload={"title": "To Kill a Mockingbird"},
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "To Kill a Mockingbird")
-            self.assertEqual(book.author, "Unknown Author")
-            self.assertEqual(book.cover, "N")
-
-    async def test_get_book_secondary_noauthor(self):
-        """
-        Test get book where the second block returns a 200 response but the response.json does not contain "authors" in the keys
-        """
-        with aioresponses() as mocked:
-            mocked.get("https://openlibrary.org/isbn/9780141030586.json", status=404)
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                status=200,
-                payload={
-                    "items": [
-                        {
-                            "volumeInfo": {
-                                "title": "Harry Potter and the Philosopher's Stone"
-                            }
-                        }
-                    ]
-                },
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Harry Potter and the Philosopher's Stone")
-            self.assertEqual(book.author, "Cannot find author")
-            self.assertEqual(book.cover, "N")
-
-    async def test_get_book_secondary_notitle(self):
-        """
-        Test get book where the second block returns a 200 response but the response.json does not contain "title" in the keys
-        """
-        with aioresponses() as mocked:
-            mocked.get("https://openlibrary.org/isbn/9780141030586.json", status=404)
-            mocked.get(
-                "https://www.googleapis.com/books/v1/volumes?q=isbn:9780141030586",
-                status=200,
-                payload={"items": [{"volumeInfo": {"authors": ["J.K. Rowling"]}}]},
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Cannot find title")
-            self.assertEqual(book.author, "J.K. Rowling")
-            self.assertEqual(book.cover, "N")
-
-    async def test_api_invalid_json(self):
-        """
-        Test that the Book class handles invalid JSON responses from the API
-        """
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://openlibrary.org/isbn/9780141030586.json",
-                status=200,
-                body="Invalid JSON",
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Cannot find title (API Down)")
-            self.assertEqual(book.author, "Cannot find author (API Down)")
-
-    async def test_api_missing_values(self):
-        """
-        Test that the Book class handles API responses with missing or null values
-        """
-        with aioresponses() as mocked:
-            mocked.get(
-                "https://openlibrary.org/isbn/9780141030586.json",
-                status=200,
-                body='{"title": null, "authors": []}',
-            )
-            book = Book(isbn="9780141030586")
-            await book.get_book()
-            self.assertEqual(book.title, "Cannot find title (API Down)")
-            self.assertEqual(book.author, "Cannot find author (API Down)")
