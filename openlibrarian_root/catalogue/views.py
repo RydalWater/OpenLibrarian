@@ -9,13 +9,42 @@ from utils.Session import (
     cache_key,
 )
 from utils.OpenLibrary import search_books
-from utils.Book import Book
+import aiohttp
+from utils.Book import Book, fetch_bulk_books, fetch_fallback_book
 from utils.Library import Library
 from utils.Interests import Interests, fetch_interests
 from utils.Progress import Progress
 from utils.Review import Review
 from utils.Constants import INTERESTS_HASHMAP, INTERESTS
 from utils.Network import nostr_prepare, get_event_relays
+
+
+async def _resolve_book_detail(isbn: str, hidden: str) -> dict:
+    """Resolve one ISBN to a detailed book dict via OL bulk API (with fallback)."""
+    norm_isbn = "".join(isbn.split("-"))
+    if "Hidden" in norm_isbn:
+        return Book(isbn=norm_isbn, hidden=hidden).detailed()
+
+    bulk_data = await fetch_bulk_books([norm_isbn])
+    if norm_isbn in bulk_data:
+        return Book.from_bulk_data(
+            norm_isbn, bulk_data[norm_isbn], hidden=hidden
+        ).detailed()
+
+    timeout = aiohttp.ClientTimeout(total=10)
+    async with aiohttp.ClientSession(timeout=timeout) as session:
+        fb = await fetch_fallback_book(norm_isbn, session)
+    if fb:
+        return Book(
+            isbn=norm_isbn,
+            title=fb.get("title", "Cannot find title"),
+            author=", ".join(fb["authors"])
+            if fb.get("authors")
+            else "Cannot find author",
+            cover=fb.get("cover", "N"),
+            hidden=hidden,
+        ).detailed()
+    return Book.placeholder(norm_isbn, hidden=hidden).detailed()
 
 
 async def catalogue(request):
@@ -78,10 +107,9 @@ async def search(request):
                     for library in session["libraries"]:
                         if library["s"] == shelf:
                             event_list = []
-                            # Build Book
-                            book = Book(isbn=isbn, hidden=hidden)
-                            await book.get_book()
-                            library["b"].append(book.detailed())
+                            library["b"].append(
+                                await _resolve_book_detail(isbn, hidden)
+                            )
                             # Add book to shelf and publish
                             lib = Library(dict=library, npub=session["npub"])
                             lib.build_event(npub=session["npub"])
