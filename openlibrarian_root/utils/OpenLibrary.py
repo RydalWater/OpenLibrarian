@@ -50,13 +50,13 @@ async def search_books(**kwargs):
             response_json = await response.json()
 
             # If there are no results
-            if response_json["numFound"] == 0:
+            if not response_json or response_json.get("numFound") is None or response_json.get("numFound", 0) == 0:
                 print("No books found.")
-                return 0, None
+                return 0, []
 
             # If there are results
             else:
-                num_results = response_json["numFound"]
+                num_results = int(response_json["numFound"])
                 docs = response_json["docs"]
 
                 # Filter documents with necessary keys
